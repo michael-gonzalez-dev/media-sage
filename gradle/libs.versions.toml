@@ -45,6 +45,9 @@ shadow = "8.3.9"
 roborazzi = "1.69.0"
 robolectric = "4.16"
 cryptography-kotlin = "0.6.0"
+firebase-bom = "34.5.0"
+google-services = "4.4.3"
+firebase-crashlytics-gradle = "3.0.5"
 
 [libraries]
 # Coil (KMP image loading)
@@ -129,6 +132,13 @@ postgresql-jdbc = { module = "org.postgresql:postgresql", version.ref = "postgre
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography-kotlin" }
 cryptography-provider-optimal = { module = "dev.whyoleg.cryptography:cryptography-provider-optimal", version.ref = "cryptography-kotlin" }
 
+# Firebase (Analytics + Crashlytics, MS-683 — Android only; iOS pulls the SDK via CocoaPods).
+# The -ktx artifacts are deprecated/removed from the BOM — their Kotlin extensions (Firebase.analytics,
+# etc.) now ship in the base artifacts directly, same package names, so no code changes were needed.
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+
 # Supabase (KMP client)
 supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "supabase" }
 supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "supabase" }
@@ -171,3 +181,6 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-gradle" }
+kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }

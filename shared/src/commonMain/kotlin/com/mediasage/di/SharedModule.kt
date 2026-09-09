@@ -1,5 +1,7 @@
 package com.mediasage.di
 
+import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.analytics.createAnalyticsService
 import com.mediasage.data.crypto.ReflectionNoteCipher
 import com.mediasage.data.crypto.createReflectionNoteCipher
 import com.mediasage.data.local.db.MediaSageDatabase
@@ -110,6 +112,7 @@ fun sharedModule(
         DayAssignmentRepositoryImpl(get(), get(), get(), get(), getOrNull(), get(), get())
     }
     single<ReflectionNoteCipher> { createReflectionNoteCipher() }
+    single<AnalyticsService> { createAnalyticsService() }
     single<UserReflectionNoteRepository> {
         UserReflectionNoteRepositoryImpl(get(), get(), getOrNull(), get(), get(), getOrNull())
     }

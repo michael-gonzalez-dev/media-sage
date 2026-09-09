@@ -6,12 +6,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.feature.login.LoginContract
 import com.mediasage.feature.login.LoginScreen
 import com.mediasage.feature.login.LoginViewModel
 import com.mediasage.navigation.MediaSageScaffold
 import com.mediasage.theme.AppTheme
 import com.mediasage.theme.MediaSageTheme
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -22,10 +24,12 @@ fun App(isDebugBuild: Boolean = false, appVersion: String = "") {
     val appTheme by appViewModel.appTheme.collectAsState()
     val textScalePercent by appViewModel.textScalePercent.collectAsState()
     val authState by appViewModel.authState.collectAsState()
+    val analyticsService = koinInject<AnalyticsService>()
 
     CompositionLocalProvider(
         LocalIsDebugBuild provides isDebugBuild,
         LocalAppVersion provides appVersion,
+        LocalAnalyticsService provides analyticsService,
     ) {
         MediaSageTheme(theme = appTheme, darkTheme = darkMode ?: false, textScalePercent = textScalePercent) {
             when (authState) {

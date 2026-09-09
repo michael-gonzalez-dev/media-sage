@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.figures
 
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
@@ -58,18 +59,20 @@ class FigureDetailViewModelTest {
 
     @Test
     fun pinToHome_assignsImmediatelyWhenTodayHasNoBriefingYet() = runTest(testDispatcher) {
-        val (viewModel, dayAssignmentRepo) = figureDetailViewModel(figureId = 2L, figures = listOf(augustine, lewis))
+        val (viewModel, dayAssignmentRepo, analyticsService) =
+            figureDetailViewModel(figureId = 2L, figures = listOf(augustine, lewis))
 
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
 
         assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
+        assertEquals(listOf("figure_pinned" to mapOf("figure_id" to "2")), analyticsService.loggedEvents)
     }
 
     @Test
     fun pinToHome_promptsConfirmationWhenTodayAlreadyBriefedForADifferentFigure() = runTest(testDispatcher) {
-        val (viewModel, dayAssignmentRepo) = figureDetailViewModel(
+        val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
@@ -83,11 +86,12 @@ class FigureDetailViewModelTest {
         assertNotNull(pending)
         assertEquals("Augustine of Hippo", pending.currentFigureName)
         assertEquals("C.S. Lewis", pending.newFigureName)
+        assertTrue(analyticsService.loggedEvents.isEmpty())
     }
 
     @Test
     fun confirmReassignment_appliesTheAssignmentAndClearsTheDialog() = runTest(testDispatcher) {
-        val (viewModel, dayAssignmentRepo) = figureDetailViewModel(
+        val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
@@ -99,11 +103,12 @@ class FigureDetailViewModelTest {
         assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
+        assertEquals(listOf("figure_pinned" to mapOf("figure_id" to "2")), analyticsService.loggedEvents)
     }
 
     @Test
     fun cancelReassignment_leavesAssignmentUnchanged() = runTest(testDispatcher) {
-        val (viewModel, dayAssignmentRepo) = figureDetailViewModel(
+        val (viewModel, dayAssignmentRepo, _) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
@@ -119,7 +124,7 @@ class FigureDetailViewModelTest {
 
     @Test
     fun pinToHome_unpinningAlreadyPinnedFigureClearsWithNoDialog() = runTest(testDispatcher) {
-        val (viewModel, dayAssignmentRepo) = figureDetailViewModel(
+        val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 1L,
             figures = listOf(augustine, lewis),
             assignments = mapOf(todayOrdinal to DayAssignment(figureId = 1L, lens = null)),
@@ -131,12 +136,13 @@ class FigureDetailViewModelTest {
         assertEquals(listOf(todayOrdinal), dayAssignmentRepo.clearCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
+        assertTrue(analyticsService.loggedEvents.isEmpty())
     }
 
     @Test
     fun pinQuote_memorizesTheQuoteForThisFigure() = runTest(testDispatcher) {
         val quoteRepo = DetailFakeQuoteRepository()
-        val (viewModel, _) = figureDetailViewModel(
+        val (viewModel, _, analyticsService) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             quoteRepo = quoteRepo,
@@ -145,6 +151,7 @@ class FigureDetailViewModelTest {
         viewModel.onIntent(FigureDetailContract.Intent.PinQuote("You are never too old to dream."))
 
         assertEquals(listOf(2L to "You are never too old to dream."), quoteRepo.memorizeCalls)
+        assertEquals(listOf("quote_memorized" to mapOf("figure_id" to "2")), analyticsService.loggedEvents)
     }
 
     @Test
@@ -155,7 +162,7 @@ class FigureDetailViewModelTest {
             connectionThemes = emptyList(), matchTheme = "", tone = "", headlineTitle = "Some headline",
         )
         val memorized = Quote(id = 1L, figureId = 2L, text = "You are never too old to dream.", source = "", themes = emptyList())
-        val (viewModel, _) = figureDetailViewModel(
+        val (viewModel, _, _) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             encouragements = listOf(encouragement),
@@ -178,14 +185,17 @@ class FigureDetailViewModelTest {
         lockedFigureIdsByEpochDay: Map<Long, Long> = emptyMap(),
         encouragements: List<Encouragement> = emptyList(),
         quoteRepo: DetailFakeQuoteRepository = DetailFakeQuoteRepository(),
-    ): Pair<FigureDetailViewModel, DetailFakeDayAssignmentRepository> {
+        analyticsService: FakeAnalyticsServiceForFigureDetail = FakeAnalyticsServiceForFigureDetail(),
+    ): Triple<FigureDetailViewModel, DetailFakeDayAssignmentRepository, FakeAnalyticsServiceForFigureDetail> {
         val figureRepo = DetailFakeFigureRepository(figures)
         val encouragementRepo = DetailFakeEncouragementRepository(encouragements)
         val dayAssignmentRepo = DetailFakeDayAssignmentRepository(MutableStateFlow(assignments))
         val reflectionRepo = FakeDailyReflectionRepository(lockedFigureIdsByEpochDay)
-        val viewModel = FigureDetailViewModel(figureId, figureRepo, encouragementRepo, dayAssignmentRepo, reflectionRepo, quoteRepo)
+        val viewModel = FigureDetailViewModel(
+            figureId, figureRepo, encouragementRepo, dayAssignmentRepo, reflectionRepo, quoteRepo, analyticsService,
+        )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
-        return viewModel to dayAssignmentRepo
+        return Triple(viewModel, dayAssignmentRepo, analyticsService)
     }
 
     private companion object {
@@ -258,6 +268,14 @@ private class DetailFakeQuoteRepository(private val memorizedQuote: Quote? = nul
     }
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolve(userId: String?) = Unit
+}
+
+private class FakeAnalyticsServiceForFigureDetail : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private class FakeDailyReflectionRepository(
