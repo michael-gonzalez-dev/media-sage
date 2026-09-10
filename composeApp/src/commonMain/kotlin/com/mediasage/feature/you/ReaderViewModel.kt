@@ -2,6 +2,7 @@ package com.mediasage.feature.you
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DayAssignment
@@ -48,6 +49,7 @@ class ReaderViewModel(
     private val dayAssignmentRepository: DayAssignmentRepository,
     private val authRepository: AuthRepository,
     private val reflectionRepository: DailyReflectionRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val today = Instant.fromEpochMilliseconds(epochMillis())
@@ -96,6 +98,7 @@ class ReaderViewModel(
             is ReaderContract.Intent.FigureAssigned -> handleFigureAssigned(intent)
             is ReaderContract.Intent.AssignmentCleared -> writeThenCloseSheet {
                 dayAssignmentRepository.clear(intent.dayOfWeek)
+                analyticsService.logEvent("figure_day_assignment", mapOf("action" to "clear"))
             }
             is ReaderContract.Intent.ConfirmReassignment -> handleConfirmReassignment()
             is ReaderContract.Intent.CancelReassignment -> input.update { it.copy(pendingReassignment = null) }
@@ -119,6 +122,7 @@ class ReaderViewModel(
                 promptReassignment(intent, lockedFigureId, data)
             } else {
                 dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
+                analyticsService.logEvent("figure_day_assignment", mapOf("action" to "assign"))
                 input.update { it.copy(activeSheet = null) }
             }
         }
@@ -156,6 +160,7 @@ class ReaderViewModel(
         val pending = input.value.pendingReassignment ?: return
         viewModelScope.launch {
             dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
+            analyticsService.logEvent("figure_day_assignment", mapOf("action" to "reassign"))
             input.update { it.copy(pendingReassignment = null) }
         }
     }

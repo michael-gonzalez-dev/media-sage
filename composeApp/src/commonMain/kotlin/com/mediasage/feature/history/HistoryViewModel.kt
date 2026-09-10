@@ -2,6 +2,7 @@ package com.mediasage.feature.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.EncouragementRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +12,8 @@ import kotlinx.coroutines.launch
 private const val QUOTE_PREVIEW_LENGTH = 120
 
 class HistoryViewModel(
-    private val encouragementRepository: EncouragementRepository
+    private val encouragementRepository: EncouragementRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HistoryContract.UiState>(HistoryContract.UiState.Loading)
@@ -24,7 +26,13 @@ class HistoryViewModel(
     fun onIntent(intent: HistoryContract.Intent) {
         when (intent) {
             is HistoryContract.Intent.ToggleBookmark -> {
-                viewModelScope.launch { encouragementRepository.toggleBookmark(intent.articleUrl) }
+                val current = _state.value as? HistoryContract.UiState.Success
+                val wasBookmarked = current?.items?.firstOrNull { it.articleUrl == intent.articleUrl }?.isBookmarked == true
+                viewModelScope.launch {
+                    encouragementRepository.toggleBookmark(intent.articleUrl)
+                    val action = if (wasBookmarked) "remove" else "add"
+                    analyticsService.logEvent("bookmark_toggled", mapOf("action" to action, "screen" to "history"))
+                }
             }
         }
     }

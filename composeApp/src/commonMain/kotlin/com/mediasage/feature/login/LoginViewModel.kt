@@ -3,6 +3,7 @@ package com.mediasage.feature.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.AuthPreferencesRepository
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.ProfileRepository
 import kotlinx.coroutines.channels.Channel
@@ -14,10 +15,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val AUTH_METHOD = "email"
+
 class LoginViewModel(
     private val authRepository: AuthRepository,
     private val userPreferencesRepository: AuthPreferencesRepository,
     private val profileRepository: ProfileRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginContract.UiState())
@@ -72,6 +76,7 @@ class LoginViewModel(
                     // composition and the buffered event replays on the next visit after sign-out,
                     // bouncing the user straight back into the app.
                     _state.update { it.copy(isLoading = false, error = null) }
+                    analyticsService.logEvent("login", mapOf("method" to AUTH_METHOD))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Sign in failed") }
@@ -88,6 +93,8 @@ class LoginViewModel(
                     _state.update {
                         it.copy(isLoading = false, pendingOtpEmail = email, pendingDisplayName = displayName)
                     }
+                    analyticsService.logEvent("sign_up", mapOf("method" to AUTH_METHOD))
+                    analyticsService.logEvent("otp_sent", mapOf("method" to AUTH_METHOD))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Sign up failed") }
@@ -117,10 +124,13 @@ class LoginViewModel(
                             pendingDisplayName = null,
                         )
                     }
+                    analyticsService.logEvent("otp_verified", mapOf("method" to AUTH_METHOD))
+                    analyticsService.logEvent("login", mapOf("method" to AUTH_METHOD))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Invalid code") }
                     _sideEffects.send(LoginContract.SideEffect.ShowError(e.message ?: "Invalid code"))
+                    analyticsService.logEvent("otp_failed", mapOf("method" to AUTH_METHOD))
                 }
         }
     }

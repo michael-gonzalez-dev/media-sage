@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.headlinedetail
 
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
@@ -59,6 +60,7 @@ class HeadlineDetailViewModelTest {
             encouragementRepository = FakeEncouragementRepository(buildEncouragement()),
             figureRepository = FakeFigureRepository(null),
             quoteRepository = FakeQuoteRepository(),
+            analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen(),
         )
 
         assertEquals(listOf("https://example.com/article"), headlineRepo.markReadCalls)
@@ -176,19 +178,62 @@ class HeadlineDetailViewModelTest {
         assertIs<HeadlineDetailContract.FigureProfileState.Hidden>(profile)
     }
 
+    @Test
+    fun retryMatchLogsContentRetryEvent() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        val vm = buildViewModel(
+            headline = buildHeadline(),
+            encouragement = buildEncouragement(figureName = "Augustine"),
+            figure = buildFigure(name = "Augustine"),
+            analyticsService = analyticsService,
+        )
+
+        vm.onIntent(HeadlineDetailContract.Intent.RetryMatch)
+
+        assertEquals(listOf("content_retry" to mapOf("surface" to "headline_match")), analyticsService.loggedEvents)
+    }
+
+    @Test
+    fun toggleBookmarkLogsAddActionWhenNotYetBookmarked() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        val vm = buildViewModel(
+            headline = buildHeadline(),
+            encouragement = buildEncouragement(figureName = "Augustine"),
+            figure = buildFigure(name = "Augustine"),
+            analyticsService = analyticsService,
+        )
+
+        vm.onIntent(HeadlineDetailContract.Intent.ToggleBookmark)
+
+        assertEquals(
+            listOf("bookmark_toggled" to mapOf("action" to "add", "screen" to "headline_detail")),
+            analyticsService.loggedEvents,
+        )
+    }
+
     private fun buildViewModel(
         headline: Headline? = null,
         encouragement: Encouragement? = buildEncouragement(),
         figure: Figure? = null,
         quoteRepository: QuoteRepository = FakeQuoteRepository(),
         articleUrl: String = "https://example.com/article",
+        analyticsService: AnalyticsService = FakeAnalyticsServiceForHeadlineDetailScreen(),
     ) = HeadlineDetailViewModel(
         articleUrl = articleUrl,
         headlineRepository = FakeHeadlineRepository(headline),
         encouragementRepository = FakeEncouragementRepository(encouragement),
         figureRepository = FakeFigureRepository(figure),
         quoteRepository = quoteRepository,
+        analyticsService = analyticsService,
     )
+}
+
+private class FakeAnalyticsServiceForHeadlineDetailScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private fun buildHeadline(url: String = "https://example.com/article") = Headline(

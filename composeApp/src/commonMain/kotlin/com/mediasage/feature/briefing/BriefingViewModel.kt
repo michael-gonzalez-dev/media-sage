@@ -2,6 +2,7 @@ package com.mediasage.feature.briefing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.DailyReflection
 import com.mediasage.domain.model.DayAssignment
@@ -35,6 +36,7 @@ class BriefingViewModel(
     private val figureRepository: FigureRepository,
     private val headlineRepository: HeadlineRepository,
     private val userReflectionNoteRepository: UserReflectionNoteRepository,
+    private val analyticsService: AnalyticsService,
     private val toneScheduler: BriefingToneScheduler = RealBriefingToneScheduler(),
 ) : ViewModel() {
 
@@ -55,7 +57,10 @@ class BriefingViewModel(
 
     fun onIntent(intent: BriefingContract.Intent) {
         when (intent) {
-            is BriefingContract.Intent.Retry -> loadCard()
+            is BriefingContract.Intent.Retry -> {
+                analyticsService.logEvent("content_retry", mapOf("surface" to "briefing"))
+                loadCard()
+            }
             is BriefingContract.Intent.ReflectTapped -> openReflectSheet()
             is BriefingContract.Intent.ReflectDismissed -> updateReflectSheet(null)
             is BriefingContract.Intent.ReflectNoteChanged -> {

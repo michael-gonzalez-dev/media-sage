@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.figures
 
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.model.Figure
@@ -43,7 +44,7 @@ class FiguresViewModelTest {
     fun emitsLoadingInitially() {
         val figureRepo = FakeFigureRepository(MutableStateFlow(emptyList()))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         assertIs<FiguresContract.UiState.Success>(vm.state.value)
     }
@@ -53,7 +54,7 @@ class FiguresViewModelTest {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals(1, state.figures.size)
@@ -66,7 +67,7 @@ class FiguresViewModelTest {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals(0, state.figures[0].quoteCount)
@@ -81,7 +82,7 @@ class FiguresViewModelTest {
         val counts = mapOf("Augustine" to 3, "C.S. Lewis" to 1)
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(counts))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals(3, state.figures.first { it.name == "Augustine" }.quoteCount)
@@ -93,7 +94,7 @@ class FiguresViewModelTest {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         vm.onIntent(FiguresContract.Intent.Refresh)
 
@@ -106,7 +107,7 @@ class FiguresViewModelTest {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         vm.onIntent(FiguresContract.Intent.Refresh)
 
@@ -119,7 +120,7 @@ class FiguresViewModelTest {
         val countsFlow = MutableStateFlow(emptyMap<String, Int>())
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(countsFlow)
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         assertIs<FiguresContract.UiState.Success>(vm.state.value).let {
             assertEquals(0, it.figures[0].quoteCount)
@@ -140,7 +141,7 @@ class FiguresViewModelTest {
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("aug"))
 
@@ -158,7 +159,7 @@ class FiguresViewModelTest {
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("APOLOGIST"))
 
@@ -175,13 +176,42 @@ class FiguresViewModelTest {
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("aug"))
         assertEquals(1, assertIs<FiguresContract.UiState.Success>(vm.state.value).figures.size)
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged(""))
         assertEquals(2, assertIs<FiguresContract.UiState.Success>(vm.state.value).figures.size)
+    }
+
+    @Test
+    fun searchingLogsFigureSearchEventOnceWhenQueryStartsNonBlank() = runTest(testDispatcher) {
+        val figures = listOf(buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo"))
+        val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
+        val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
+        val analyticsService = FakeAnalyticsServiceForFiguresScreen()
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), analyticsService)
+
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("a"))
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("au"))
+
+        assertEquals(listOf("figure_search" to emptyMap()), analyticsService.loggedEvents)
+    }
+
+    @Test
+    fun clearingThenResearchingLogsFigureSearchEventAgain() = runTest(testDispatcher) {
+        val figures = listOf(buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo"))
+        val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
+        val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
+        val analyticsService = FakeAnalyticsServiceForFiguresScreen()
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), analyticsService)
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("a"))
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged(""))
+
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("b"))
+
+        assertEquals(listOf("figure_search" to emptyMap(), "figure_search" to emptyMap()), analyticsService.loggedEvents)
     }
 
     @Test
@@ -194,7 +224,7 @@ class FiguresViewModelTest {
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
         // Assign Zwingli (id=2) to every day so the test is day-of-week agnostic
         val dayAssignmentRepo = FakeDayAssignmentRepository(assignments = (0..6).associate { it to DayAssignment(figureId = 2L, lens = null) })
-        val vm = FiguresViewModel(figureRepo, repo, dayAssignmentRepo)
+        val vm = FiguresViewModel(figureRepo, repo, dayAssignmentRepo, FakeAnalyticsServiceForFiguresScreen())
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals("Zwingli", state.figures[0].name)
@@ -210,7 +240,7 @@ class FiguresViewModelTest {
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val repo = FakeEncouragementRepository(MutableStateFlow(emptyMap()))
-        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository())
+        val vm = FiguresViewModel(figureRepo, repo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals("Augustine", state.figures[0].name)
@@ -234,6 +264,14 @@ private fun buildFigure(id: Long, name: String, role: String) = Figure(
     century = "4th",
     role = role
 )
+
+private class FakeAnalyticsServiceForFiguresScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
+}
 
 private class FakeDayAssignmentRepository(
     private val assignments: Map<Int, DayAssignment> = emptyMap()

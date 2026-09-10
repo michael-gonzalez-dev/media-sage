@@ -2,6 +2,7 @@ package com.mediasage.feature.headlinedetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.HeadlineRepository
@@ -20,6 +21,7 @@ class HeadlineDetailViewModel(
     private val encouragementRepository: EncouragementRepository,
     private val figureRepository: FigureRepository,
     private val quoteRepository: QuoteRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HeadlineDetailContract.UiState>(HeadlineDetailContract.UiState.Loading)
@@ -37,11 +39,17 @@ class HeadlineDetailViewModel(
     fun onIntent(intent: HeadlineDetailContract.Intent) {
         when (intent) {
             is HeadlineDetailContract.Intent.RetryMatch -> {
+                analyticsService.logEvent("content_retry", mapOf("surface" to "headline_match"))
                 _state.value = HeadlineDetailContract.UiState.Loading
                 loadMatch()
             }
             is HeadlineDetailContract.Intent.ToggleBookmark -> {
-                viewModelScope.launch { encouragementRepository.toggleBookmark(articleUrl) }
+                val wasBookmarked = (_state.value as? HeadlineDetailContract.UiState.Success)?.isBookmarked == true
+                viewModelScope.launch {
+                    encouragementRepository.toggleBookmark(articleUrl)
+                    val action = if (wasBookmarked) "remove" else "add"
+                    analyticsService.logEvent("bookmark_toggled", mapOf("action" to action, "screen" to "headline_detail"))
+                }
             }
             is HeadlineDetailContract.Intent.ShowFigureProfile -> showFigureProfile()
             is HeadlineDetailContract.Intent.DismissFigureProfile -> {
