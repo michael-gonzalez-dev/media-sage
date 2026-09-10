@@ -79,7 +79,7 @@ val appModule = module {
             get<AnalyticsService>(),
         )
     }
-    viewModel { QuotesViewModel(get<QuoteRepository>(), get<FigureRepository>()) }
+    viewModel { QuotesViewModel(get<QuoteRepository>(), get<FigureRepository>(), get<AnalyticsService>()) }
     viewModel { LoginViewModel(get<AuthRepository>(), get<AuthPreferencesRepository>(), get<ProfileRepository>()) }
     viewModel { SettingsViewModel(get<AuthRepository>(), get<ThemePreferencesRepository>()) }
     viewModel {

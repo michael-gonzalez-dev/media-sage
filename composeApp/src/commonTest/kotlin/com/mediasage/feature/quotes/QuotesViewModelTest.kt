@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.quotes
 
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
 import com.mediasage.domain.model.Quote
@@ -78,25 +79,37 @@ class QuotesViewModelTest {
     fun quoteSelectedMemorizesTheQuoteForItsFigure() = runTest(testDispatcher) {
         val quote = Quote(id = 1L, figureId = 1L, text = "You are never too old to set another goal.", source = "", themes = emptyList())
         val quoteRepo = FakeQuoteRepositoryForQuotesScreen(quotes = listOf(quote))
-        val viewModel = quotesViewModel(quoteRepository = quoteRepo, figures = listOf(lewis))
+        val analyticsService = FakeAnalyticsServiceForQuotesScreen()
+        val viewModel = quotesViewModel(quoteRepository = quoteRepo, figures = listOf(lewis), analyticsService = analyticsService)
 
         viewModel.onIntent(QuotesContract.Intent.QuoteSelected(figureId = 1L, quoteText = quote.text))
 
         assertEquals(listOf(1L to quote.text), quoteRepo.memorizeCalls)
+        assertEquals(listOf("quote_memorized" to mapOf("figure_id" to "1")), analyticsService.loggedEvents)
     }
 
     private fun TestScope.quotesViewModel(
         quotes: List<Quote> = emptyList(),
         figures: List<Figure> = emptyList(),
         quoteRepository: FakeQuoteRepositoryForQuotesScreen = FakeQuoteRepositoryForQuotesScreen(quotes),
+        analyticsService: FakeAnalyticsServiceForQuotesScreen = FakeAnalyticsServiceForQuotesScreen(),
     ): QuotesViewModel {
         val viewModel = QuotesViewModel(
             quoteRepository = quoteRepository,
             figureRepository = FakeFigureRepositoryForQuotesScreen(figures),
+            analyticsService = analyticsService,
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
         return viewModel
     }
+}
+
+private class FakeAnalyticsServiceForQuotesScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private class FakeFigureRepositoryForQuotesScreen(private val figures: List<Figure>) : FigureRepository {
