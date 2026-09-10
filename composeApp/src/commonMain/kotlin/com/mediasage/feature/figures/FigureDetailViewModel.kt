@@ -2,6 +2,7 @@ package com.mediasage.feature.figures
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
@@ -25,6 +26,7 @@ class FigureDetailViewModel(
     private val dayAssignmentRepository: DayAssignmentRepository,
     private val dailyReflectionRepository: DailyReflectionRepository,
     private val quoteRepository: QuoteRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<FigureDetailContract.UiState>(FigureDetailContract.UiState.Loading)
@@ -47,7 +49,10 @@ class FigureDetailViewModel(
     }
 
     private fun handlePinQuote(quoteText: String) {
-        viewModelScope.launch { quoteRepository.memorizeQuote(figureId, quoteText) }
+        viewModelScope.launch {
+            quoteRepository.memorizeQuote(figureId, quoteText)
+            analyticsService.logEvent("quote_memorized", mapOf("figure_id" to figureId.toString()))
+        }
     }
 
     private fun handlePinToggle() {
@@ -69,6 +74,7 @@ class FigureDetailViewModel(
                 )
             } else {
                 dayAssignmentRepository.assign(todayOrdinal, figureId)
+                analyticsService.logEvent("figure_pinned", mapOf("figure_id" to figureId.toString()))
             }
         }
     }
@@ -77,6 +83,7 @@ class FigureDetailViewModel(
         val pending = input.value ?: return
         viewModelScope.launch {
             dayAssignmentRepository.assign(pending.todayOrdinal, figureId)
+            analyticsService.logEvent("figure_pinned", mapOf("figure_id" to figureId.toString()))
             input.value = null
         }
     }

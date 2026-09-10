@@ -36,6 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mediasage.LocalIsDebugBuild
+import com.mediasage.data.analytics.triggerTestCrash
 import com.mediasage.theme.AppTheme
 import com.mediasage.theme.BrandAmber
 import com.mediasage.theme.MediaSageTheme
@@ -45,6 +47,7 @@ import mediasage.composeapp.generated.resources.settings_edit_profile
 import mediasage.composeapp.generated.resources.settings_privacy_policy
 import mediasage.composeapp.generated.resources.settings_section_account
 import mediasage.composeapp.generated.resources.settings_section_appearance
+import mediasage.composeapp.generated.resources.settings_section_debug
 import mediasage.composeapp.generated.resources.settings_section_support
 import mediasage.composeapp.generated.resources.settings_send_feedback
 import mediasage.composeapp.generated.resources.settings_developer_credit
@@ -53,6 +56,7 @@ import mediasage.composeapp.generated.resources.settings_terms_of_service
 import mediasage.composeapp.generated.resources.settings_text_size_label
 import mediasage.composeapp.generated.resources.settings_theme_label
 import mediasage.composeapp.generated.resources.settings_dark_mode_label
+import mediasage.composeapp.generated.resources.settings_trigger_test_crash
 import mediasage.composeapp.generated.resources.settings_version_label
 import mediasage.composeapp.generated.resources.title_settings
 import org.jetbrains.compose.resources.stringResource
@@ -199,6 +203,24 @@ fun SettingsScreen(
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+
+                if (LocalIsDebugBuild.current) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // ── Debug ─────────────────────────────────────────────────
+                    SettingsSectionHeader(stringResource(Res.string.settings_section_debug))
+
+                    OutlinedButton(
+                        onClick = { triggerTestCrash() },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        Text(text = stringResource(Res.string.settings_trigger_test_crash))
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))

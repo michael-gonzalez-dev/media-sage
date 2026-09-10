@@ -14,6 +14,9 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kover) apply false
     alias(libs.plugins.roborazzi) apply false
+    alias(libs.plugins.googleServices) apply false
+    alias(libs.plugins.firebaseCrashlytics) apply false
+    alias(libs.plugins.kotlinCocoapods) apply false
 }
 
 subprojects {

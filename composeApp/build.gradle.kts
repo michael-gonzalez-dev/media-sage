@@ -12,6 +12,15 @@ plugins {
     alias(libs.plugins.roborazzi)
 }
 
+// Firebase's Android Gradle plugins (google-services, Crashlytics) hard-fail the build if
+// google-services.json is absent — gated so CI (ci.yml only assembles a debug APK, never
+// launches it) and contributors without the file still get a green build (MS-683).
+val googleServicesJsonExists = file("google-services.json").exists()
+if (googleServicesJsonExists) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 // The Cloud Run worker only builds the Android target (to render Compose UI headlessly
 // via Robolectric — see docs/MS-581-headless-ui-render-loop.md). Registering the iOS
 // targets forces the Kotlin/Native toolchain (~3 GB extracted) to download during
@@ -19,6 +28,11 @@ plugins {
 // passing -Pmediasage.worker=true. Local and CI builds leave the property unset and
 // build all targets normally.
 val buildIosTargets = providers.gradleProperty("mediasage.worker").orNull != "true"
+
+// Kotlin's CocoaPods plugin requires every KMP module in the iOS framework chain to apply it
+// when any one of them (here, :shared) declares pods — this module has no pods of its own.
+// Gated the same way as :shared's cocoapods block (MS-683).
+val googleServiceInfoPlistExists = file("../iosApp/GoogleService-Info.plist").exists()
 
 kotlin {
     androidTarget {
@@ -43,6 +57,16 @@ kotlin {
                         freeCompilerArgs.add("-Xexpect-actual-classes")
                     }
                 }
+            }
+        }
+
+        if (googleServiceInfoPlistExists) {
+            apply(plugin = "org.jetbrains.kotlin.native.cocoapods")
+            extensions.configure<org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension> {
+                version = "1.0"
+                summary = "Media Sage Compose Multiplatform UI"
+                homepage = "https://thecouragepost.app"
+                ios.deploymentTarget = "15.0"
             }
         }
     }
@@ -151,5 +175,10 @@ android {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
     coreLibraryDesugaring(libs.android.desugar.jdk)
+    // The Firebase BOM's version constraints from :shared's `api platform(...)` weren't
+    // propagating into this application module's own classpath resolution — declaring it
+    // again here directly resolves the versionless firebase-analytics/firebase-crashlytics
+    // transitive dependencies (MS-683).
+    implementation(platform(libs.firebase.bom))
 }
 

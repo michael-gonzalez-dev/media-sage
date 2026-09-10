@@ -93,6 +93,8 @@
     <string name="settings_privacy_policy">Privacy Policy</string>
     <string name="settings_terms_of_service">Terms of Service</string>
     <string name="settings_send_feedback">Send Feedback</string>
+    <string name="settings_section_debug">Debug</string>
+    <string name="settings_trigger_test_crash">Trigger Test Crash (Crashlytics)</string>
 
     <!-- Bookmarks screen -->
     <string name="title_bookmarks">Saved Headlines</string>

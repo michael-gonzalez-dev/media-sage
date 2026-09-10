@@ -47,6 +47,20 @@ jobs:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > fastlane/AuthKey.p8
 
+      - name: Write Firebase config (MS-683)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          echo "$GOOGLE_SERVICES_JSON" > composeApp/google-services.json
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > iosApp/GoogleService-Info.plist
+
+      - name: Generate CocoaPods podspecs
+        run: ./gradlew :shared:podspec :composeApp:podspec :shared:generateDummyFramework :composeApp:generateDummyFramework
+
+      - name: Install CocoaPods dependencies
+        run: cd iosApp && pod install
+
       - name: Deploy to TestFlight
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}

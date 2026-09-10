@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.mediasage.LocalAnalyticsService
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.feature.briefing.BriefingContract
 import com.mediasage.feature.briefing.BriefingNotificationScheduler
@@ -30,6 +31,7 @@ import com.mediasage.feature.briefing.BriefingViewModel
 import com.mediasage.feature.briefing.RequestNotificationPermissionEffect
 import com.mediasage.feature.figures.FiguresContract
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.mediasage.feature.bookmarks.BookmarksScreen
 import com.mediasage.feature.bookmarks.BookmarksViewModel
@@ -107,7 +109,7 @@ fun MediaSageScaffold(
             predictivePopTransitionSpec = { navTabTransition },
         ) { route ->
             when (route) {
-                is Route.Briefing -> NavEntry(route) {
+                is Route.Briefing -> TrackedNavEntry(route) {
                     val vm = koinViewModel<BriefingViewModel>()
                     val state by vm.state.collectAsStateWithLifecycle()
                     val notificationScheduler = koinInject<BriefingNotificationScheduler>()
@@ -132,7 +134,7 @@ fun MediaSageScaffold(
                         onNavigateToFigureDetail = { id -> appState.navigateToFigureDetail(id) }
                     )
                 }
-                is Route.Home -> NavEntry(route) {
+                is Route.Home -> TrackedNavEntry(route) {
                     val vm = koinViewModel<HeadlinesViewModel>()
                     val state by vm.state.collectAsState()
                     LaunchedEffect(vm) {
@@ -151,7 +153,7 @@ fun MediaSageScaffold(
                         onNavigateToDetail = { url -> appState.navigateToHeadlineDetail(url) }
                     )
                 }
-                is Route.HeadlineDetail -> NavEntry(route) {
+                is Route.HeadlineDetail -> TrackedNavEntry(route) {
                     val vm = koinViewModel<HeadlineDetailViewModel>(
                         key = "headline-detail-${route.articleUrl}",
                         parameters = { parametersOf(route.articleUrl) }
@@ -163,7 +165,7 @@ fun MediaSageScaffold(
                         onNavigateBack = { appState.navigateBack() }
                     )
                 }
-                is Route.Figures -> NavEntry(route) {
+                is Route.Figures -> TrackedNavEntry(route) {
                     val vm = koinViewModel<FiguresViewModel>()
                     val state by vm.state.collectAsState()
                     LaunchedEffect(vm) {
@@ -180,7 +182,7 @@ fun MediaSageScaffold(
                         onNavigateToFigureDetail = { id -> appState.navigateToFigureDetail(id) }
                     )
                 }
-                is Route.FigureDetail -> NavEntry(route) {
+                is Route.FigureDetail -> TrackedNavEntry(route) {
                     val vm = koinViewModel<FigureDetailViewModel>(
                         key = "figure-${route.figureId}",
                         parameters = { parametersOf(route.figureId) }
@@ -192,7 +194,7 @@ fun MediaSageScaffold(
                         onNavigateBack = { appState.navigateBack() }
                     )
                 }
-                is Route.You -> NavEntry(route) {
+                is Route.You -> TrackedNavEntry(route) {
                     val vm = koinViewModel<ReaderViewModel>()
                     val state by vm.state.collectAsState()
                     ReaderScreen(
@@ -207,7 +209,7 @@ fun MediaSageScaffold(
                         },
                     )
                 }
-                is Route.Quotes -> NavEntry(route) {
+                is Route.Quotes -> TrackedNavEntry(route) {
                     val vm = koinViewModel<QuotesViewModel>()
                     val state by vm.state.collectAsState()
                     QuotesScreen(
@@ -216,7 +218,7 @@ fun MediaSageScaffold(
                         onNavigateBack = { appState.navigateBack() },
                     )
                 }
-                is Route.ReaderHistory -> NavEntry(route) {
+                is Route.ReaderHistory -> TrackedNavEntry(route) {
                     val vm = koinViewModel<ReaderHistoryViewModel>()
                     val state by vm.state.collectAsState()
                     ReaderHistoryScreen(
@@ -228,7 +230,7 @@ fun MediaSageScaffold(
                         },
                     )
                 }
-                is Route.DayDetail -> NavEntry(route) {
+                is Route.DayDetail -> TrackedNavEntry(route) {
                     val vm = koinViewModel<DayDetailViewModel>(
                         key = "day-detail-${route.epochDay}",
                         parameters = { parametersOf(route.epochDay, route.figureName, route.figureImageUrl) }
@@ -240,7 +242,7 @@ fun MediaSageScaffold(
                         onNavigateBack = { appState.navigateBack() },
                     )
                 }
-                is Route.Bookmarks -> NavEntry(route) {
+                is Route.Bookmarks -> TrackedNavEntry(route) {
                     val vm = koinViewModel<BookmarksViewModel>()
                     val state by vm.state.collectAsState()
                     BookmarksScreen(
@@ -250,7 +252,7 @@ fun MediaSageScaffold(
                         onNavigateToDetail = { url -> appState.navigateToHeadlineDetail(url) }
                     )
                 }
-                is Route.Settings -> NavEntry(route) {
+                is Route.Settings -> TrackedNavEntry(route) {
                     val vm = koinViewModel<SettingsViewModel>()
                     val state by vm.state.collectAsState()
                     LaunchedEffect(vm) {
@@ -272,6 +274,21 @@ fun MediaSageScaffold(
     }
     } // Box
 }
+
+/**
+ * Wraps [NavEntry] with a `screen_view` analytics log on entry — the signal Firebase derives
+ * time-on-screen from. Centralized here (rather than in each screen composable) so every
+ * destination gets it without a per-screen `LifecycleResumeEffect` copy.
+ */
+private fun <T : NavKey> TrackedNavEntry(route: T, content: @Composable () -> Unit): NavEntry<T> =
+    NavEntry(route) {
+        val analyticsService = LocalAnalyticsService.current
+        LifecycleResumeEffect(route) {
+            analyticsService.logScreenView(route::class.simpleName ?: "unknown")
+            onPauseOrDispose {}
+        }
+        content()
+    }
 
 @Composable
 private fun MediaSageBottomBar(
