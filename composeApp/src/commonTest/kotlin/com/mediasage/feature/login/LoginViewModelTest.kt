@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import com.mediasage.data.AuthPreferencesRepository
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
@@ -138,7 +139,10 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginContract.Intent.SignUpWithEmail("ada@example.com", "password123", "Ada"))
 
         assertEquals(
-            listOf("sign_up" to mapOf("method" to "email"), "otp_sent" to mapOf("method" to "email")),
+            listOf(
+                AnalyticsEvents.SIGN_UP to emailMethodParams,
+                AnalyticsEvents.OTP_SENT to emailMethodParams,
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -154,7 +158,10 @@ class LoginViewModelTest {
         viewModel.onIntent(LoginContract.Intent.VerifyOtp("123456"))
 
         assertEquals(
-            listOf("otp_verified" to mapOf("method" to "email"), "login" to mapOf("method" to "email")),
+            listOf(
+                AnalyticsEvents.OTP_VERIFIED to emailMethodParams,
+                AnalyticsEvents.LOGIN to emailMethodParams,
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -169,7 +176,7 @@ class LoginViewModelTest {
 
         viewModel.onIntent(LoginContract.Intent.VerifyOtp("000000"))
 
-        assertEquals(listOf("otp_failed" to mapOf("method" to "email")), analyticsService.loggedEvents)
+        assertEquals(listOf(AnalyticsEvents.OTP_FAILED to emailMethodParams), analyticsService.loggedEvents)
     }
 
     @Test
@@ -179,9 +186,11 @@ class LoginViewModelTest {
 
         viewModel.onIntent(LoginContract.Intent.SignInWithEmail("ada@example.com", "password123"))
 
-        assertEquals(listOf("login" to mapOf("method" to "email")), analyticsService.loggedEvents)
+        assertEquals(listOf(AnalyticsEvents.LOGIN to emailMethodParams), analyticsService.loggedEvents)
     }
 }
+
+private val emailMethodParams = mapOf(AnalyticsEvents.Params.METHOD to AnalyticsEvents.Values.METHOD_EMAIL)
 
 private class FakeAnalyticsServiceForLoginScreen : AnalyticsService {
     val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()

@@ -2,6 +2,7 @@ package com.mediasage.feature.figures
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.repository.DailyReflectionRepository
@@ -51,7 +52,7 @@ class FigureDetailViewModel(
     private fun handlePinQuote(quoteText: String) {
         viewModelScope.launch {
             quoteRepository.memorizeQuote(figureId, quoteText)
-            analyticsService.logEvent("quote_memorized", mapOf("figure_id" to figureId.toString()))
+            analyticsService.logEvent(AnalyticsEvents.QUOTE_MEMORIZED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
         }
     }
 
@@ -74,7 +75,7 @@ class FigureDetailViewModel(
                 )
             } else {
                 dayAssignmentRepository.assign(todayOrdinal, figureId)
-                analyticsService.logEvent("figure_pinned", mapOf("figure_id" to figureId.toString()))
+                analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
             }
         }
     }
@@ -83,7 +84,7 @@ class FigureDetailViewModel(
         val pending = input.value ?: return
         viewModelScope.launch {
             dayAssignmentRepository.assign(pending.todayOrdinal, figureId)
-            analyticsService.logEvent("figure_pinned", mapOf("figure_id" to figureId.toString()))
+            analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
             input.value = null
         }
     }

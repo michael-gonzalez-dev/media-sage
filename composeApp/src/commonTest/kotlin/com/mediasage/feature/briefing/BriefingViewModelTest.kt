@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.briefing
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
@@ -470,7 +471,10 @@ class BriefingViewModelTest {
 
         viewModel.onIntent(BriefingContract.Intent.Retry)
 
-        assertEquals(listOf("content_retry" to mapOf("surface" to "briefing")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.CONTENT_RETRY to mapOf(AnalyticsEvents.Params.SURFACE to AnalyticsEvents.Values.SURFACE_BRIEFING)),
+            analyticsService.loggedEvents,
+        )
     }
 
     private fun TestScope.briefingViewModel(

@@ -2,6 +2,7 @@ package com.mediasage.feature.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.EncouragementRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +31,14 @@ class HistoryViewModel(
                 val wasBookmarked = current?.items?.firstOrNull { it.articleUrl == intent.articleUrl }?.isBookmarked == true
                 viewModelScope.launch {
                     encouragementRepository.toggleBookmark(intent.articleUrl)
-                    val action = if (wasBookmarked) "remove" else "add"
-                    analyticsService.logEvent("bookmark_toggled", mapOf("action" to action, "screen" to "history"))
+                    val action = if (wasBookmarked) AnalyticsEvents.Values.ACTION_REMOVE else AnalyticsEvents.Values.ACTION_ADD
+                    analyticsService.logEvent(
+                        AnalyticsEvents.BOOKMARK_TOGGLED,
+                        mapOf(
+                            AnalyticsEvents.Params.ACTION to action,
+                            AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HISTORY,
+                        ),
+                    )
                 }
             }
         }

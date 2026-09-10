@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.figures
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Encouragement
@@ -196,7 +197,7 @@ class FiguresViewModelTest {
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("a"))
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("au"))
 
-        assertEquals(listOf("figure_search" to emptyMap()), analyticsService.loggedEvents)
+        assertEquals(listOf(AnalyticsEvents.FIGURE_SEARCH to emptyMap()), analyticsService.loggedEvents)
     }
 
     @Test
@@ -211,7 +212,10 @@ class FiguresViewModelTest {
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("b"))
 
-        assertEquals(listOf("figure_search" to emptyMap(), "figure_search" to emptyMap()), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_SEARCH to emptyMap(), AnalyticsEvents.FIGURE_SEARCH to emptyMap()),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test

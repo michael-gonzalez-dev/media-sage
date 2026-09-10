@@ -2,6 +2,7 @@ package com.mediasage.feature.figures
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.repository.DayAssignmentRepository
@@ -82,7 +83,7 @@ class FiguresViewModel(
             is FiguresContract.Intent.FigureClicked -> { /* handled via navigation callback */ }
             is FiguresContract.Intent.SearchQueryChanged -> {
                 if (_searchQuery.value.isBlank() && intent.query.isNotBlank()) {
-                    analyticsService.logEvent("figure_search")
+                    analyticsService.logEvent(AnalyticsEvents.FIGURE_SEARCH)
                 }
                 _searchQuery.value = intent.query
             }

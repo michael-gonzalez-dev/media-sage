@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.you
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
@@ -159,11 +160,18 @@ class ReaderViewModelTest {
     fun figureAssigned_logsFigureDayAssignmentEventWithAssignAction() = runTest(testDispatcher) {
         val otherFigure = Figure(id = 2L, name = "C.S. Lewis", category = FigureCategory.THEOLOGIAN, century = "20th", role = "Author")
         val analyticsService = FakeAnalyticsServiceForReaderScreen()
-        val (viewModel, _) = readerViewModelWithRepo(figure = testFigure, extraFigures = listOf(otherFigure), analyticsService = analyticsService)
+        val (viewModel, _) = readerViewModelWithRepo(
+            figure = testFigure,
+            extraFigures = listOf(otherFigure),
+            analyticsService = analyticsService,
+        )
 
         viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 2L, lens = null))
 
-        assertEquals(listOf("figure_day_assignment" to mapOf("action" to "assign")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ASSIGN)),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -181,7 +189,10 @@ class ReaderViewModelTest {
 
         viewModel.onIntent(ReaderContract.Intent.ConfirmReassignment)
 
-        assertEquals(listOf("figure_day_assignment" to mapOf("action" to "reassign")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REASSIGN)),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -191,7 +202,10 @@ class ReaderViewModelTest {
 
         viewModel.onIntent(ReaderContract.Intent.AssignmentCleared(dayOfWeek = todayOrdinal))
 
-        assertEquals(listOf("figure_day_assignment" to mapOf("action" to "clear")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR)),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test

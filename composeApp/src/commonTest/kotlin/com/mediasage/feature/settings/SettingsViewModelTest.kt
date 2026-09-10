@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import com.mediasage.data.ThemePreferencesRepository
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
@@ -50,7 +51,10 @@ class SettingsViewModelTest {
 
         viewModel.onIntent(SettingsContract.Intent.SetAppTheme(AppTheme.MODERN))
 
-        assertEquals(listOf("appearance_changed" to mapOf("setting" to "theme")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.APPEARANCE_CHANGED to mapOf(AnalyticsEvents.Params.SETTING to AnalyticsEvents.Values.SETTING_THEME)),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -60,7 +64,10 @@ class SettingsViewModelTest {
 
         viewModel.onIntent(SettingsContract.Intent.ToggleDarkMode(true))
 
-        assertEquals(listOf("appearance_changed" to mapOf("setting" to "dark_mode")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.APPEARANCE_CHANGED to mapOf(AnalyticsEvents.Params.SETTING to AnalyticsEvents.Values.SETTING_DARK_MODE)),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -70,7 +77,7 @@ class SettingsViewModelTest {
 
         viewModel.onIntent(SettingsContract.Intent.SignOut)
 
-        assertEquals(listOf("sign_out" to emptyMap()), analyticsService.loggedEvents)
+        assertEquals(listOf(AnalyticsEvents.SIGN_OUT to emptyMap()), analyticsService.loggedEvents)
     }
 }
 

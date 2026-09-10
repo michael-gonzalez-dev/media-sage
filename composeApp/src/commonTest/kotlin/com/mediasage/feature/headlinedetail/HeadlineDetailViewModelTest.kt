@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.headlinedetail
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.model.Figure
@@ -190,7 +191,12 @@ class HeadlineDetailViewModelTest {
 
         vm.onIntent(HeadlineDetailContract.Intent.RetryMatch)
 
-        assertEquals(listOf("content_retry" to mapOf("surface" to "headline_match")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(
+                AnalyticsEvents.CONTENT_RETRY to mapOf(AnalyticsEvents.Params.SURFACE to AnalyticsEvents.Values.SURFACE_HEADLINE_MATCH),
+            ),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -206,7 +212,12 @@ class HeadlineDetailViewModelTest {
         vm.onIntent(HeadlineDetailContract.Intent.ToggleBookmark)
 
         assertEquals(
-            listOf("bookmark_toggled" to mapOf("action" to "add", "screen" to "headline_detail")),
+            listOf(
+                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ADD,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HEADLINE_DETAIL,
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }

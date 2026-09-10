@@ -2,6 +2,7 @@ package com.mediasage.feature.you
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
@@ -98,7 +99,7 @@ class ReaderViewModel(
             is ReaderContract.Intent.FigureAssigned -> handleFigureAssigned(intent)
             is ReaderContract.Intent.AssignmentCleared -> writeThenCloseSheet {
                 dayAssignmentRepository.clear(intent.dayOfWeek)
-                analyticsService.logEvent("figure_day_assignment", mapOf("action" to "clear"))
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_CLEAR)
             }
             is ReaderContract.Intent.ConfirmReassignment -> handleConfirmReassignment()
             is ReaderContract.Intent.CancelReassignment -> input.update { it.copy(pendingReassignment = null) }
@@ -122,7 +123,7 @@ class ReaderViewModel(
                 promptReassignment(intent, lockedFigureId, data)
             } else {
                 dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
-                analyticsService.logEvent("figure_day_assignment", mapOf("action" to "assign"))
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN)
                 input.update { it.copy(activeSheet = null) }
             }
         }
@@ -160,9 +161,13 @@ class ReaderViewModel(
         val pending = input.value.pendingReassignment ?: return
         viewModelScope.launch {
             dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
-            analyticsService.logEvent("figure_day_assignment", mapOf("action" to "reassign"))
+            logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN)
             input.update { it.copy(pendingReassignment = null) }
         }
+    }
+
+    private fun logAssignmentEvent(action: String) {
+        analyticsService.logEvent(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT, mapOf(AnalyticsEvents.Params.ACTION to action))
     }
 
     private fun weekdayLabel(dayOfWeek: Int): String =

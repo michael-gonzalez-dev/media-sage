@@ -3,6 +3,7 @@ package com.mediasage.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.ThemePreferencesRepository
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.AuthRepository
 import kotlinx.coroutines.channels.Channel
@@ -47,18 +48,24 @@ class SettingsViewModel(
         when (intent) {
             is SettingsContract.Intent.SetAppTheme -> viewModelScope.launch {
                 themePreferencesRepository.setAppTheme(intent.theme)
-                analyticsService.logEvent("appearance_changed", mapOf("setting" to "theme"))
+                analyticsService.logEvent(
+                    AnalyticsEvents.APPEARANCE_CHANGED,
+                    mapOf(AnalyticsEvents.Params.SETTING to AnalyticsEvents.Values.SETTING_THEME),
+                )
             }
             is SettingsContract.Intent.ToggleDarkMode -> viewModelScope.launch {
                 themePreferencesRepository.setDarkMode(intent.enabled)
-                analyticsService.logEvent("appearance_changed", mapOf("setting" to "dark_mode"))
+                analyticsService.logEvent(
+                    AnalyticsEvents.APPEARANCE_CHANGED,
+                    mapOf(AnalyticsEvents.Params.SETTING to AnalyticsEvents.Values.SETTING_DARK_MODE),
+                )
             }
             is SettingsContract.Intent.SetTextScalePercent -> viewModelScope.launch {
                 themePreferencesRepository.setTextScalePercent(intent.percent)
             }
             is SettingsContract.Intent.SignOut -> viewModelScope.launch {
                 authRepository.signOut()
-                analyticsService.logEvent("sign_out")
+                analyticsService.logEvent(AnalyticsEvents.SIGN_OUT)
                 _sideEffects.send(SettingsContract.SideEffect.SignedOut)
             }
         }

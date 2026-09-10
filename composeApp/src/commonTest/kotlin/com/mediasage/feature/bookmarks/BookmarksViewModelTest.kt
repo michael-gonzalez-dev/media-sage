@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.bookmarks
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.repository.EncouragementRepository
@@ -41,7 +42,12 @@ class BookmarksViewModelTest {
         vm.onIntent(BookmarksContract.Intent.ToggleBookmark("https://example.com/article"))
 
         assertEquals(
-            listOf("bookmark_toggled" to mapOf("action" to "remove", "screen" to "bookmarks")),
+            listOf(
+                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REMOVE,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_BOOKMARKS,
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }

@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.history
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.repository.EncouragementRepository
@@ -109,7 +110,12 @@ class HistoryViewModelTest {
         vm.onIntent(HistoryContract.Intent.ToggleBookmark("https://example.com/article"))
 
         assertEquals(
-            listOf("bookmark_toggled" to mapOf("action" to "add", "screen" to "history")),
+            listOf(
+                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ADD,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HISTORY,
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -123,7 +129,12 @@ class HistoryViewModelTest {
         vm.onIntent(HistoryContract.Intent.ToggleBookmark("https://example.com/article"))
 
         assertEquals(
-            listOf("bookmark_toggled" to mapOf("action" to "remove", "screen" to "history")),
+            listOf(
+                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REMOVE,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HISTORY,
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }

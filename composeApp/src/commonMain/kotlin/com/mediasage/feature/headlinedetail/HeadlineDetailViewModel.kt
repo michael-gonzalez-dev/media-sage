@@ -2,6 +2,7 @@ package com.mediasage.feature.headlinedetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
@@ -39,7 +40,10 @@ class HeadlineDetailViewModel(
     fun onIntent(intent: HeadlineDetailContract.Intent) {
         when (intent) {
             is HeadlineDetailContract.Intent.RetryMatch -> {
-                analyticsService.logEvent("content_retry", mapOf("surface" to "headline_match"))
+                analyticsService.logEvent(
+                    AnalyticsEvents.CONTENT_RETRY,
+                    mapOf(AnalyticsEvents.Params.SURFACE to AnalyticsEvents.Values.SURFACE_HEADLINE_MATCH),
+                )
                 _state.value = HeadlineDetailContract.UiState.Loading
                 loadMatch()
             }
@@ -47,8 +51,14 @@ class HeadlineDetailViewModel(
                 val wasBookmarked = (_state.value as? HeadlineDetailContract.UiState.Success)?.isBookmarked == true
                 viewModelScope.launch {
                     encouragementRepository.toggleBookmark(articleUrl)
-                    val action = if (wasBookmarked) "remove" else "add"
-                    analyticsService.logEvent("bookmark_toggled", mapOf("action" to action, "screen" to "headline_detail"))
+                    val action = if (wasBookmarked) AnalyticsEvents.Values.ACTION_REMOVE else AnalyticsEvents.Values.ACTION_ADD
+                    analyticsService.logEvent(
+                        AnalyticsEvents.BOOKMARK_TOGGLED,
+                        mapOf(
+                            AnalyticsEvents.Params.ACTION to action,
+                            AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HEADLINE_DETAIL,
+                        ),
+                    )
                 }
             }
             is HeadlineDetailContract.Intent.ShowFigureProfile -> showFigureProfile()
