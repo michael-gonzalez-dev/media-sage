@@ -2,6 +2,7 @@ package com.mediasage.feature.quotes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.Quote
 import com.mediasage.domain.repository.FigureRepository
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 class QuotesViewModel(
     private val quoteRepository: QuoteRepository,
     private val figureRepository: FigureRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     val state: StateFlow<QuotesContract.UiState> = combine(
@@ -37,6 +39,7 @@ class QuotesViewModel(
         when (intent) {
             is QuotesContract.Intent.QuoteSelected -> viewModelScope.launch {
                 quoteRepository.memorizeQuote(intent.figureId, intent.quoteText)
+                analyticsService.logEvent("quote_memorized", mapOf("figure_id" to intent.figureId.toString()))
             }
         }
     }
