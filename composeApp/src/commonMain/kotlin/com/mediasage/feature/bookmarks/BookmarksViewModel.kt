@@ -2,6 +2,8 @@ package com.mediasage.feature.bookmarks
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.ui.formatHeadlineDate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +14,8 @@ import kotlinx.coroutines.launch
 private const val QUOTE_PREVIEW_LENGTH = 120
 
 class BookmarksViewModel(
-    private val encouragementRepository: EncouragementRepository
+    private val encouragementRepository: EncouragementRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<BookmarksContract.UiState>(BookmarksContract.UiState.Loading)
@@ -25,7 +28,17 @@ class BookmarksViewModel(
     fun onIntent(intent: BookmarksContract.Intent) {
         when (intent) {
             is BookmarksContract.Intent.ToggleBookmark -> {
-                viewModelScope.launch { encouragementRepository.toggleBookmark(intent.articleUrl) }
+                // This screen only ever lists already-bookmarked items, so toggling always removes.
+                viewModelScope.launch {
+                    encouragementRepository.toggleBookmark(intent.articleUrl)
+                    analyticsService.logEvent(
+                        AnalyticsEvents.BOOKMARK_TOGGLED,
+                        mapOf(
+                            AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REMOVE,
+                            AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_BOOKMARKS,
+                        ),
+                    )
+                }
             }
         }
     }

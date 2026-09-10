@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.figures
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
@@ -67,7 +68,10 @@ class FigureDetailViewModelTest {
         assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
-        assertEquals(listOf("figure_pinned" to mapOf("figure_id" to "2")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -103,7 +107,10 @@ class FigureDetailViewModelTest {
         assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
-        assertEquals(listOf("figure_pinned" to mapOf("figure_id" to "2")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -151,7 +158,10 @@ class FigureDetailViewModelTest {
         viewModel.onIntent(FigureDetailContract.Intent.PinQuote("You are never too old to dream."))
 
         assertEquals(listOf(2L to "You are never too old to dream."), quoteRepo.memorizeCalls)
-        assertEquals(listOf("quote_memorized" to mapOf("figure_id" to "2")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.QUOTE_MEMORIZED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test

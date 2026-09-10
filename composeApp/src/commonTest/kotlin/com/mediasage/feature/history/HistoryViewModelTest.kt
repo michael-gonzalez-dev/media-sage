@@ -2,6 +2,8 @@
 
 package com.mediasage.feature.history
 
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.repository.EncouragementRepository
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +37,7 @@ class HistoryViewModelTest {
 
     @Test
     fun emitsEmptyWhenNoEncouragements() = runTest(testDispatcher) {
-        val vm = HistoryViewModel(encouragementRepository = FakeEncouragementRepository(emptyList()))
+        val vm = HistoryViewModel(FakeEncouragementRepository(emptyList()), FakeAnalyticsServiceForHistoryScreen())
 
         assertIs<HistoryContract.UiState.Empty>(vm.state.value)
     }
@@ -49,7 +51,7 @@ class HistoryViewModelTest {
             figureRole = "Bishop of Hippo",
             quoteText = "Our heart is restless until it finds rest in You."
         )
-        val vm = HistoryViewModel(encouragementRepository = FakeEncouragementRepository(listOf(encouragement)))
+        val vm = HistoryViewModel(FakeEncouragementRepository(listOf(encouragement)), FakeAnalyticsServiceForHistoryScreen())
 
         val state = assertIs<HistoryContract.UiState.Success>(vm.state.value)
         assertEquals(1, state.items.size)
@@ -63,7 +65,7 @@ class HistoryViewModelTest {
     fun quotePreviewIsTruncatedTo120Chars() = runTest(testDispatcher) {
         val longQuote = "A".repeat(200)
         val encouragement = buildEncouragement(quoteText = longQuote)
-        val vm = HistoryViewModel(encouragementRepository = FakeEncouragementRepository(listOf(encouragement)))
+        val vm = HistoryViewModel(FakeEncouragementRepository(listOf(encouragement)), FakeAnalyticsServiceForHistoryScreen())
 
         val state = assertIs<HistoryContract.UiState.Success>(vm.state.value)
         assertEquals(120, state.items.first().quotePreview.length)
@@ -72,7 +74,7 @@ class HistoryViewModelTest {
     @Test
     fun headlineImageUrlIsReadFromEncouragement() = runTest(testDispatcher) {
         val encouragement = buildEncouragement(headlineImageUrl = "https://img.example.com/photo.jpg")
-        val vm = HistoryViewModel(encouragementRepository = FakeEncouragementRepository(listOf(encouragement)))
+        val vm = HistoryViewModel(FakeEncouragementRepository(listOf(encouragement)), FakeAnalyticsServiceForHistoryScreen())
 
         val state = assertIs<HistoryContract.UiState.Success>(vm.state.value)
         assertEquals("https://img.example.com/photo.jpg", state.items.first().headlineImageUrl)
@@ -81,7 +83,7 @@ class HistoryViewModelTest {
     @Test
     fun headlineImageUrlIsNullWhenNotStored() = runTest(testDispatcher) {
         val encouragement = buildEncouragement(headlineImageUrl = null)
-        val vm = HistoryViewModel(encouragementRepository = FakeEncouragementRepository(listOf(encouragement)))
+        val vm = HistoryViewModel(FakeEncouragementRepository(listOf(encouragement)), FakeAnalyticsServiceForHistoryScreen())
 
         val state = assertIs<HistoryContract.UiState.Success>(vm.state.value)
         assertNull(state.items.first().headlineImageUrl)
@@ -90,7 +92,7 @@ class HistoryViewModelTest {
     @Test
     fun stateUpdatesWhenEncouragementFlowEmitsNewValues() = runTest(testDispatcher) {
         val flow = MutableStateFlow(emptyList<Encouragement>())
-        val vm = HistoryViewModel(encouragementRepository = FakeEncouragementRepository(flow = flow))
+        val vm = HistoryViewModel(FakeEncouragementRepository(flow = flow), FakeAnalyticsServiceForHistoryScreen())
 
         assertIs<HistoryContract.UiState.Empty>(vm.state.value)
 
@@ -98,6 +100,52 @@ class HistoryViewModelTest {
 
         assertIs<HistoryContract.UiState.Success>(vm.state.value)
     }
+
+    @Test
+    fun toggleBookmarkLogsAddActionWhenItemWasNotBookmarked() = runTest(testDispatcher) {
+        val encouragement = buildEncouragement(articleUrl = "https://example.com/article", bookmarked = false)
+        val analyticsService = FakeAnalyticsServiceForHistoryScreen()
+        val vm = HistoryViewModel(FakeEncouragementRepository(listOf(encouragement)), analyticsService)
+
+        vm.onIntent(HistoryContract.Intent.ToggleBookmark("https://example.com/article"))
+
+        assertEquals(
+            listOf(
+                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ADD,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HISTORY,
+                ),
+            ),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
+    fun toggleBookmarkLogsRemoveActionWhenItemWasAlreadyBookmarked() = runTest(testDispatcher) {
+        val encouragement = buildEncouragement(articleUrl = "https://example.com/article", bookmarked = true)
+        val analyticsService = FakeAnalyticsServiceForHistoryScreen()
+        val vm = HistoryViewModel(FakeEncouragementRepository(listOf(encouragement)), analyticsService)
+
+        vm.onIntent(HistoryContract.Intent.ToggleBookmark("https://example.com/article"))
+
+        assertEquals(
+            listOf(
+                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REMOVE,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HISTORY,
+                ),
+            ),
+            analyticsService.loggedEvents,
+        )
+    }
+}
+
+private class FakeAnalyticsServiceForHistoryScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private fun buildEncouragement(

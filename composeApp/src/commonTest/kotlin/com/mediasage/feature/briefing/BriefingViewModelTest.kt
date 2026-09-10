@@ -2,6 +2,8 @@
 
 package com.mediasage.feature.briefing
 
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
@@ -116,6 +118,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         val sideEffects = mutableListOf<BriefingContract.SideEffect>()
@@ -154,6 +157,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -190,6 +194,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -228,6 +233,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -269,6 +275,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = toneScheduler,
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -306,6 +313,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(headlines),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -327,6 +335,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = noteRepo,
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -354,6 +363,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = noteRepo,
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -383,6 +393,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -409,6 +420,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -434,6 +446,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -446,10 +459,29 @@ class BriefingViewModelTest {
         assertEquals(null, state.reflectSheet)
     }
 
+    @Test
+    fun retryLogsContentRetryEvent() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForBriefingScreen()
+        val viewModel = briefingViewModel(
+            figures = listOf(judson, lincoln),
+            assignments = emptyMap(),
+            resolveReporterResult = 1L,
+            analyticsService = analyticsService,
+        )
+
+        viewModel.onIntent(BriefingContract.Intent.Retry)
+
+        assertEquals(
+            listOf(AnalyticsEvents.CONTENT_RETRY to mapOf(AnalyticsEvents.Params.SURFACE to AnalyticsEvents.Values.SURFACE_BRIEFING)),
+            analyticsService.loggedEvents,
+        )
+    }
+
     private fun TestScope.briefingViewModel(
         figures: List<Figure>,
         assignments: Map<Int, DayAssignment>,
         resolveReporterResult: Long?,
+        analyticsService: AnalyticsService = FakeAnalyticsServiceForBriefingScreen(),
     ): BriefingViewModel {
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(assignments), resolveReporterResult)
         val reflectionRepo = FakeDailyReflectionRepository()
@@ -461,6 +493,7 @@ class BriefingViewModelTest {
             figureRepository = figureRepo,
             headlineRepository = FakeHeadlineRepository(),
             userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = analyticsService,
             toneScheduler = FakeBriefingToneScheduler(),
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
@@ -471,6 +504,14 @@ class BriefingViewModelTest {
         val todayOrdinal = Instant.fromEpochMilliseconds(epochMillis())
             .toLocalDateTime(TimeZone.currentSystemDefault()).date.dayOfWeek.ordinal
     }
+}
+
+private class FakeAnalyticsServiceForBriefingScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private class FakeFigureRepository(private val figures: List<Figure>) : FigureRepository {

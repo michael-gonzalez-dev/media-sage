@@ -56,6 +56,7 @@ val appModule = module {
             get<FigureRepository>(),
             get<HeadlineRepository>(),
             get<UserReflectionNoteRepository>(),
+            get<AnalyticsService>(),
         )
     }
     viewModel {
@@ -66,8 +67,15 @@ val appModule = module {
             get<HeadlineCategoryPreferencesRepository>(),
         )
     }
-    viewModel { (articleUrl: String) -> HeadlineDetailViewModel(articleUrl, get(), get(), get(), get()) }
-    viewModel { FiguresViewModel(get<FigureRepository>(), get<EncouragementRepository>(), get<DayAssignmentRepository>()) }
+    viewModel { (articleUrl: String) -> HeadlineDetailViewModel(articleUrl, get(), get(), get(), get(), get<AnalyticsService>()) }
+    viewModel {
+        FiguresViewModel(
+            get<FigureRepository>(),
+            get<EncouragementRepository>(),
+            get<DayAssignmentRepository>(),
+            get<AnalyticsService>(),
+        )
+    }
     viewModel { (figureId: Long) ->
         FigureDetailViewModel(
             figureId,
@@ -80,22 +88,30 @@ val appModule = module {
         )
     }
     viewModel { QuotesViewModel(get<QuoteRepository>(), get<FigureRepository>(), get<AnalyticsService>()) }
-    viewModel { LoginViewModel(get<AuthRepository>(), get<AuthPreferencesRepository>(), get<ProfileRepository>()) }
-    viewModel { SettingsViewModel(get<AuthRepository>(), get<ThemePreferencesRepository>()) }
+    viewModel {
+        LoginViewModel(
+            get<AuthRepository>(),
+            get<AuthPreferencesRepository>(),
+            get<ProfileRepository>(),
+            get<AnalyticsService>(),
+        )
+    }
+    viewModel { SettingsViewModel(get<AuthRepository>(), get<ThemePreferencesRepository>(), get<AnalyticsService>()) }
     viewModel {
         ReaderViewModel(
             get<GetReaderCalendarUseCase>(),
             get<DayAssignmentRepository>(),
             get<AuthRepository>(),
             get<DailyReflectionRepository>(),
+            get<AnalyticsService>(),
         )
     }
     viewModel { ReaderHistoryViewModel(get<GetReaderCalendarUseCase>(), get<DailyReflectionRepository>()) }
     viewModel { (epochDay: Long, figureName: String?, figureImageUrl: String?) ->
         DayDetailViewModel(epochDay, figureName, figureImageUrl, get<GetDayDetailUseCase>(), get<UserReflectionNoteRepository>())
     }
-    viewModel { HistoryViewModel(get<EncouragementRepository>()) }
-    viewModel { BookmarksViewModel(get<EncouragementRepository>()) }
+    viewModel { HistoryViewModel(get<EncouragementRepository>(), get<AnalyticsService>()) }
+    viewModel { BookmarksViewModel(get<EncouragementRepository>(), get<AnalyticsService>()) }
 }
 
 /** Temporary module that overrides MediaSageApi with mock data for demos. */
