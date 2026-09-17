@@ -57,6 +57,10 @@ sealed interface Route : NavKey {
     /** Settings screen (shell). */
     @Serializable
     data object Settings : Route
+
+    /** About screen — app mission and historical-figure disclaimer, reached from [Settings]. */
+    @Serializable
+    data object About : Route
 }
 
 /** Serialization config required for Nav3 on non-JVM platforms. */
@@ -73,5 +77,6 @@ val navSerializersModule = SerializersModule {
         subclass(Route.DayDetail::class)
         subclass(Route.Bookmarks::class)
         subclass(Route.Settings::class)
+        subclass(Route.About::class)
     }
 }
