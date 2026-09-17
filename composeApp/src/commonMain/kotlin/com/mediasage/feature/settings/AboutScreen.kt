@@ -26,6 +26,7 @@ import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.about_disclaimer_body
 import mediasage.composeapp.generated.resources.about_disclaimer_title
 import mediasage.composeapp.generated.resources.about_mission
+import mediasage.composeapp.generated.resources.about_mission_title
 import mediasage.composeapp.generated.resources.nav_back
 import mediasage.composeapp.generated.resources.title_about
 import org.jetbrains.compose.resources.stringResource
@@ -62,8 +63,14 @@ fun AboutScreen(
                     .padding(16.dp),
             ) {
                 Text(
+                    text = stringResource(Res.string.about_mission_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
                     text = stringResource(Res.string.about_mission),
                     style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 8.dp),
                 )
 
                 HorizontalDivider(
