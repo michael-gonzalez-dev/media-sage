@@ -46,6 +46,7 @@ import com.mediasage.feature.headlinedetail.HeadlineDetailScreen
 import com.mediasage.feature.headlinedetail.HeadlineDetailViewModel
 import com.mediasage.feature.quotes.QuotesScreen
 import com.mediasage.feature.quotes.QuotesViewModel
+import com.mediasage.feature.settings.AboutScreen
 import com.mediasage.feature.settings.SettingsContract
 import com.mediasage.feature.settings.SettingsScreen
 import com.mediasage.feature.settings.SettingsViewModel
@@ -265,8 +266,12 @@ fun MediaSageScaffold(
                     SettingsScreen(
                         state = state,
                         onIntent = vm::onIntent,
-                        onNavigateBack = { appState.navigateBack() }
+                        onNavigateBack = { appState.navigateBack() },
+                        onNavigateToAbout = { appState.navigateToAbout() }
                     )
+                }
+                is Route.About -> TrackedNavEntry(route) {
+                    AboutScreen(onNavigateBack = { appState.navigateBack() })
                 }
                 else -> NavEntry(route) {}
             }
