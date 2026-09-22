@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,6 +70,8 @@ private const val TEXT_SCALE_DEFAULT_PERCENT = 100
 private const val TEXT_SCALE_STEP_PERCENT = 5
 private const val TEXT_SCALE_STEPS =
     (TEXT_SCALE_MAX_PERCENT - TEXT_SCALE_MIN_PERCENT) / TEXT_SCALE_STEP_PERCENT - 1
+private const val PRIVACY_POLICY_URL = "https://thecouragepost.app/privacy"
+private const val TERMS_OF_SERVICE_URL = "https://thecouragepost.app/terms"
 
 @Composable
 fun SettingsScreen(
@@ -78,6 +81,7 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit = {},
 ) {
     val ready = state as? SettingsContract.UiState.Ready
+    val uriHandler = LocalUriHandler.current
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -192,7 +196,18 @@ fun SettingsScreen(
                     )
                 }
 
-                SettingsRow(label = stringResource(Res.string.settings_privacy_policy)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = { uriHandler.openUri(PRIVACY_POLICY_URL) })
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.settings_privacy_policy),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
                         contentDescription = null,
@@ -200,7 +215,18 @@ fun SettingsScreen(
                     )
                 }
 
-                SettingsRow(label = stringResource(Res.string.settings_terms_of_service)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = { uriHandler.openUri(TERMS_OF_SERVICE_URL) })
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.settings_terms_of_service),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
                         contentDescription = null,
