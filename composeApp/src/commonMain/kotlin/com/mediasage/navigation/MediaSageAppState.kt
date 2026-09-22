@@ -55,6 +55,10 @@ class MediaSageAppState(
         backStack.add(Route.Settings)
     }
 
+    fun navigateToAbout() {
+        backStack.add(Route.About)
+    }
+
     fun navigateBack() {
         backStack.removeLastOrNull()
     }

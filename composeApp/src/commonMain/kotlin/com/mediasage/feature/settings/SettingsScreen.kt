@@ -1,5 +1,6 @@
 package com.mediasage.feature.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +44,7 @@ import com.mediasage.theme.BrandAmber
 import com.mediasage.theme.MediaSageTheme
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.nav_back
+import mediasage.composeapp.generated.resources.settings_about
 import mediasage.composeapp.generated.resources.settings_edit_profile
 import mediasage.composeapp.generated.resources.settings_privacy_policy
 import mediasage.composeapp.generated.resources.settings_section_account
@@ -74,6 +76,7 @@ fun SettingsScreen(
     state: SettingsContract.UiState,
     onIntent: (SettingsContract.Intent) -> Unit,
     onNavigateBack: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
 ) {
     val ready = state as? SettingsContract.UiState.Ready
 
@@ -180,6 +183,25 @@ fun SettingsScreen(
 
                 // ── Support ───────────────────────────────────────────────────
                 SettingsSectionHeader(stringResource(Res.string.settings_section_support))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onNavigateToAbout)
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.settings_about),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
 
                 SettingsRow(label = stringResource(Res.string.settings_privacy_policy)) {
                     Icon(
