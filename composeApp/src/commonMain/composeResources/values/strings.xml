@@ -87,7 +87,7 @@
     <string name="settings_dark_mode_label">Dark Mode</string>
     <string name="settings_text_size_label">Text Size</string>
     <string name="settings_section_account">Account</string>
-    <string name="settings_edit_profile">Edit Profile</string>
+    <string name="settings_display_name">Name</string>
     <string name="settings_version_label">Version</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_about">About</string>
@@ -151,11 +151,9 @@
     <!-- Figure detail screen -->
     <string name="figure_detail_biography">Biography</string>
     <string name="figure_detail_tab_quotes">Quotes</string>
-    <string name="figure_detail_tab_writings">Writings</string>
     <string name="figure_detail_quotes_sheet_title">Collected Quotes</string>
     <string name="figure_detail_no_biography">No biography available.</string>
     <string name="figure_detail_no_quotes">No quotes yet.</string>
-    <string name="figure_detail_writings_placeholder">Coming soon</string>
 
     <plurals name="headlines_story_count">
         <item quantity="one">%1$d story</item>
