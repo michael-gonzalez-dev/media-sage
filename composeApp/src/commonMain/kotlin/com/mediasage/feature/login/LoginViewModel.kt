@@ -3,6 +3,8 @@ package com.mediasage.feature.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.AuthPreferencesRepository
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.ProfileRepository
 import kotlinx.coroutines.channels.Channel
@@ -18,6 +20,7 @@ class LoginViewModel(
     private val authRepository: AuthRepository,
     private val userPreferencesRepository: AuthPreferencesRepository,
     private val profileRepository: ProfileRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginContract.UiState())
@@ -25,6 +28,8 @@ class LoginViewModel(
 
     private val _sideEffects = Channel<LoginContract.SideEffect>(Channel.BUFFERED)
     val sideEffects = _sideEffects.receiveAsFlow()
+
+    private val emailMethodParams = mapOf(AnalyticsEvents.Params.METHOD to AnalyticsEvents.Values.METHOD_EMAIL)
 
     init {
         viewModelScope.launch {
@@ -72,6 +77,7 @@ class LoginViewModel(
                     // composition and the buffered event replays on the next visit after sign-out,
                     // bouncing the user straight back into the app.
                     _state.update { it.copy(isLoading = false, error = null) }
+                    analyticsService.logEvent(AnalyticsEvents.LOGIN, emailMethodParams)
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Sign in failed") }
@@ -88,6 +94,8 @@ class LoginViewModel(
                     _state.update {
                         it.copy(isLoading = false, pendingOtpEmail = email, pendingDisplayName = displayName)
                     }
+                    analyticsService.logEvent(AnalyticsEvents.SIGN_UP, emailMethodParams)
+                    analyticsService.logEvent(AnalyticsEvents.OTP_SENT, emailMethodParams)
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Sign up failed") }
@@ -117,10 +125,13 @@ class LoginViewModel(
                             pendingDisplayName = null,
                         )
                     }
+                    analyticsService.logEvent(AnalyticsEvents.OTP_VERIFIED, emailMethodParams)
+                    analyticsService.logEvent(AnalyticsEvents.LOGIN, emailMethodParams)
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false, error = e.message ?: "Invalid code") }
                     _sideEffects.send(LoginContract.SideEffect.ShowError(e.message ?: "Invalid code"))
+                    analyticsService.logEvent(AnalyticsEvents.OTP_FAILED, emailMethodParams)
                 }
         }
     }

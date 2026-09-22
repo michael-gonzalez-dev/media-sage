@@ -2,6 +2,7 @@
 
 package com.mediasage.feature.quotes
 
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
@@ -85,7 +86,10 @@ class QuotesViewModelTest {
         viewModel.onIntent(QuotesContract.Intent.QuoteSelected(figureId = 1L, quoteText = quote.text))
 
         assertEquals(listOf(1L to quote.text), quoteRepo.memorizeCalls)
-        assertEquals(listOf("quote_memorized" to mapOf("figure_id" to "1")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(AnalyticsEvents.QUOTE_MEMORIZED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "1")),
+            analyticsService.loggedEvents,
+        )
     }
 
     private fun TestScope.quotesViewModel(

@@ -6,6 +6,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import com.mediasage.data.AuthPreferencesRepository
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.ProfileRepository
@@ -38,10 +40,14 @@ class LoginViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun loginViewModel(authRepository: AuthRepository = FakeLoginAuthRepository()) = LoginViewModel(
+    private fun loginViewModel(
+        authRepository: AuthRepository = FakeLoginAuthRepository(),
+        analyticsService: FakeAnalyticsServiceForLoginScreen = FakeAnalyticsServiceForLoginScreen(),
+    ) = LoginViewModel(
         authRepository = authRepository,
         userPreferencesRepository = AuthPreferencesRepository(FakePreferencesDataStore()),
         profileRepository = FakeLoginProfileRepository(),
+        analyticsService = analyticsService,
     )
 
     @Test
@@ -123,6 +129,75 @@ class LoginViewModelTest {
         assertEquals("ada@example.com", state.pendingOtpEmail)
         assertNotNull(state.error)
     }
+
+    @Test
+    fun signUpLogsSignUpAndOtpSentEvents() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForLoginScreen()
+        val viewModel = loginViewModel(analyticsService = analyticsService)
+
+        viewModel.onIntent(LoginContract.Intent.SwitchToSignUp)
+        viewModel.onIntent(LoginContract.Intent.SignUpWithEmail("ada@example.com", "password123", "Ada"))
+
+        assertEquals(
+            listOf(
+                AnalyticsEvents.SIGN_UP to emailMethodParams,
+                AnalyticsEvents.OTP_SENT to emailMethodParams,
+            ),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
+    fun successfulOtpVerificationLogsOtpVerifiedAndLoginEvents() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForLoginScreen()
+        val viewModel = loginViewModel(analyticsService = analyticsService)
+        viewModel.onIntent(LoginContract.Intent.SwitchToSignUp)
+        viewModel.onIntent(LoginContract.Intent.SignUpWithEmail("ada@example.com", "password123", "Ada"))
+        analyticsService.loggedEvents.clear()
+
+        viewModel.onIntent(LoginContract.Intent.VerifyOtp("123456"))
+
+        assertEquals(
+            listOf(
+                AnalyticsEvents.OTP_VERIFIED to emailMethodParams,
+                AnalyticsEvents.LOGIN to emailMethodParams,
+            ),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
+    fun failedOtpVerificationLogsOtpFailedEvent() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForLoginScreen()
+        val viewModel = loginViewModel(FakeLoginAuthRepository(failOtp = true), analyticsService)
+        viewModel.onIntent(LoginContract.Intent.SwitchToSignUp)
+        viewModel.onIntent(LoginContract.Intent.SignUpWithEmail("ada@example.com", "password123", "Ada"))
+        analyticsService.loggedEvents.clear()
+
+        viewModel.onIntent(LoginContract.Intent.VerifyOtp("000000"))
+
+        assertEquals(listOf(AnalyticsEvents.OTP_FAILED to emailMethodParams), analyticsService.loggedEvents)
+    }
+
+    @Test
+    fun successfulSignInLogsLoginEvent() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForLoginScreen()
+        val viewModel = loginViewModel(analyticsService = analyticsService)
+
+        viewModel.onIntent(LoginContract.Intent.SignInWithEmail("ada@example.com", "password123"))
+
+        assertEquals(listOf(AnalyticsEvents.LOGIN to emailMethodParams), analyticsService.loggedEvents)
+    }
+}
+
+private val emailMethodParams = mapOf(AnalyticsEvents.Params.METHOD to AnalyticsEvents.Values.METHOD_EMAIL)
+
+private class FakeAnalyticsServiceForLoginScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private class FakeLoginAuthRepository(

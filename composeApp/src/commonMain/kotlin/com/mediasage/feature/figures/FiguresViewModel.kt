@@ -2,6 +2,8 @@ package com.mediasage.feature.figures
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.EncouragementRepository
@@ -20,7 +22,8 @@ import kotlin.time.Instant
 class FiguresViewModel(
     private val figureRepository: FigureRepository,
     private val encouragementRepository: EncouragementRepository,
-    private val dayAssignmentRepository: DayAssignmentRepository
+    private val dayAssignmentRepository: DayAssignmentRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<FiguresContract.UiState>(FiguresContract.UiState.Loading)
@@ -78,7 +81,12 @@ class FiguresViewModel(
             is FiguresContract.Intent.LoadFigures -> { /* reactive — no manual reload needed */ }
             is FiguresContract.Intent.Refresh -> refresh()
             is FiguresContract.Intent.FigureClicked -> { /* handled via navigation callback */ }
-            is FiguresContract.Intent.SearchQueryChanged -> { _searchQuery.value = intent.query }
+            is FiguresContract.Intent.SearchQueryChanged -> {
+                if (_searchQuery.value.isBlank() && intent.query.isNotBlank()) {
+                    analyticsService.logEvent(AnalyticsEvents.FIGURE_SEARCH)
+                }
+                _searchQuery.value = intent.query
+            }
         }
     }
 

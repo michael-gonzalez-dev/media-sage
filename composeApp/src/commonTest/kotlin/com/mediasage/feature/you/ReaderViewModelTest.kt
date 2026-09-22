@@ -2,6 +2,8 @@
 
 package com.mediasage.feature.you
 
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
@@ -155,6 +157,58 @@ class ReaderViewModelTest {
     }
 
     @Test
+    fun figureAssigned_logsFigureDayAssignmentEventWithAssignAction() = runTest(testDispatcher) {
+        val otherFigure = Figure(id = 2L, name = "C.S. Lewis", category = FigureCategory.THEOLOGIAN, century = "20th", role = "Author")
+        val analyticsService = FakeAnalyticsServiceForReaderScreen()
+        val (viewModel, _) = readerViewModelWithRepo(
+            figure = testFigure,
+            extraFigures = listOf(otherFigure),
+            analyticsService = analyticsService,
+        )
+
+        viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 2L, lens = null))
+
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ASSIGN)),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
+    fun confirmReassignment_logsFigureDayAssignmentEventWithReassignAction() = runTest(testDispatcher) {
+        val otherFigure = Figure(id = 2L, name = "C.S. Lewis", category = FigureCategory.THEOLOGIAN, century = "20th", role = "Author")
+        val briefing = BriefingDay(epochDay = todayEpochDay, figureId = 1L, scriptureReference = "John 3:16", scriptureText = "…")
+        val analyticsService = FakeAnalyticsServiceForReaderScreen()
+        val (viewModel, _) = readerViewModelWithRepo(
+            figure = testFigure,
+            extraFigures = listOf(otherFigure),
+            briefings = listOf(briefing),
+            analyticsService = analyticsService,
+        )
+        viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 2L, lens = null))
+
+        viewModel.onIntent(ReaderContract.Intent.ConfirmReassignment)
+
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REASSIGN)),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
+    fun assignmentCleared_logsFigureDayAssignmentEventWithClearAction() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForReaderScreen()
+        val (viewModel, _) = readerViewModelWithRepo(figure = testFigure, analyticsService = analyticsService)
+
+        viewModel.onIntent(ReaderContract.Intent.AssignmentCleared(dayOfWeek = todayOrdinal))
+
+        assertEquals(
+            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR)),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
     fun userDisplayNameIsPopulatedFromTheSignedInSession() = runTest(testDispatcher) {
         val (viewModel, _) = readerViewModelWithRepo(figure = testFigure, session = UserSession("u1", "a@b.com", "Jordan"))
 
@@ -298,6 +352,7 @@ class ReaderViewModelTest {
         briefings: List<BriefingDay> = emptyList(),
         latestQuote: Quote? = null,
         session: UserSession? = null,
+        analyticsService: FakeAnalyticsServiceForReaderScreen = FakeAnalyticsServiceForReaderScreen(),
     ): Pair<ReaderViewModel, FakeDayAssignmentRepository> {
         val figureRepo = FakeFigureRepository(listOf(figure) + extraFigures)
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(assignments))
@@ -309,6 +364,7 @@ class ReaderViewModelTest {
             dayAssignmentRepository = dayAssignmentRepo,
             authRepository = authRepo,
             reflectionRepository = reflectionRepo,
+            analyticsService = analyticsService,
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
         return viewModel to dayAssignmentRepo
@@ -319,6 +375,14 @@ class ReaderViewModelTest {
         val todayOrdinal = today.dayOfWeek.ordinal
         val todayEpochDay = today.toEpochDays().toLong()
     }
+}
+
+private class FakeAnalyticsServiceForReaderScreen : AnalyticsService {
+    val loggedEvents = mutableListOf<Pair<String, Map<String, String>>>()
+    override fun logEvent(name: String, params: Map<String, String>) {
+        loggedEvents.add(name to params)
+    }
+    override fun logScreenView(screenName: String) = Unit
 }
 
 private class FakeFigureRepository(private val figures: List<Figure>) : FigureRepository {

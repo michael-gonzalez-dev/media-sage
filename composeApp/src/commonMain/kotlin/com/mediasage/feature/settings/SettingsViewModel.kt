@@ -3,6 +3,8 @@ package com.mediasage.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.ThemePreferencesRepository
+import com.mediasage.data.analytics.AnalyticsEvents
+import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.repository.AuthRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +17,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel(
     private val authRepository: AuthRepository,
     private val themePreferencesRepository: ThemePreferencesRepository,
+    private val analyticsService: AnalyticsService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<SettingsContract.UiState>(SettingsContract.UiState.Ready())
@@ -45,15 +48,24 @@ class SettingsViewModel(
         when (intent) {
             is SettingsContract.Intent.SetAppTheme -> viewModelScope.launch {
                 themePreferencesRepository.setAppTheme(intent.theme)
+                analyticsService.logEvent(
+                    AnalyticsEvents.APPEARANCE_CHANGED,
+                    mapOf(AnalyticsEvents.Params.SETTING to AnalyticsEvents.Values.SETTING_THEME),
+                )
             }
             is SettingsContract.Intent.ToggleDarkMode -> viewModelScope.launch {
                 themePreferencesRepository.setDarkMode(intent.enabled)
+                analyticsService.logEvent(
+                    AnalyticsEvents.APPEARANCE_CHANGED,
+                    mapOf(AnalyticsEvents.Params.SETTING to AnalyticsEvents.Values.SETTING_DARK_MODE),
+                )
             }
             is SettingsContract.Intent.SetTextScalePercent -> viewModelScope.launch {
                 themePreferencesRepository.setTextScalePercent(intent.percent)
             }
             is SettingsContract.Intent.SignOut -> viewModelScope.launch {
                 authRepository.signOut()
+                analyticsService.logEvent(AnalyticsEvents.SIGN_OUT)
                 _sideEffects.send(SettingsContract.SideEffect.SignedOut)
             }
         }

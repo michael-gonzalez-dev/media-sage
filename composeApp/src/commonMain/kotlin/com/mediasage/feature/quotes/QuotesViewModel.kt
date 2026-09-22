@@ -2,6 +2,7 @@ package com.mediasage.feature.quotes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.Quote
@@ -39,7 +40,10 @@ class QuotesViewModel(
         when (intent) {
             is QuotesContract.Intent.QuoteSelected -> viewModelScope.launch {
                 quoteRepository.memorizeQuote(intent.figureId, intent.quoteText)
-                analyticsService.logEvent("quote_memorized", mapOf("figure_id" to intent.figureId.toString()))
+                analyticsService.logEvent(
+                    AnalyticsEvents.QUOTE_MEMORIZED,
+                    mapOf(AnalyticsEvents.Params.FIGURE_ID to intent.figureId.toString()),
+                )
             }
         }
     }
