@@ -38,7 +38,7 @@ class SettingsViewModel(
                     appTheme = theme,
                     darkMode = dark,
                     textScalePercent = textScalePercent,
-                    displayName = session?.displayName.orEmpty(),
+                    email = session?.email.orEmpty(),
                 )
             }.collect { _state.value = it }
         }

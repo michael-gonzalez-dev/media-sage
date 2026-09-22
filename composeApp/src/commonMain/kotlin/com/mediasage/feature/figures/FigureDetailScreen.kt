@@ -55,8 +55,6 @@ import mediasage.composeapp.generated.resources.figure_detail_pin_to_home
 import mediasage.composeapp.generated.resources.figure_detail_pinned_to_home
 import mediasage.composeapp.generated.resources.figure_detail_quotes_sheet_title
 import mediasage.composeapp.generated.resources.figure_detail_tab_quotes
-import mediasage.composeapp.generated.resources.figure_detail_tab_writings
-import mediasage.composeapp.generated.resources.figure_detail_writings_placeholder
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -126,7 +124,6 @@ private fun ErrorMessage(message: String) {
 private enum class FigureDetailTab(val labelRes: StringResource) {
     BIOGRAPHY(Res.string.figure_detail_biography),
     QUOTES(Res.string.figure_detail_tab_quotes),
-    WRITINGS(Res.string.figure_detail_tab_writings),
 }
 
 @Composable
@@ -146,7 +143,6 @@ private fun FigureDetailContent(
                     onPinToggle = onPinToggle,
                     onPinQuote = onPinQuote,
                 )
-                FigureDetailTab.WRITINGS -> WritingsTabContent(state = state, onPinToggle = onPinToggle)
             }
         }
 
@@ -290,32 +286,6 @@ private fun QuotesTabContent(
                 )
             }
             item { Spacer(modifier = Modifier.height(20.dp)) }
-        }
-    }
-}
-
-@Composable
-private fun WritingsTabContent(state: FigureDetailContract.UiState.Success, onPinToggle: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
-        FigureHero(state = state, onPinToggle = onPinToggle)
-
-        Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) {
-            Text(
-                text = stringResource(Res.string.figure_detail_tab_writings),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                Text(
-                    text = stringResource(Res.string.figure_detail_writings_placeholder),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 }

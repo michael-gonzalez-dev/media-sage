@@ -27,7 +27,7 @@ import com.mediasage.theme.MediaSageTheme
 
 /**
  * Comic-palette bottom tab row shared by [com.mediasage.feature.figures.FigureDetailScreen] (Biography |
- * Quotes | Writings) and [com.mediasage.feature.daydetail.DayDetailScreen] (Morning | Evening).
+ * Quotes) and [com.mediasage.feature.daydetail.DayDetailScreen] (Morning | Evening).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
