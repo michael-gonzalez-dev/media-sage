@@ -108,6 +108,27 @@ fun SettingsScreen(
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
 
+                // ── Account ───────────────────────────────────────────────────
+                SettingsSectionHeader(stringResource(Res.string.settings_section_account))
+
+                SettingsRow(label = stringResource(Res.string.settings_email)) {
+                    Text(
+                        text = ready?.email.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                SettingsRow(label = stringResource(Res.string.settings_version_label)) {
+                    Text(
+                        text = ready?.appVersion ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // ── Appearance ────────────────────────────────────────────────
                 SettingsSectionHeader(stringResource(Res.string.settings_section_appearance))
 
@@ -146,27 +167,6 @@ fun SettingsScreen(
                     percent = ready?.textScalePercent ?: TEXT_SCALE_DEFAULT_PERCENT,
                     onPercentChange = { onIntent(SettingsContract.Intent.SetTextScalePercent(it)) },
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // ── Account ───────────────────────────────────────────────────
-                SettingsSectionHeader(stringResource(Res.string.settings_section_account))
-
-                SettingsRow(label = stringResource(Res.string.settings_email)) {
-                    Text(
-                        text = ready?.email.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                SettingsRow(label = stringResource(Res.string.settings_version_label)) {
-                    Text(
-                        text = ready?.appVersion ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
