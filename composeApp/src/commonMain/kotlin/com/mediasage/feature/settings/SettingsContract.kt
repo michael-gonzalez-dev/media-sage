@@ -10,7 +10,7 @@ object SettingsContract {
             val darkMode: Boolean = false,
             val textScalePercent: Int = 100,
             val appVersion: String = "1.0",
-            val displayName: String = "",
+            val email: String = "",
         ) : UiState
     }
 

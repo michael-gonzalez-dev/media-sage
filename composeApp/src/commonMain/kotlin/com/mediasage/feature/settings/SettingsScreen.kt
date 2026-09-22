@@ -44,7 +44,7 @@ import com.mediasage.theme.MediaSageTheme
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.nav_back
 import mediasage.composeapp.generated.resources.settings_about
-import mediasage.composeapp.generated.resources.settings_display_name
+import mediasage.composeapp.generated.resources.settings_email
 import mediasage.composeapp.generated.resources.settings_privacy_policy
 import mediasage.composeapp.generated.resources.settings_section_account
 import mediasage.composeapp.generated.resources.settings_section_appearance
@@ -152,9 +152,9 @@ fun SettingsScreen(
                 // ── Account ───────────────────────────────────────────────────
                 SettingsSectionHeader(stringResource(Res.string.settings_section_account))
 
-                SettingsRow(label = stringResource(Res.string.settings_display_name)) {
+                SettingsRow(label = stringResource(Res.string.settings_email)) {
                     Text(
-                        text = ready?.displayName.orEmpty(),
+                        text = ready?.email.orEmpty(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

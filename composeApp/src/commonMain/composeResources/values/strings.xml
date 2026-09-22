@@ -87,7 +87,7 @@
     <string name="settings_dark_mode_label">Dark Mode</string>
     <string name="settings_text_size_label">Text Size</string>
     <string name="settings_section_account">Account</string>
-    <string name="settings_display_name">Name</string>
+    <string name="settings_email">Email</string>
     <string name="settings_version_label">Version</string>
     <string name="settings_section_support">Support</string>
     <string name="settings_about">About</string>
