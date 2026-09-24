@@ -8,6 +8,7 @@ on:
       - '!composeApp/src/commonMain/kotlin/com/mediasage/feature/smoketest/**'
       - 'shared/**'
       - 'iosApp/**'
+      - 'fastlane/**'
   workflow_dispatch:
 
 concurrency:
