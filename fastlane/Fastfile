@@ -36,11 +36,17 @@ platform :ios do
       profile_name: "match AppStore com.thecouragepost.app"
     )
 
-    # `bundle exec` injects Bundler into the environment (RUBYOPT=-rbundler/setup etc.). xcodebuild passes that
-    # down to the Kotlin CocoaPods plugin's nested `pod install`, which runs on a different Ruby and crashes
-    # trying to load this Gemfile. Strip only those variables while archiving.
-    bundler_env_keys = %w[RUBYOPT RUBYLIB BUNDLE_GEMFILE BUNDLE_BIN_PATH BUNDLER_SETUP BUNDLER_VERSION]
-    saved_bundler_env = bundler_env_keys.to_h { |key| [key, ENV.delete(key)] }
+    # `bundle exec` rewrites the Ruby environment (RUBYOPT=-rbundler/setup, GEM_HOME/GEM_PATH pointing at
+    # vendor/bundle, BUNDLE_* vars). xcodebuild passes that down to the Kotlin CocoaPods plugin's nested
+    # `pod install`, which runs on the system Ruby and fails under it. While archiving, restore every Ruby/gem/
+    # Bundler variable to its pre-Bundler value; everything else (e.g. vars set by match/setup_ci) is kept.
+    ruby_env_keys = (ENV.keys + Bundler.original_env.keys).uniq.select do |key|
+      key.start_with?("BUNDLE_", "BUNDLER_") || %w[RUBYOPT RUBYLIB GEM_HOME GEM_PATH].include?(key)
+    end
+    saved_ruby_env = ruby_env_keys.to_h { |key| [key, ENV[key]] }
+    ruby_env_keys.each do |key|
+      Bundler.original_env.key?(key) ? ENV[key] = Bundler.original_env[key] : ENV.delete(key)
+    end
     begin
       build_app(
         scheme: "iosApp",
@@ -53,7 +59,7 @@ platform :ios do
         xcargs: "SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
       )
     ensure
-      saved_bundler_env.each { |key, value| ENV[key] = value if value }
+      saved_ruby_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
     end
 
     upload_to_testflight(
