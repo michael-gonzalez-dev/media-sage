@@ -1,7 +1,8 @@
 package com.mediasage.feature.settings
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +49,7 @@ import com.mediasage.theme.BrandAmber
 import com.mediasage.theme.MediaSageTheme
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.nav_back
+import mediasage.composeapp.generated.resources.onos_monos_logo
 import mediasage.composeapp.generated.resources.settings_about
 import mediasage.composeapp.generated.resources.settings_email
 import mediasage.composeapp.generated.resources.settings_privacy_policy
@@ -53,6 +58,7 @@ import mediasage.composeapp.generated.resources.settings_section_appearance
 import mediasage.composeapp.generated.resources.settings_section_debug
 import mediasage.composeapp.generated.resources.settings_section_support
 import mediasage.composeapp.generated.resources.settings_send_feedback
+import mediasage.composeapp.generated.resources.settings_developed_by
 import mediasage.composeapp.generated.resources.settings_developer_credit
 import mediasage.composeapp.generated.resources.settings_sign_out
 import mediasage.composeapp.generated.resources.settings_terms_of_service
@@ -62,6 +68,7 @@ import mediasage.composeapp.generated.resources.settings_dark_mode_label
 import mediasage.composeapp.generated.resources.settings_trigger_test_crash
 import mediasage.composeapp.generated.resources.settings_version_label
 import mediasage.composeapp.generated.resources.title_settings
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -293,18 +300,44 @@ fun SettingsScreen(
                 )
             }
 
-            Box(
+            DeveloperCredit(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp, end = 16.dp),
-                contentAlignment = Alignment.BottomEnd,
-            ) {
-                Text(
-                    text = stringResource(Res.string.settings_developer_credit),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                )
-            }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeveloperCredit(modifier: Modifier = Modifier) {
+    // The logo is a single-color mark, tinted to match the credit text so the two always read as one unit.
+    val creditColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.onos_monos_logo),
+            // Decorative — the adjacent text already announces the studio name to screen readers.
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(creditColor),
+            modifier = Modifier.size(32.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                text = stringResource(Res.string.settings_developed_by),
+                style = MaterialTheme.typography.labelSmall,
+                color = creditColor,
+            )
+            Text(
+                text = stringResource(Res.string.settings_developer_credit),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = creditColor,
+            )
         }
     }
 }
