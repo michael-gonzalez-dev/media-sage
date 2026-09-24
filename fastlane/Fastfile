@@ -25,12 +25,26 @@ platform :ios do
       xcodeproj: "iosApp/iosApp.xcodeproj"
     )
 
+    # Signing is scoped to the app target only. Passing it via xcargs applies it to every target in the
+    # workspace, including CocoaPods framework targets, which cannot take a provisioning profile.
+    update_code_signing_settings(
+      path: "iosApp/iosApp.xcodeproj",
+      targets: ["iosApp"],
+      use_automatic_signing: false,
+      team_id: ENV['APPLE_TEAM_ID'],
+      code_sign_identity: "Apple Distribution",
+      profile_name: "match AppStore com.thecouragepost.app"
+    )
+
     build_app(
       scheme: "iosApp",
       workspace: "iosApp/iosApp.xcworkspace",
       export_method: "app-store",
       configuration: "Release",
-      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=#{ENV['APPLE_TEAM_ID']} PROVISIONING_PROFILE_SPECIFIER='match AppStore com.thecouragepost.app' CODE_SIGN_IDENTITY='Apple Distribution' SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
+      export_options: {
+        provisioningProfiles: { "com.thecouragepost.app" => "match AppStore com.thecouragepost.app" }
+      },
+      xcargs: "SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
     )
 
     upload_to_testflight(

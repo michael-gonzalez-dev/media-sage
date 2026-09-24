@@ -15,11 +15,21 @@ A GitHub Actions workflow that automatically builds the iOS app and uploads it t
 **App Store Connect API key via filepath, not content**
 The Fastlane `app_store_connect_api_key` action has a bug with `key_content:` on some LibreSSL versions — it fails to parse the key. Workaround: write the `.p8` content to a file and pass `key_filepath:` instead.
 
-**Manual code signing with xcargs**
-Match fetches AppStore certificates and provisioning profiles. Signing identity and profile are forced via xcargs to bypass Xcode's automatic signing, which would fail in CI:
+**Manual code signing, scoped to the app target**
+Match fetches AppStore certificates and provisioning profiles. Xcode's automatic signing would fail in CI, so the lane switches the `iosApp` target to manual signing with the match profile via `update_code_signing_settings` before `build_app`:
 ```ruby
-xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=#{team_id} PROVISIONING_PROFILE_SPECIFIER='match AppStore com.thecouragepost.app' CODE_SIGN_IDENTITY='Apple Distribution'"
+update_code_signing_settings(
+  path: "iosApp/iosApp.xcodeproj",
+  targets: ["iosApp"],
+  use_automatic_signing: false,
+  team_id: ENV['APPLE_TEAM_ID'],
+  code_sign_identity: "Apple Distribution",
+  profile_name: "match AppStore com.thecouragepost.app"
+)
 ```
+`xcargs` now carries only non-signing values (Supabase host/key, build number).
+
+*MS-753 update:* signing was originally forced via `xcargs` (`CODE_SIGN_STYLE=Manual … PROVISIONING_PROFILE_SPECIFIER=…`). Command-line build settings apply to **every target** in the workspace, which was harmless while the app was the only target. When MS-683 added CocoaPods (Firebase), every archive failed with `FirebaseCore does not support provisioning profiles, but provisioning profile … has been manually specified` — for each Pod target. TestFlight silently stopped receiving builds from Sept 10 until this fix. Pod framework and resource-bundle targets need no signing config of their own: CocoaPods already leaves them unsigned (`CODE_SIGN_IDENTITY = ""`, `CODE_SIGNING_ALLOWED = NO`), and they're re-signed when embedded in the app.
 
 **One match call, not two**
 An earlier attempt called `match(type: "development")` before `match(type: "appstore")`. This caused a cert mismatch: Xcode picked up the Development cert from the keychain for an App Store build. The fix is a single `match(type: "appstore", readonly: true)`.
