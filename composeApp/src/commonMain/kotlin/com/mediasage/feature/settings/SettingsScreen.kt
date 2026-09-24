@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -72,6 +73,7 @@ private const val TEXT_SCALE_STEPS =
     (TEXT_SCALE_MAX_PERCENT - TEXT_SCALE_MIN_PERCENT) / TEXT_SCALE_STEP_PERCENT - 1
 private const val PRIVACY_POLICY_URL = "https://thecouragepost.app/privacy"
 private const val TERMS_OF_SERVICE_URL = "https://thecouragepost.app/terms"
+private const val FEEDBACK_MAILTO_URL = "mailto:support@thecouragepost.app?subject=The%20Courage%20Post%20Feedback"
 
 @Composable
 fun SettingsScreen(
@@ -199,7 +201,7 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = { uriHandler.openUri(PRIVACY_POLICY_URL) })
+                        .clickable(onClick = { openUriSafely(uriHandler, PRIVACY_POLICY_URL) })
                         .padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -218,7 +220,7 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = { uriHandler.openUri(TERMS_OF_SERVICE_URL) })
+                        .clickable(onClick = { openUriSafely(uriHandler, TERMS_OF_SERVICE_URL) })
                         .padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -234,7 +236,18 @@ fun SettingsScreen(
                     )
                 }
 
-                SettingsRow(label = stringResource(Res.string.settings_send_feedback)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = { openUriSafely(uriHandler, FEEDBACK_MAILTO_URL) })
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.settings_send_feedback),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
                     Icon(
                         imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
                         contentDescription = null,
@@ -293,6 +306,14 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+}
+
+private fun openUriSafely(uriHandler: UriHandler, uri: String) {
+    try {
+        uriHandler.openUri(uri)
+    } catch (e: IllegalArgumentException) {
+        // No app installed that can handle this URI (e.g. no browser or mail client) — nothing to do.
     }
 }
 
