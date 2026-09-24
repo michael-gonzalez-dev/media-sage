@@ -36,16 +36,25 @@ platform :ios do
       profile_name: "match AppStore com.thecouragepost.app"
     )
 
-    build_app(
-      scheme: "iosApp",
-      workspace: "iosApp/iosApp.xcworkspace",
-      export_method: "app-store",
-      configuration: "Release",
-      export_options: {
-        provisioningProfiles: { "com.thecouragepost.app" => "match AppStore com.thecouragepost.app" }
-      },
-      xcargs: "SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
-    )
+    # `bundle exec` injects Bundler into the environment (RUBYOPT=-rbundler/setup etc.). xcodebuild passes that
+    # down to the Kotlin CocoaPods plugin's nested `pod install`, which runs on a different Ruby and crashes
+    # trying to load this Gemfile. Strip only those variables while archiving.
+    bundler_env_keys = %w[RUBYOPT RUBYLIB BUNDLE_GEMFILE BUNDLE_BIN_PATH BUNDLER_SETUP BUNDLER_VERSION]
+    saved_bundler_env = bundler_env_keys.to_h { |key| [key, ENV.delete(key)] }
+    begin
+      build_app(
+        scheme: "iosApp",
+        workspace: "iosApp/iosApp.xcworkspace",
+        export_method: "app-store",
+        configuration: "Release",
+        export_options: {
+          provisioningProfiles: { "com.thecouragepost.app" => "match AppStore com.thecouragepost.app" }
+        },
+        xcargs: "SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
+      )
+    ensure
+      saved_bundler_env.each { |key, value| ENV[key] = value if value }
+    end
 
     upload_to_testflight(
       api_key: api_key,
