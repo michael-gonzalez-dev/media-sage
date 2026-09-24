@@ -214,6 +214,7 @@
     <string name="login_error_empty_otp">Please enter the verification code</string>
 
     <string name="settings_sign_out">Sign Out</string>
+    <string name="settings_developed_by">Developed by</string>
     <string name="settings_developer_credit">Onos Monos</string>
 
     <!-- Briefing evening-tone notification -->
