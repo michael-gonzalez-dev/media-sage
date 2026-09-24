@@ -18,6 +18,11 @@ concurrency:
 jobs:
   deploy:
     runs-on: macos-26
+    env:
+      # CocoaPods crashes without a UTF-8 locale ("Unicode Normalization not appropriate for ASCII-8BIT").
+      # The Kotlin CocoaPods plugin runs `pod install` from inside the Xcode build, which inherits this env.
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
     steps:
       - uses: actions/checkout@v5
 
@@ -74,3 +79,10 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           BUILD_NUMBER: ${{ github.run_number }}
         run: bundle exec fastlane ios beta
+
+      - name: Upload raw xcodebuild log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-logs
+          path: ~/Library/Logs/gym/
