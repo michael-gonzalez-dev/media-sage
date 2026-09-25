@@ -32,4 +32,4 @@ fun initKoin(supabaseUrl: String, supabaseAnonKey: String, analyticsService: Ana
 }
 
 fun MainViewController(isDebugBuild: Boolean = false, appVersion: String = "") =
-    ComposeUIViewController { App(isDebugBuild = isDebugBuild, appVersion = appVersion) }
+    ComposeUIViewController { App(isDebugBuild = isDebugBuild, appVersion = appVersion, isIos = true) }

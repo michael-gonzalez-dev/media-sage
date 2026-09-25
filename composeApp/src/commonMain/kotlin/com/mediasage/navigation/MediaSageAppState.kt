@@ -7,6 +7,8 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.mediasage.feature.settings.AboutSection
+
 @Stable
 class MediaSageAppState(
     val backStack: NavBackStack<NavKey>
@@ -57,6 +59,10 @@ class MediaSageAppState(
 
     fun navigateToAbout() {
         backStack.add(Route.About)
+    }
+
+    fun navigateToAboutDetail(section: AboutSection) {
+        backStack.add(Route.AboutDetail(section))
     }
 
     fun navigateBack() {
