@@ -57,6 +57,10 @@ jobs:
         run: |
           echo "$GOOGLE_SERVICES_JSON" > composeApp/google-services.json
           echo "$GOOGLE_SERVICE_INFO_PLIST" > iosApp/iosApp/GoogleService-Info.plist
+          # Fail fast (without printing contents) if the secret isn't a valid Firebase plist — the app's
+          # FirebaseApp.configure() and the Crashlytics dSYM upload both need GOOGLE_APP_ID.
+          plutil -lint iosApp/iosApp/GoogleService-Info.plist
+          plutil -extract GOOGLE_APP_ID raw -o /dev/null iosApp/iosApp/GoogleService-Info.plist
 
       - name: Deploy to TestFlight
         env:
