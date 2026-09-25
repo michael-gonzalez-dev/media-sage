@@ -2,9 +2,9 @@
 
 ## What changed
 
-The "About the figures & AI content" page was four unbroken paragraphs. On a device that read as a
+The "Figures & AI content" page (row and title were "About the figures & AI content") was four unbroken paragraphs. On a device that read as a
 wall of text, and the second paragraph packed quotes, reflections, and portraits into one dense block.
-It now has three headed sections ("About these figures", "What's made with AI", "Why use AI at all").
+It now has three headed sections ("The figures", "What's made with AI", "Why use AI at all").
 Under the AI heading, Quotes, Daily reflections, and Portraits are separate items, each with a
 semi-bold lead-in label. The wording itself is unchanged from MS-754.
 
@@ -42,3 +42,10 @@ Headings serve scanning. The AI page is reference material, where readers look f
 "Why" and "Onos Monos" pages are short narratives meant to be read top to bottom, so headings would
 break the flow over one- or two-sentence paragraphs. Consistency across the three pages comes from
 the shared top bar, type, and spacing.
+
+## Dropping the "About" prefix
+
+The rows sit on the About screen, so "About Onos Monos" and "About the figures & AI content"
+repeated the screen's own name. They're now "Onos Monos" and "Figures & AI content" (each row label is
+also its page title), and the AI page's first heading went from "About these figures" to "The
+figures". "Why The Courage Post" already reads naturally and is unchanged.

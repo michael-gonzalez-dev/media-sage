@@ -97,7 +97,7 @@
     <string name="about_app_name">The Courage Post</string>
     <string name="about_why_title">Why The Courage Post</string>
     <string name="about_why_body">A lot of the news today is designed to keep us anxious, because anxious readers keep scrolling. The Courage Post is built to do the opposite.\n\nEach day's briefing grounds you in the hard-won wisdom of people who lived through real hardship long before us and found in God a confidence and peace worth passing on. The day's headlines are paired with that same wisdom.\n\nMy hope is that a few minutes here each day leaves you steadier than the news alone would.</string>
-    <string name="about_studio_title">About Onos Monos</string>
+    <string name="about_studio_title">Onos Monos</string>
     <string name="about_studio_body">Onos monos is Greek for “a donkey alone.” When Jesus rode into Jerusalem (Matthew 21:1–11), He rode an ordinary donkey. There was nothing special about the animal. What mattered was the One it carried. That's the idea behind this work. It should carry something greater than the person who makes it.\n\nOnos Monos is just me, one engineer who designs, builds, and maintains this app. I believe technology can make learning and research easier and more accessible for everyone when it's used as a tool and not a distraction.\n\nThe Courage Post is one way I'm putting that belief into practice. It turns the daily news into a chance to learn from history, from scripture, and from the people who came before us.</string>
     <string name="about_section_support">Support</string>
     <string name="about_send_feedback">Send feedback</string>
@@ -109,8 +109,8 @@
     <string name="about_developed_by">Developed by</string>
     <string name="about_developer_credit">Onos Monos</string>
     <string name="about_copyright">© 2026 Michael Arthur Gonzalez. All rights reserved.</string>
-    <string name="about_disclaimer_title">About the figures &amp; AI content</string>
-    <string name="about_disclaimer_figures_heading">About these figures</string>
+    <string name="about_disclaimer_title">Figures &amp; AI content</string>
+    <string name="about_disclaimer_figures_heading">The figures</string>
     <string name="about_disclaimer_figures_body">The historical and biblical figures in this app, including their portraits, biographies, quotes, and daily reflections, are here for education and devotional reflection. This app is not affiliated with, endorsed by, or authorized by any of these figures, their estates, or any institution connected to them.</string>
     <string name="about_disclaimer_ai_heading">What's made with AI</string>
     <string name="about_disclaimer_quotes_label">Quotes.</string>
