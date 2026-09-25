@@ -132,7 +132,7 @@ postgresql-jdbc = { module = "org.postgresql:postgresql", version.ref = "postgre
 cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography-kotlin" }
 cryptography-provider-optimal = { module = "dev.whyoleg.cryptography:cryptography-provider-optimal", version.ref = "cryptography-kotlin" }
 
-# Firebase (Analytics + Crashlytics, MS-683 — Android only; iOS pulls the SDK via CocoaPods).
+# Firebase (Analytics + Crashlytics, MS-683 — Android only; iOS pulls the SDK via Swift Package Manager, MS-753).
 # The -ktx artifacts are deprecated/removed from the BOM — their Kotlin extensions (Firebase.analytics,
 # etc.) now ship in the base artifacts directly, same package names, so no code changes were needed.
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
@@ -183,4 +183,3 @@ shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
 firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-gradle" }
-kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }

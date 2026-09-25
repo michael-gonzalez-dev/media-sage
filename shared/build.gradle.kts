@@ -14,11 +14,6 @@ plugins {
 // build all targets normally.
 val buildIosTargets = providers.gradleProperty("mediasage.worker").orNull != "true"
 
-// Firebase iOS SDK is pulled in via CocoaPods (MS-683) — gated on the config file so a
-// contributor without GoogleService-Info.plist (and without CocoaPods installed) still gets a
-// working iOS build.
-val googleServiceInfoPlistExists = file("../iosApp/GoogleService-Info.plist").exists()
-
 kotlin {
     androidTarget {
         compilerOptions {
@@ -41,18 +36,6 @@ kotlin {
                         freeCompilerArgs.add("-Xexpect-actual-classes")
                     }
                 }
-            }
-        }
-
-        if (googleServiceInfoPlistExists) {
-            apply(plugin = "org.jetbrains.kotlin.native.cocoapods")
-            extensions.configure<org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension> {
-                version = "1.0"
-                summary = "Media Sage shared KMP module"
-                homepage = "https://thecouragepost.app"
-                ios.deploymentTarget = "15.0"
-                pod("FirebaseAnalytics")
-                pod("FirebaseCrashlytics")
             }
         }
     }
@@ -105,14 +88,6 @@ kotlin {
         if (buildIosTargets) {
             iosMain.dependencies {
                 implementation(libs.ktor.client.darwin)
-            }
-            // Firebase-cinterop iOS actuals only compile against the real pods (podspec/pod
-            // install are themselves gated on the plist above) — CI's `:shared:build` has no
-            // Firebase secrets, so it needs the no-op fallback actuals instead (MS-683).
-            getByName("iosMain") {
-                kotlin.srcDir(
-                    if (googleServiceInfoPlistExists) "src/iosFirebaseMain/kotlin" else "src/iosNoFirebaseMain/kotlin"
-                )
             }
         }
     }

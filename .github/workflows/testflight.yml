@@ -8,6 +8,7 @@ on:
       - '!composeApp/src/commonMain/kotlin/com/mediasage/feature/smoketest/**'
       - 'shared/**'
       - 'iosApp/**'
+      - 'fastlane/**'
   workflow_dispatch:
 
 concurrency:
@@ -47,19 +48,19 @@ jobs:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > fastlane/AuthKey.p8
 
-      - name: Write Firebase config (MS-683)
+      - name: Write Firebase config
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        # The iOS plist must live inside iosApp/iosApp/ — that folder is an Xcode synchronized group,
+        # so anything in it is bundled into the app, where FirebaseApp.configure() reads it at launch.
         run: |
           echo "$GOOGLE_SERVICES_JSON" > composeApp/google-services.json
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > iosApp/GoogleService-Info.plist
-
-      - name: Generate CocoaPods podspecs
-        run: ./gradlew :shared:podspec :composeApp:podspec :shared:generateDummyFramework :composeApp:generateDummyFramework
-
-      - name: Install CocoaPods dependencies
-        run: cd iosApp && pod install
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > iosApp/iosApp/GoogleService-Info.plist
+          # Fail fast (without printing contents) if the secret isn't a valid Firebase plist — the app's
+          # FirebaseApp.configure() and the Crashlytics dSYM upload both need GOOGLE_APP_ID.
+          plutil -lint iosApp/iosApp/GoogleService-Info.plist
+          plutil -extract GOOGLE_APP_ID raw -o /dev/null iosApp/iosApp/GoogleService-Info.plist
 
       - name: Deploy to TestFlight
         env:
@@ -73,3 +74,10 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           BUILD_NUMBER: ${{ github.run_number }}
         run: bundle exec fastlane ios beta
+
+      - name: Upload raw xcodebuild log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-logs
+          path: ~/Library/Logs/gym/

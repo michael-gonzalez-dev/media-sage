@@ -1,5 +1,30 @@
 # MS-683: Integrate Firebase Analytics and Crashlytics
 
+> **MS-753 update — iOS no longer uses CocoaPods.** The CocoaPods integration described below broke
+> every TestFlight release archive from Sept 10 until MS-753, in layered ways that only surface in a
+> Release archive: signing forced via `xcargs` hit the Pod targets, the Kotlin CocoaPods plugin's nested
+> `pod install` inherited `bundle exec`'s Ruby environment, and the `shared` and `composeApp` pods each
+> started their own Gradle build in parallel and raced on the same Kotlin output directory. CocoaPods was
+> also layered *on top of* the existing direct Kotlin integration rather than replacing it (three Kotlin
+> build paths in one app). MS-753 replaced it:
+> - The Firebase iOS SDK (`FirebaseAnalytics`, `FirebaseCrashlytics`) comes in via **Swift Package
+>   Manager** in the Xcode project (Firebase's recommended distribution; CocoaPods is deprecated for it).
+> - The iOS `AnalyticsService` is implemented in Swift (`iosApp/iosApp/FirebaseAnalyticsService.swift`)
+>   and passed into `initKoin(...)` → `sharedModule(analyticsServiceFactory = ...)`. Kotlin no longer
+>   links Firebase on iOS, so there is no cinterop, no `cocoapods {}` block, and no
+>   `iosFirebaseMain`/`iosNoFirebaseMain` compile-time switch. Android passes its own
+>   `FirebaseAnalyticsService` the same way; the `expect fun createAnalyticsService()` is gone.
+> - `triggerTestCrash()`'s iOS actual lives in plain `iosMain` (it never needed Firebase — an uncaught
+>   Kotlin exception aborts the process and Crashlytics captures it).
+> - An "Upload Crashlytics dSYMs" build phase was added so iOS crash reports are symbolicated.
+> - The Kotlin framework is built only by the app's original "Compile Kotlin Framework" phase
+>   (`embedAndSignAppleFrameworkForXcode`).
+> - `GoogleService-Info.plist` belongs in `iosApp/iosApp/` (an Xcode synchronized group, so it's bundled
+>   automatically). CI previously wrote it to `iosApp/`, the old Gradle gate path, which would have
+>   shipped a build without Firebase config.
+>
+> Sections below describing CocoaPods, cinterop, and the no-op fallback are historical.
+
 ## What was built
 
 Firebase Analytics + Crashlytics SDK integration across Android and iOS, plus three placeholder
@@ -123,8 +148,8 @@ migration is a contained, low-risk follow-up, not a rewrite.
    from `media-sage-agent` (the agentic pipeline's GCP project).
 2. Register an Android app (`com.mediasage`) and an iOS app (`com.thecouragepost.app`); download
    `google-services.json` → `composeApp/google-services.json` and `GoogleService-Info.plist` →
-   `iosApp/GoogleService-Info.plist` (both gitignored).
+   `iosApp/iosApp/GoogleService-Info.plist` (both gitignored).
 3. Add `GOOGLE_SERVICES_JSON` and `GOOGLE_SERVICE_INFO_PLIST` GitHub Actions secrets (their raw file
    contents) for `testflight.yml` to write before each release build.
-4. Locally: `./gradlew :shared:podspec :composeApp:podspec :shared:generateDummyFramework
-   :composeApp:generateDummyFramework && cd iosApp && pod install` once the real plist is in place.
+4. ~~Locally: `pod install`~~ — no longer needed since MS-753; open `iosApp/iosApp.xcodeproj` and Xcode
+   resolves the Firebase Swift package automatically.

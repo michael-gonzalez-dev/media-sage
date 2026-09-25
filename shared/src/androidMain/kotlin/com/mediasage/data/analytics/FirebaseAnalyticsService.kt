@@ -23,5 +23,3 @@ class FirebaseAnalyticsService : AnalyticsService {
         firebaseAnalytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, bundle)
     }
 }
-
-actual fun createAnalyticsService(): AnalyticsService = FirebaseAnalyticsService()

@@ -9,7 +9,11 @@ struct iOSApp: App {
         let info = Bundle.main.infoDictionary
         let supabaseUrl = info?["SUPABASE_URL"] as? String ?? ""
         let supabaseAnonKey = info?["SUPABASE_ANON_KEY"] as? String ?? ""
-        MainViewControllerKt.doInitKoin(supabaseUrl: supabaseUrl, supabaseAnonKey: supabaseAnonKey)
+        MainViewControllerKt.doInitKoin(
+            supabaseUrl: supabaseUrl,
+            supabaseAnonKey: supabaseAnonKey,
+            analyticsService: FirebaseAnalyticsService()
+        )
     }
 
     var body: some Scene {
