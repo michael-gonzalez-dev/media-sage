@@ -25,8 +25,8 @@ platform :ios do
       xcodeproj: "iosApp/iosApp.xcodeproj"
     )
 
-    # Signing is scoped to the app target only. Passing it via xcargs applies it to every target in the
-    # workspace, including CocoaPods framework targets, which cannot take a provisioning profile.
+    # Signing is scoped to the app target only. Passing it via xcargs would apply it to every target in the
+    # build (e.g. Swift package targets), which cannot take a provisioning profile.
     update_code_signing_settings(
       path: "iosApp/iosApp.xcodeproj",
       targets: ["iosApp"],
@@ -36,31 +36,16 @@ platform :ios do
       profile_name: "match AppStore com.thecouragepost.app"
     )
 
-    # `bundle exec` rewrites the Ruby environment (RUBYOPT=-rbundler/setup, GEM_HOME/GEM_PATH pointing at
-    # vendor/bundle, BUNDLE_* vars). xcodebuild passes that down to the Kotlin CocoaPods plugin's nested
-    # `pod install`, which runs on the system Ruby and fails under it. While archiving, restore every Ruby/gem/
-    # Bundler variable to its pre-Bundler value; everything else (e.g. vars set by match/setup_ci) is kept.
-    ruby_env_keys = (ENV.keys + Bundler.original_env.keys).uniq.select do |key|
-      key.start_with?("BUNDLE_", "BUNDLER_") || %w[RUBYOPT RUBYLIB GEM_HOME GEM_PATH].include?(key)
-    end
-    saved_ruby_env = ruby_env_keys.to_h { |key| [key, ENV[key]] }
-    ruby_env_keys.each do |key|
-      Bundler.original_env.key?(key) ? ENV[key] = Bundler.original_env[key] : ENV.delete(key)
-    end
-    begin
-      build_app(
-        scheme: "iosApp",
-        workspace: "iosApp/iosApp.xcworkspace",
-        export_method: "app-store",
-        configuration: "Release",
-        export_options: {
-          provisioningProfiles: { "com.thecouragepost.app" => "match AppStore com.thecouragepost.app" }
-        },
-        xcargs: "SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
-      )
-    ensure
-      saved_ruby_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
-    end
+    build_app(
+      scheme: "iosApp",
+      project: "iosApp/iosApp.xcodeproj",
+      export_method: "app-store",
+      configuration: "Release",
+      export_options: {
+        provisioningProfiles: { "com.thecouragepost.app" => "match AppStore com.thecouragepost.app" }
+      },
+      xcargs: "SUPABASE_HOST='#{supabase_host}' SUPABASE_ANON_KEY='#{supabase_anon_key}' CURRENT_PROJECT_VERSION='#{ENV['BUILD_NUMBER'] || Time.now.to_i.to_s}'"
+    )
 
     upload_to_testflight(
       api_key: api_key,

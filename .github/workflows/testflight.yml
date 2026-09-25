@@ -48,19 +48,15 @@ jobs:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > fastlane/AuthKey.p8
 
-      - name: Write Firebase config (MS-683)
+      - name: Write Firebase config
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
           GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        # The iOS plist must live inside iosApp/iosApp/ — that folder is an Xcode synchronized group,
+        # so anything in it is bundled into the app, where FirebaseApp.configure() reads it at launch.
         run: |
           echo "$GOOGLE_SERVICES_JSON" > composeApp/google-services.json
-          echo "$GOOGLE_SERVICE_INFO_PLIST" > iosApp/GoogleService-Info.plist
-
-      - name: Generate CocoaPods podspecs
-        run: ./gradlew :shared:podspec :composeApp:podspec :shared:generateDummyFramework :composeApp:generateDummyFramework
-
-      - name: Install CocoaPods dependencies
-        run: cd iosApp && pod install
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > iosApp/iosApp/GoogleService-Info.plist
 
       - name: Deploy to TestFlight
         env:

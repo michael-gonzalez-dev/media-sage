@@ -29,11 +29,6 @@ if (googleServicesJsonExists) {
 // build all targets normally.
 val buildIosTargets = providers.gradleProperty("mediasage.worker").orNull != "true"
 
-// Kotlin's CocoaPods plugin requires every KMP module in the iOS framework chain to apply it
-// when any one of them (here, :shared) declares pods — this module has no pods of its own.
-// Gated the same way as :shared's cocoapods block (MS-683).
-val googleServiceInfoPlistExists = file("../iosApp/GoogleService-Info.plist").exists()
-
 kotlin {
     androidTarget {
         compilerOptions {
@@ -57,16 +52,6 @@ kotlin {
                         freeCompilerArgs.add("-Xexpect-actual-classes")
                     }
                 }
-            }
-        }
-
-        if (googleServiceInfoPlistExists) {
-            apply(plugin = "org.jetbrains.kotlin.native.cocoapods")
-            extensions.configure<org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension> {
-                version = "1.0"
-                summary = "Media Sage Compose Multiplatform UI"
-                homepage = "https://thecouragepost.app"
-                ios.deploymentTarget = "15.0"
             }
         }
     }

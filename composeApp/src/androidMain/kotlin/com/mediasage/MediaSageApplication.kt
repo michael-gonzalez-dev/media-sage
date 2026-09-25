@@ -1,6 +1,7 @@
 package com.mediasage
 
 import android.app.Application
+import com.mediasage.data.analytics.FirebaseAnalyticsService
 import com.mediasage.di.MockConfig
 import com.mediasage.di.appModule
 import com.mediasage.di.databaseModule
@@ -24,7 +25,14 @@ class MediaSageApplication : Application() {
             add(userModule)
             add(headlinesModule)
             add(notificationModule)
-            add(sharedModule(BuildConfig.SERVER_BASE_URL, BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_ANON_KEY))
+            add(
+                sharedModule(
+                    serverBaseUrl = BuildConfig.SERVER_BASE_URL,
+                    supabaseUrl = BuildConfig.SUPABASE_URL,
+                    supabaseAnonKey = BuildConfig.SUPABASE_ANON_KEY,
+                    analyticsServiceFactory = ::FirebaseAnalyticsService,
+                )
+            )
             add(appModule)
             if (BuildConfig.USE_MOCK_DATA) add(mockApiModule)
         }

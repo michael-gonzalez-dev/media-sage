@@ -27,9 +27,10 @@ update_code_signing_settings(
   profile_name: "match AppStore com.thecouragepost.app"
 )
 ```
-`xcargs` now carries only non-signing values (Supabase host/key, build number).
+`xcargs` now carries only non-signing values (Supabase host/key, build number). `build_app` points at
+`iosApp/iosApp.xcodeproj` (there is no CocoaPods workspace since MS-753).
 
-*MS-753 update:* signing was originally forced via `xcargs` (`CODE_SIGN_STYLE=Manual … PROVISIONING_PROFILE_SPECIFIER=…`). Command-line build settings apply to **every target** in the workspace, which was harmless while the app was the only target. When MS-683 added CocoaPods (Firebase), every archive failed with `FirebaseCore does not support provisioning profiles, but provisioning profile … has been manually specified` — for each Pod target. TestFlight silently stopped receiving builds from Sept 10 until this fix. Pod framework and resource-bundle targets need no signing config of their own: CocoaPods already leaves them unsigned (`CODE_SIGN_IDENTITY = ""`, `CODE_SIGNING_ALLOWED = NO`), and they're re-signed when embedded in the app.
+*MS-753 update:* signing was originally forced via `xcargs` (`CODE_SIGN_STYLE=Manual … PROVISIONING_PROFILE_SPECIFIER=…`). Command-line build settings apply to **every target** in the workspace, which was harmless while the app was the only target. When MS-683 added CocoaPods (Firebase), every archive failed with `FirebaseCore does not support provisioning profiles, but provisioning profile … has been manually specified` — for each Pod target. TestFlight silently stopped receiving builds from Sept 10 until this fix. Fixing signing only exposed the next CocoaPods failure (a nested `pod install` inheriting `bundle exec`'s Ruby environment, then two pods racing on the same Kotlin build output), so MS-753 ultimately removed CocoaPods in favor of Swift Package Manager — see the MS-753 note at the top of `docs/MS-683-firebase-analytics-crashlytics.md`. The workflow also uploads fastlane's raw `xcodebuild` log as a `gym-logs` artifact on failure, since xcbeautify hides the underlying error messages.
 
 **One match call, not two**
 An earlier attempt called `match(type: "development")` before `match(type: "appstore")`. This caused a cert mismatch: Xcode picked up the Development cert from the keychain for an App Store build. The fix is a single `match(type: "appstore", readonly: true)`.

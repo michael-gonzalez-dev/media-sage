@@ -1,7 +1,6 @@
 package com.mediasage.di
 
 import com.mediasage.data.analytics.AnalyticsService
-import com.mediasage.data.analytics.createAnalyticsService
 import com.mediasage.data.crypto.ReflectionNoteCipher
 import com.mediasage.data.crypto.createReflectionNoteCipher
 import com.mediasage.data.local.db.MediaSageDatabase
@@ -57,7 +56,8 @@ import org.koin.dsl.module
 fun sharedModule(
     serverBaseUrl: String = "http://10.0.2.2:8080",
     supabaseUrl: String = "",
-    supabaseAnonKey: String = ""
+    supabaseAnonKey: String = "",
+    analyticsServiceFactory: () -> AnalyticsService,
 ) = module {
     // Supabase client — only registered when credentials are configured
     if (supabaseUrl.isNotBlank() && supabaseAnonKey.isNotBlank()) {
@@ -112,7 +112,7 @@ fun sharedModule(
         DayAssignmentRepositoryImpl(get(), get(), get(), get(), getOrNull(), get(), get())
     }
     single<ReflectionNoteCipher> { createReflectionNoteCipher() }
-    single<AnalyticsService> { createAnalyticsService() }
+    single<AnalyticsService> { analyticsServiceFactory() }
     single<UserReflectionNoteRepository> {
         UserReflectionNoteRepositoryImpl(get(), get(), getOrNull(), get(), get(), getOrNull())
     }
