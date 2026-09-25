@@ -1,6 +1,7 @@
 package com.mediasage.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.mediasage.feature.settings.AboutSection
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -58,9 +59,13 @@ sealed interface Route : NavKey {
     @Serializable
     data object Settings : Route
 
-    /** About screen — app mission and historical-figure disclaimer, reached from [Settings]. */
+    /** About screen — app header, content pages, support and legal links, reached from [Settings]. */
     @Serializable
     data object About : Route
+
+    /** One long-form About page (mission, studio, figure/AI disclaimer), pushed from [About]. */
+    @Serializable
+    data class AboutDetail(val section: AboutSection) : Route
 }
 
 /** Serialization config required for Nav3 on non-JVM platforms. */
@@ -78,5 +83,6 @@ val navSerializersModule = SerializersModule {
         subclass(Route.Bookmarks::class)
         subclass(Route.Settings::class)
         subclass(Route.About::class)
+        subclass(Route.AboutDetail::class)
     }
 }

@@ -18,7 +18,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 @Preview
-fun App(isDebugBuild: Boolean = false, appVersion: String = "") {
+fun App(isDebugBuild: Boolean = false, appVersion: String = "", isIos: Boolean = false) {
     val appViewModel = koinViewModel<AppViewModel>()
     val darkMode by appViewModel.darkMode.collectAsState()
     val appTheme by appViewModel.appTheme.collectAsState()
@@ -29,6 +29,7 @@ fun App(isDebugBuild: Boolean = false, appVersion: String = "") {
     CompositionLocalProvider(
         LocalIsDebugBuild provides isDebugBuild,
         LocalAppVersion provides appVersion,
+        LocalIsIos provides isIos,
         LocalAnalyticsService provides analyticsService,
     ) {
         MediaSageTheme(theme = appTheme, darkTheme = darkMode ?: false, textScalePercent = textScalePercent) {

@@ -9,7 +9,6 @@ object SettingsContract {
             val appTheme: AppTheme = AppTheme.CLASSIC,
             val darkMode: Boolean = false,
             val textScalePercent: Int = 100,
-            val appVersion: String = "1.0",
             val email: String = "",
         ) : UiState
     }

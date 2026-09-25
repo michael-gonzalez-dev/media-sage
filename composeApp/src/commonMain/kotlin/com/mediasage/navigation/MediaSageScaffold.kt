@@ -46,6 +46,7 @@ import com.mediasage.feature.headlinedetail.HeadlineDetailScreen
 import com.mediasage.feature.headlinedetail.HeadlineDetailViewModel
 import com.mediasage.feature.quotes.QuotesScreen
 import com.mediasage.feature.quotes.QuotesViewModel
+import com.mediasage.feature.settings.AboutDetailScreen
 import com.mediasage.feature.settings.AboutScreen
 import com.mediasage.feature.settings.SettingsContract
 import com.mediasage.feature.settings.SettingsScreen
@@ -271,7 +272,13 @@ fun MediaSageScaffold(
                     )
                 }
                 is Route.About -> TrackedNavEntry(route) {
-                    AboutScreen(onNavigateBack = { appState.navigateBack() })
+                    AboutScreen(
+                        onNavigateBack = { appState.navigateBack() },
+                        onNavigateToSection = { appState.navigateToAboutDetail(it) },
+                    )
+                }
+                is Route.AboutDetail -> TrackedNavEntry(route) {
+                    AboutDetailScreen(section = route.section, onNavigateBack = { appState.navigateBack() })
                 }
                 else -> NavEntry(route) {}
             }

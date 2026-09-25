@@ -1,8 +1,6 @@
 package com.mediasage.feature.settings
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,20 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.ArrowForwardIos
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -36,9 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,27 +35,17 @@ import com.mediasage.theme.AppTheme
 import com.mediasage.theme.BrandAmber
 import com.mediasage.theme.MediaSageTheme
 import mediasage.composeapp.generated.resources.Res
-import mediasage.composeapp.generated.resources.nav_back
-import mediasage.composeapp.generated.resources.onos_monos_logo
 import mediasage.composeapp.generated.resources.settings_about
+import mediasage.composeapp.generated.resources.settings_dark_mode_label
 import mediasage.composeapp.generated.resources.settings_email
-import mediasage.composeapp.generated.resources.settings_privacy_policy
 import mediasage.composeapp.generated.resources.settings_section_account
 import mediasage.composeapp.generated.resources.settings_section_appearance
 import mediasage.composeapp.generated.resources.settings_section_debug
-import mediasage.composeapp.generated.resources.settings_section_support
-import mediasage.composeapp.generated.resources.settings_send_feedback
-import mediasage.composeapp.generated.resources.settings_developed_by
-import mediasage.composeapp.generated.resources.settings_developer_credit
 import mediasage.composeapp.generated.resources.settings_sign_out
-import mediasage.composeapp.generated.resources.settings_terms_of_service
 import mediasage.composeapp.generated.resources.settings_text_size_label
 import mediasage.composeapp.generated.resources.settings_theme_label
-import mediasage.composeapp.generated.resources.settings_dark_mode_label
 import mediasage.composeapp.generated.resources.settings_trigger_test_crash
-import mediasage.composeapp.generated.resources.settings_version_label
 import mediasage.composeapp.generated.resources.title_settings
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
@@ -78,9 +55,6 @@ private const val TEXT_SCALE_DEFAULT_PERCENT = 100
 private const val TEXT_SCALE_STEP_PERCENT = 5
 private const val TEXT_SCALE_STEPS =
     (TEXT_SCALE_MAX_PERCENT - TEXT_SCALE_MIN_PERCENT) / TEXT_SCALE_STEP_PERCENT - 1
-private const val PRIVACY_POLICY_URL = "https://thecouragepost.app/privacy"
-private const val TERMS_OF_SERVICE_URL = "https://thecouragepost.app/terms"
-private const val FEEDBACK_MAILTO_URL = "mailto:support@thecouragepost.app?subject=The%20Courage%20Post%20Feedback"
 
 @Composable
 fun SettingsScreen(
@@ -90,28 +64,10 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit = {},
 ) {
     val ready = state as? SettingsContract.UiState.Ready
-    val uriHandler = LocalUriHandler.current
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = stringResource(Res.string.nav_back),
-                    )
-                }
-                Text(
-                    text = stringResource(Res.string.title_settings),
-                    style = MaterialTheme.typography.titleLarge,
-                )
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.primary, thickness = 1.dp)
+            SettingsTopBar(title = stringResource(Res.string.title_settings), onNavigateBack = onNavigateBack)
 
             Column(
                 modifier = Modifier
@@ -127,14 +83,6 @@ fun SettingsScreen(
                 SettingsRow(label = stringResource(Res.string.settings_email)) {
                     Text(
                         text = ready?.email.orEmpty(),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                SettingsRow(label = stringResource(Res.string.settings_version_label)) {
-                    Text(
-                        text = ready?.appVersion ?: "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -183,84 +131,9 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // ── Support ───────────────────────────────────────────────────
-                SettingsSectionHeader(stringResource(Res.string.settings_section_support))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onNavigateToAbout)
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.settings_about),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = { openUriSafely(uriHandler, PRIVACY_POLICY_URL) })
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.settings_privacy_policy),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = { openUriSafely(uriHandler, TERMS_OF_SERVICE_URL) })
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.settings_terms_of_service),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = { openUriSafely(uriHandler, FEEDBACK_MAILTO_URL) })
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.settings_send_feedback),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowForwardIos,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                // ── About ─────────────────────────────────────────────────────
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                SettingsNavRow(label = stringResource(Res.string.settings_about), onClick = onNavigateToAbout)
 
                 if (LocalIsDebugBuild.current) {
                     Spacer(modifier = Modifier.height(24.dp))
@@ -299,68 +172,8 @@ fun SettingsScreen(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-
-            DeveloperCredit(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp, end = 16.dp),
-            )
         }
     }
-}
-
-@Composable
-private fun DeveloperCredit(modifier: Modifier = Modifier) {
-    // The logo is a single-color mark, tinted to match the credit text so the two always read as one unit.
-    val creditColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.onos_monos_logo),
-            // Decorative — the adjacent text already announces the studio name to screen readers.
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(creditColor),
-            modifier = Modifier.size(32.dp),
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(
-                text = stringResource(Res.string.settings_developed_by),
-                style = MaterialTheme.typography.labelSmall,
-                color = creditColor,
-            )
-            Text(
-                text = stringResource(Res.string.settings_developer_credit),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = creditColor,
-            )
-        }
-    }
-}
-
-private fun openUriSafely(uriHandler: UriHandler, uri: String) {
-    try {
-        uriHandler.openUri(uri)
-    } catch (e: IllegalArgumentException) {
-        // No app installed that can handle this URI (e.g. no browser or mail client) — nothing to do.
-    }
-}
-
-@Composable
-private fun SettingsSectionHeader(title: String) {
-    Text(
-        text = title.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(bottom = 4.dp),
-    )
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-    Spacer(modifier = Modifier.height(4.dp))
 }
 
 @Composable
