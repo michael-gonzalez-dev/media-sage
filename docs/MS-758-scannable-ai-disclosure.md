@@ -46,6 +46,11 @@ the shared top bar, type, and spacing.
 ## Dropping the "About" prefix
 
 The rows sit on the About screen, so "About Onos Monos" and "About the figures & AI content"
-repeated the screen's own name. They're now "Onos Monos" and "Figures & AI content" (each row label is
-also its page title), and the AI page's first heading went from "About these figures" to "The
-figures". "Why The Courage Post" already reads naturally and is unchanged.
+repeated the screen's own name. They're now "Meet the developer" and "Figures & AI content" (each
+row label is also its page title), and the AI page's first heading went from "About these figures" to
+"The figures". "Why The Courage Post" already reads naturally and is unchanged.
+
+Plain "Onos Monos" was considered and rejected: a new user doesn't know it's the studio name, so the
+row gave no hint of what's behind it. Plain "Developer" was rejected too, because on Android it
+suggests "Developer options", the hidden debug menu. "Meet the developer" says what the page is and
+leads into "Onos Monos is just me". The studio name still appears on the page and in the footer.
