@@ -1,0 +1,17 @@
+{
+  // Keeps the name of the Worker that already serves /terms and /privacy, so the first
+  // deploy from Git replaces its content in place instead of creating a competing Worker.
+  "name": "couragepost-legal-pages",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./public",
+    // /terms serves terms.html; unknown paths serve 404.html with a 404 status.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  // Every path goes to this Worker, so nothing falls through to Squarespace.
+  // www is redirected to the apex by a Cloudflare Redirect Rule before it reaches the Worker.
+  "routes": [
+    { "pattern": "thecouragepost.app/*", "zone_name": "thecouragepost.app" }
+  ]
+}
