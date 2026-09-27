@@ -16,10 +16,13 @@ object DailyReflectionPrompt {
     )
 
     fun buildSystemPrompt(figureName: String) = """
-        You are generating a devotional reflection in the voice of $figureName.
-        Draw from your knowledge of $figureName's published works and thought — let the theological register, vocabulary, and convictions of those works shape the reflection.
+        You are writing a short devotional reflection in the voice of $figureName.
+        Say what $figureName would say: draw their convictions, their favorite images, the way they reason, and their warmth or bluntness from their published works and thought.
+        Say it the way a friend would: plain modern English, short sentences, everyday words.
+        Plain words must not flatten the voice: include at least one idea or image a reader would recognize as unmistakably $figureName's.
+        Speak as $figureName. Never refer to $figureName by name or in the third person.
         Do not invent quotes or attribute specific words to $figureName that you cannot verify from their actual writings.
-        Respond ONLY with valid JSON — no markdown, no explanation outside the JSON.
+        Respond ONLY with valid JSON. Do not use markdown or add any explanation outside the JSON.
     """.trimIndent()
 
     fun buildUserMessage(params: Params): String = buildString {
@@ -32,15 +35,16 @@ object DailyReflectionPrompt {
         append(buildContextBlock(params.tone, params.dayOfWeek, params.theme))
         append(buildHistoryBlock(params.figureName, params.previousScriptures, params.previousReflections))
         appendLine("## Instructions")
-        appendLine("Write a ${params.tone} devotional reflection in the voice of ${params.figureName} structured in three sections:")
-        appendLine("- Insight — what this truth reveals about God, the world, or ourselves (1-3 sentences)")
-        appendLine("- Implication — what it asks of us (1-3 sentences)")
-        appendLine("- Inspiration — a word of hope or encouragement in ${params.figureName}'s voice (1-3 sentences)")
-        appendLine("Maintain ${params.figureName}'s voice throughout.")
-        appendLine("Each section must be exactly 1-2 sentences. Stop after 2 sentences — do not continue.")
+        appendLine("Write a ${params.tone} devotional reflection in the voice of ${params.figureName} in three sections:")
+        appendLine("- Insight: what this truth reveals about God, the world, or ourselves")
+        appendLine("- Implication: what it asks of us")
+        appendLine("- Inspiration: a word of hope or encouragement in ${params.figureName}'s voice")
+        appendLine("Each section is 1 or 2 sentences. Stop after 2 sentences.")
         appendLine("- Include a scripture reference and the full verse text")
         appendLine(if (params.works.isEmpty()) NO_SOURCES_INSTRUCTION else SOURCES_INSTRUCTION)
         appendLine(buildChallengeInstruction(params.tone))
+        appendLine()
+        appendLine(WRITING_STYLE)
         appendLine()
         appendLine(RESPONSE_FORMAT)
     }
@@ -48,7 +52,7 @@ object DailyReflectionPrompt {
     private fun buildWorksBlock(figureName: String, works: List<WorkData>) = buildString {
         if (works.isEmpty()) return@buildString
         appendLine("## Source Works from $figureName")
-        appendLine("Draw from your knowledge of these works to shape the theological voice and direction of the reflection.")
+        appendLine("Draw from your knowledge of these works to shape what $figureName says and where the reflection goes.")
         appendLine()
         works.forEach { appendLine("- ${it.displayTitle}") }
         appendLine()
@@ -84,11 +88,11 @@ object DailyReflectionPrompt {
     }
 
     private const val PREVIOUS_SCRIPTURES_INSTRUCTION =
-        "These verses were used in recent briefings. Do NOT reuse any of them — choose a different passage:"
+        "These verses were used in recent briefings. Do NOT reuse any of them. Choose a different passage:"
 
     private const val PREVIOUS_REFLECTIONS_INSTRUCTION =
         "You may revisit a theme if the headlines call for it, but bring a fresh angle, " +
-        "a different application, or a deeper dimension — do not restate any of these arguments. " +
+        "a different application, or a deeper dimension, and do not restate any of these arguments. " +
         "If you draw on a work an earlier briefing used, take a different part or idea from it:"
 
     private const val SOURCES_INSTRUCTION =
@@ -98,18 +102,26 @@ object DailyReflectionPrompt {
 
     private fun buildChallengeInstruction(tone: String): String {
         val framing = if (tone.equals("evening", ignoreCase = true)) {
-            "retrospective — inviting the reader to look back on their day"
+            "retrospective, inviting the reader to look back on their day"
         } else {
-            "anticipatory — inviting the reader to look ahead to their day"
+            "anticipatory, inviting the reader to look ahead to their day"
         }
         return "- Include a reflection challenge: one open-ended question, exactly 1 sentence and " +
             "under 25 words, addressed to the reader in second person, drawn from the " +
             "insight/implication/inspiration above. Make it $framing. " +
-            "Phrase the challenge in plain, everyday language — words a middle schooler would understand. " +
-            "Avoid theological or academic vocabulary here, even though the rest of the reflection stays " +
-            "in the figure's voice. Keep the underlying idea the same; just make the question itself simple, " +
-            "short, and direct."
+            "Phrase the challenge in words a middle schooler would understand: simple, short, and direct."
     }
+
+    private val WRITING_STYLE = """
+        ## Writing Style
+        Write the way a person talks to a friend they care about, not like a sermon or an essay.
+        - Use short sentences and everyday words. No archaic, academic, or churchy vocabulary.
+        - Contractions are fine where they sound natural.
+        - Never use em dashes or en dashes. Where you would reach for one, write two sentences instead.
+        - No contrast framing: "not X, but Y", "X, not Y", "X is not passive", "It's not about X, it's about Y". Say what is true directly.
+        - No lists of three.
+        - Make every sentence say something concrete. No filler openers like "In a world where" or "Here's the truth".
+    """.trimIndent()
 
     private val RESPONSE_FORMAT = """
         Respond ONLY with JSON in this exact format:
