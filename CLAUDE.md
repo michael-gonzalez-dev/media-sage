@@ -158,6 +158,10 @@ docker run -p 8081:8081 \
 # Generate figure portraits (batch script — requires DB_PATH, OPENAI_API_KEY)
 ./gradlew :scripts:generateImages -PscriptArgs="--batch-size=5 --quality=low --dry-run"
 
+# Briefing eval: real Claude calls, never in CI (requires CLAUDE_API_KEY; scenarios in appServer/src/eval/resources)
+source ~/.zshrc && ./gradlew :appServer:briefingEval                                  # every scenario
+source ~/.zshrc && ./gradlew :appServer:briefingEval -Pscenario=tozer-hope-full-week  # just one
+
 # Build Android
 ./gradlew :composeApp:assembleDebug
 
