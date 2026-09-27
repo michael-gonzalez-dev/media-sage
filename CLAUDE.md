@@ -184,7 +184,7 @@ cd website && npx wrangler dev
 - **Deploy:** Cloudflare Workers Builds (Git integration, configured in the Cloudflare dashboard under the Worker's Settings → Builds) deploys on every merge to `main` that touches `website/**`. There is no GitHub Actions workflow for it. Build logs are in the Cloudflare dashboard.
 - **www:** a Cloudflare Redirect Rule (dashboard → Rules) 301-redirects `www.thecouragepost.app` to the apex. It isn't in the repo.
 - **CI:** `ci.yml` ignores `website/**`, so website-only PRs skip the app build. They can still merge through the merge queue because `main` has no required status checks. If a required check is ever added, website-only PRs will need a job that reports that check.
-- The Terms describe app behaviour (figures, AI-generated content). When a PR changes that behaviour, update the page in the same PR and bump its "Last updated" date.
+- **Keep the website in step with the app.** The Terms (figures, AI-generated content) and the home page summary in `index.html` (the briefing, its lenses, the figure roster) describe app behaviour. When a PR changes that behaviour, update the affected page in the same PR, and bump the "Last updated" date on the Terms. Describe only what has shipped: no upcoming features, and no specifics likely to change, such as briefing length.
 
 ## Conventions
 
