@@ -170,7 +170,21 @@ source ~/.zshrc && ./gradlew :appServer:briefingEval -Pscenario=tozer-hope-full-
 
 # Coverage report
 ./gradlew koverHtmlReport
+
+# Preview the website locally (http://localhost:8787)
+cd website && npx wrangler dev
 ```
+
+## Website
+
+`thecouragepost.app` (Terms, Privacy, placeholder home page, 404 page) is a static site in `website/`, not a Gradle module.
+
+- **Source:** HTML in `website/public/`. `/terms` serves `terms.html`, `/privacy` serves `privacy.html`. The app's About screen links to these URLs, so don't rename the files.
+- **Routing:** `website/wrangler.jsonc` routes every path on `thecouragepost.app` to the Cloudflare Worker `couragepost-legal-pages`. Unknown paths get `404.html` with a 404 status.
+- **Deploy:** Cloudflare Workers Builds (Git integration, configured in the Cloudflare dashboard under the Worker's Settings → Builds) deploys on every merge to `main` that touches `website/**`. There is no GitHub Actions workflow for it. Build logs are in the Cloudflare dashboard.
+- **www:** a Cloudflare Redirect Rule (dashboard → Rules) 301-redirects `www.thecouragepost.app` to the apex. It isn't in the repo.
+- **CI:** `ci.yml` ignores `website/**`, so website-only PRs skip the app build. They can still merge through the merge queue because `main` has no required status checks. If a required check is ever added, website-only PRs will need a job that reports that check.
+- The Terms describe app behaviour (figures, AI-generated content). When a PR changes that behaviour, update the page in the same PR and bump its "Last updated" date.
 
 ## Conventions
 

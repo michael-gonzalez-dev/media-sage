@@ -3,6 +3,10 @@ name: CI
 on:
   pull_request:
     branches: [ main ]
+    # Website-only PRs skip the app build. Safe with the merge queue only while no
+    # status check is required on main: a required check that never runs blocks the PR.
+    paths-ignore:
+      - 'website/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
