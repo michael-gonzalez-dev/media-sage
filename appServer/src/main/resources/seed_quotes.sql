@@ -54,16 +54,19 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 5: John Wesley
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(5, 'Letter to Various Friends (collected in Works, Vol. 13)', 'Do all the good you can, by all the means you can, in all the ways you can, in all the places you can, at all the times you can, to all the people you can, as long as ever you can.', 'service,love,compassion,diligence', true),
+(5, 'Letter to Various Friends (collected in Works, Vol. 13)', 'Do all the good you can, by all the means you can, in all the ways you can, in all the places you can, at all the times you can, to all the people you can, as long as ever you can.', 'service,love,compassion,diligence', false),
 (5, 'Journal of John Wesley (May 24, 1738)', 'I felt my heart strangely warmed. I felt I did trust in Christ, Christ alone for salvation, and an assurance was given me that He had taken away my sins, even mine, and saved me from the law of sin and death.', 'conversion,faith,assurance,salvation', true),
-(5, 'Sermon: The Use of Money (1744)', 'Earn all you can, save all you can, give all you can.', 'stewardship,generosity,justice,service', true),
+(5, 'The Use of Money, sermon (1744)', 'Earn all you can, save all you can, give all you can.', 'stewardship,generosity,justice,service', true),
 (5, 'A Plain Account of Christian Perfection (1766)', 'The gospel of Christ knows no religion but social; no holiness but social holiness.', 'holiness,community,social_justice,love', true),
 (5, 'Wesley''s Works, Vol. 8: Sermon — Catholic Spirit (1750)', 'Though we cannot think alike, may we not love alike? May we not be of one heart, though we are not of one opinion?', 'unity,love,tolerance,community', true),
 (5, 'Wesley''s Works, Vol. 7: On Perfection (1784)', 'The longer I live, the larger allowances I make for human infirmities.', 'grace,compassion,humility,patience', true),
-(5, 'Sermon: Salvation by Faith (1738)', 'Faith is the only condition of justification. There is, therefore, no merit in man: merit is in Christ alone.', 'faith,salvation,grace,justification', true),
+(5, 'Sermon: Salvation by Faith (1738)', 'Faith is the only condition of justification. There is, therefore, no merit in man: merit is in Christ alone.', 'faith,salvation,grace,justification', false),
 (5, 'Journal of John Wesley (June 11, 1739)', 'I look upon all the world as my parish; thus far I mean, that, in whatever part of it I am, I judge it meet, right, and my bounden duty to declare unto all that are willing to hear, the glad tidings of salvation.', 'mission,evangelism,calling,boldness', true),
-(5, 'Letter to a Friend (1791)', 'I have no more fear of death than of going to sleep at night.', 'hope,eternal_life,peace,faith', true),
-(5, 'Preface to Sermons on Several Occasions (1746)', 'I want to know one thing — the way to heaven. God himself has condescended to teach the way.', 'scripture,truth,salvation,simplicity', true);
+(5, 'Letter to a Friend (1791)', 'I have no more fear of death than of going to sleep at night.', 'hope,eternal_life,peace,faith', false),
+(5, 'Sermons on Several Occasions, Preface, §5 (1746)', 'I want to know one thing — the way to heaven. God himself has condescended to teach the way.', 'scripture,truth,salvation,simplicity', true),
+(5, 'Salvation by Faith, sermon, Introduction §3 (1738)', 'Grace is the source, faith the condition, of salvation.', 'grace,faith,salvation,assurance', true),
+(5, 'The Character of a Methodist, §8 (1742)', 'In retirement or company, in leisure, business, or conversation, his heart is ever with the Lord. Whether he lie down or rise up, God is in all his thoughts; he walks with God continually, having the loving eye of his mind still fixed upon him, and everywhere "seeing Him that is invisible."', 'prayer,devotion,presence_of_god,faithfulness', true),
+(5, 'The Character of a Methodist, §9 (1742)', 'And he accordingly loves his neighbour as himself; he loves every man as his own soul. His heart is full of love to all mankind, to every child of "the Father of the spirits of all flesh."', 'love,neighbor,compassion,community', true);
 
 -- 6: John Wycliffe
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -71,11 +74,11 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (6, 'On the Church (De Ecclesia, 1378)', 'The pope is not above Scripture; a man is not to preach the sayings of a man but the Word of God.', 'scripture,truth,authority,reformation', true),
 (6, 'Trialogus (1383)', 'I believe that in the end truth will conquer.', 'truth,hope,faith,courage', true),
 (6, 'On Simony (De Simonia, 1380)', 'The clergy have too great riches and power, contrary to Christ''s example.', 'justice,reformation,humility,truth', true),
-(6, 'Sermon preached at Oxford (circa 1376)', 'Christ is the head of the Church, not the pope. We must follow Christ''s teaching, not the decrees of men.', 'truth,authority,reformation,obedience', true);
+(6, 'Sermon preached at Oxford (circa 1376)', 'Christ is the head of the Church, not the pope. We must follow Christ''s teaching, not the decrees of men.', 'truth,authority,reformation,obedience', false);
 
 -- 7: William Tyndale
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(7, 'Response to Thomas More (circa 1531)', 'I defy the Pope and all his laws. If God spare my life, ere many years I will cause a boy that driveth the plough shall know more of the Scripture than thou doest.', 'scripture,courage,mission,truth', true),
+(7, 'Cited in John Foxe, Actes and Monuments (1563)', 'I defy the Pope and all his laws. If God spare my life, ere many years I will cause a boy that driveth the plough shall know more of the Scripture than thou doest.', 'scripture,courage,mission,truth', true),
 (7, 'Prologue to the New Testament (1525)', 'The nature of God''s word is, that whosoever read it or hear it reasoned and disputed before him, it will begin immediately to make him every day better and better.', 'scripture,transformation,word_of_god,faith', true),
 (7, 'The Obedience of a Christian Man (1528)', 'Nay I had rather be so poor that I had not wherewith to buy me bread, than to have all the world, so I might do good unto no man therewithal.', 'service,humility,generosity,love', true),
 (7, 'A Pathway into the Holy Scripture (1525)', 'The Scripture is a light and shows us the true way, both what to do and what to hope for, and a defence from all error, and a comfort in adversity that we despair not.', 'scripture,hope,truth,guidance', true),
@@ -86,8 +89,8 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (8, 'Resolutions (1722)', 'Resolved, to live with all my might, while I do live.', 'diligence,purpose,faith,obedience', true),
 (8, 'Resolutions (1722)', 'Resolved, never to do anything, which I should be afraid to do, if it were the last hour of my life.', 'holiness,conscience,obedience,eternity', true),
 (8, 'Sinners in the Hands of an Angry God (1741)', 'The God that holds you over the pit of hell, much as one holds a spider or some loathsome insect over the fire, abhors you.', 'judgment,sin,repentance,fear_of_god', true),
-(8, 'Religious Affections (1746)', 'True religion, in great part, consists in holy affections.', 'holiness,heart,affections,worship', true),
-(8, 'Religious Affections (1746)', 'Gracious affections do not tend to make men bold, self-confident, and full of self-sufficiency, but rather make them humble and modest.', 'humility,grace,holiness,character', true),
+(8, 'A Treatise Concerning Religious Affections (1746)', 'True religion, in great part, consists in holy affections.', 'holiness,heart,affections,worship', true),
+(8, 'A Treatise Concerning Religious Affections (1746)', 'Gracious affections do not tend to make men bold, self-confident, and full of self-sufficiency, but rather make them humble and modest.', 'humility,grace,holiness,character', true),
 (8, 'A Treatise Concerning Religious Affections (1746)', 'The devil never rejoices more than when he sees a Christian neglect his Bible.', 'scripture,spiritual_warfare,devotion,vigilance', true),
 (8, 'Personal Narrative (circa 1740)', 'God''s excellency, his wisdom, his purity and love, seemed to appear in everything; in the sun, moon, and stars; in the clouds and blue sky.', 'beauty,creation,worship,sovereignty', true),
 (8, 'The End for Which God Created the World (1765)', 'The happiness of the creature consists in rejoicing in God, by which also God is magnified and exalted.', 'joy,worship,purpose,glory_of_god', true),
@@ -96,24 +99,32 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 9: George Whitefield
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(9, 'Sermon: The Method of Grace (1739)', 'Father Abraham, whom have you in heaven? Any Episcopalians? No! Any Presbyterians? No! Any Independents or Methodists? No, no, no! Whom have you there? We don''t know those names here. All who are here are Christians.', 'unity,salvation,church,grace', true),
+(9, 'Sermon: The Method of Grace (1739)', 'Father Abraham, whom have you in heaven? Any Episcopalians? No! Any Presbyterians? No! Any Independents or Methodists? No, no, no! Whom have you there? We don''t know those names here. All who are here are Christians.', 'unity,salvation,church,grace', false),
 (9, 'Journal of George Whitefield (1740)', 'I am persuaded that the generality of preachers talk of an unknown and unfelt Christ.', 'evangelism,truth,boldness,preaching', true),
-(9, 'Letter to Friends (1741)', 'God forbid that I should travel with anybody a quarter of an hour without speaking of Christ to them.', 'evangelism,boldness,mission,love', true),
-(9, 'Sermon: Regeneration (1737)', 'You must be born again. Though you give all your goods to feed the poor, though you should give your body to be burned, and have not this faith that works by love, it will profit you nothing.', 'regeneration,salvation,faith,love', true),
+(9, 'Letter to Friends (1741)', 'God forbid that I should travel with anybody a quarter of an hour without speaking of Christ to them.', 'evangelism,boldness,mission,love', false),
+(9, 'Sermon: Regeneration (1737)', 'You must be born again. Though you give all your goods to feed the poor, though you should give your body to be burned, and have not this faith that works by love, it will profit you nothing.', 'regeneration,salvation,faith,love', false),
 (9, 'Journal of George Whitefield (1738)', 'I am never better than when I am on the full stretch for God.', 'zeal,devotion,calling,service', true),
-(9, 'Sermon: The Lord Our Righteousness (1741)', 'God the Father gave to Christ a certain number; and all that the Father gives to Him shall come; and whosoever comes, Christ will in no wise cast out.', 'salvation,grace,sovereignty,hope', true),
-(9, 'Letter to the Inhabitants of Maryland, Virginia (1740)', 'I am willing to go to prison and to death for you, but I am not willing to come short of you in heaven.', 'service,sacrifice,love,mission', true),
-(9, 'Sermon: Christ the Believer''s Wisdom (1739)', 'Let a man go to the grammar school of faith and repentance before he goes to the university of election and predestination.', 'faith,repentance,wisdom,discipleship', true);
+(9, 'Sermon: The Lord Our Righteousness (1741)', 'God the Father gave to Christ a certain number; and all that the Father gives to Him shall come; and whosoever comes, Christ will in no wise cast out.', 'salvation,grace,sovereignty,hope', false),
+(9, 'Letter to the Inhabitants of Maryland, Virginia (1740)', 'I am willing to go to prison and to death for you, but I am not willing to come short of you in heaven.', 'service,sacrifice,love,mission', false),
+(9, 'Sermon: Christ the Believer''s Wisdom (1739)', 'Let a man go to the grammar school of faith and repentance before he goes to the university of election and predestination.', 'faith,repentance,wisdom,discipleship', false),
+(9, 'The Method of Grace, sermon (1741)', 'Such as have got peace with God, if you are under trials, fear not, all things shall work for your good; if you are under temptations, fear not, if he has spoken peace to your hearts, all these things shall be for your good.', 'peace,trials,hope,providence', true),
+(9, 'The Method of Grace, sermon (1741)', 'Christians should be singularly good, bold for their Lord, that all who are with you may take notice that you have been with Jesus.', 'boldness,witness,holiness,discipleship', true),
+(9, 'The Lord Our Righteousness, sermon (1741)', 'For why should I lean upon a broken reed, when I can have the rock of ages to stand upon, that never can be moved?', 'faith,assurance,trust,righteousness', true),
+(9, 'The Lord Our Righteousness, sermon (1741)', 'O think of his dying love! Let that love constrain you to obedience! Having much forgiven, love much.', 'love,gratitude,obedience,forgiveness', true),
+(9, 'Christ the Believer''s Wisdom, Righteousness, Sanctification, and Redemption, sermon', 'Fear not, therefore, O believers, to look into the grave: for to you it is not other than a consecrated dormitory, where your bodies shall sleep quietly until the morning of the resurrection;', 'hope,resurrection,death,comfort', true),
+(9, 'The Nature and Necessity of Our Regeneration or New Birth in Christ Jesus, sermon (1737)', 'It is not enough to turn from profaneness to civility; but thou must turn from civility to godliness.', 'regeneration,repentance,holiness,conversion', true);
 
 -- 10: John Knox
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (10, 'History of the Reformation in Scotland (1587)', 'A man with God is always in the majority.', 'courage,faith,sovereignty,truth', true),
 (10, 'History of the Reformation in Scotland (1587)', 'Resistance to tyranny is obedience to God.', 'justice,moral_courage,obedience,truth', true),
-(10, 'Letter to the Commonality of Scotland (1558)', 'I have promised by God that I will not rest from this calling, not because it is pleasant or easy, but because the Lord God demands it.', 'calling,obedience,courage,faithfulness', true),
-(10, 'Sermon at St. Giles'' Cathedral, Edinburgh (circa 1559)', 'Give me Scotland or I die.', 'prayer,intercession,zeal,mission', true),
+(10, 'Letter to the Commonality of Scotland (1558)', 'I have promised by God that I will not rest from this calling, not because it is pleasant or easy, but because the Lord God demands it.', 'calling,obedience,courage,faithfulness', false),
+(10, 'Sermon at St. Giles'' Cathedral, Edinburgh (circa 1559)', 'Give me Scotland or I die.', 'prayer,intercession,zeal,mission', false),
 (10, 'History of the Reformation in Scotland (1587)', 'You cannot antagonize and influence at the same time.', 'wisdom,truth,service,humility', true),
-(10, 'Letter to Mary Queen of Scots (1561)', 'Madam, I am not master of myself, but must obey him who commands me to speak plain, and to flatter no flesh upon the face of the earth.', 'truth,moral_courage,obedience,integrity', true),
-(10, 'Sermon on Isaiah 26 (circa 1565)', 'The more the Word of God is spread, the more it will take root.', 'scripture,mission,hope,word_of_god', true);
+(10, 'History of the Reformation in Scotland, interview with Mary Queen of Scots (1563)', 'Madam, I am not master of myself, but must obey him who commands me to speak plain, and to flatter no flesh upon the face of the earth.', 'truth,moral_courage,obedience,integrity', true),
+(10, 'Sermon on Isaiah 26 (circa 1565)', 'The more the Word of God is spread, the more it will take root.', 'scripture,mission,hope,word_of_god', true),
+(10, 'Sermon on Isaiah 26 (1565)', 'This, I say, is the victory of faith, when to the midst of death, through the light of God’s word, the afflicted see life.', 'faith,hope,resurrection,perseverance', true),
+(10, 'Scots Confession, Preface (1560)', 'And therefore, by the assistance of the mighty Spirit of our Lord Jesus, we firmly promise to abide to the end in the Confession of this our Faith.', 'perseverance,faithfulness,holy_spirit,courage', true);
 
 -- 11: Ulrich Zwingli
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -122,15 +133,17 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (11, 'Commentary on True and False Religion (1525)', 'No man can give himself faith. Faith is the work of God.', 'faith,grace,sovereignty,salvation', true),
 (11, 'Exposition of the Christian Faith (1531)', 'Where God''s word is preached faithfully, there the church is.', 'church,scripture,truth,reformation', true),
 (11, 'Sixty-Seven Articles (1523)', 'The sum of the gospel is that our Lord Jesus Christ, the true Son of God, has made known to us the will of his heavenly Father, and has with his innocence released us from death and reconciled us to God.', 'gospel,salvation,grace,atonement', true),
-(11, 'Letter to Francis I of France (1531)', 'I believe, yea, I know that God governs this world.', 'sovereignty,faith,hope,trust', true);
+(11, 'Letter to Francis I of France (1531)', 'I believe, yea, I know that God governs this world.', 'sovereignty,faith,hope,trust', false),
+(11, 'On the Providence of God, p. 229 (1530)', 'You are God''s tool. He wills to wear you out by use, not by idleness. Oh, happy man, whom He calls to His work!', 'calling,providence,perseverance,service', true);
 
 -- 12: Philip Melanchthon
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (12, 'Loci Communes (1521)', 'To know Christ is to know his benefits, and not to contemplate his natures and the mode of the incarnation.', 'christ,salvation,theology,knowledge', true),
 (12, 'Augsburg Confession, Article IV (1530)', 'It is taught among us that we cannot obtain forgiveness of sin and righteousness before God by our own merits, works, or satisfactions, but that we receive forgiveness of sin and become righteous before God by grace, for Christ''s sake, through faith.', 'salvation,grace,faith,justification', true),
 (12, 'Loci Communes (1543)', 'The knowledge of sin is the beginning of salvation.', 'repentance,salvation,truth,humility', true),
-(12, 'Letter to Luther (1530)', 'In these matters of which I am uncertain, I follow you as my teacher.', 'humility,wisdom,discipleship,learning', true),
-(12, 'Address to Youth at Wittenberg (1518)', 'Without knowledge of letters, we are all blind.', 'education,wisdom,truth,calling', true);
+(12, 'Letter to Luther (1530)', 'In these matters of which I am uncertain, I follow you as my teacher.', 'humility,wisdom,discipleship,learning', false),
+(12, 'On Correcting the Studies of Youth, inaugural address at Wittenberg (1518)', 'Without knowledge of letters, we are all blind.', 'education,wisdom,truth,calling', true),
+(12, 'Augsburg Confession, Article XX (1530)', 'Now he that knows that he has a Father gracious to him through Christ, truly knows God; he knows also that God cares for him, and calls upon God; in a word, he is not without God, as the heathen.', 'faith,grace,assurance,prayer', true);
 
 -- 13: Karl Barth
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -173,7 +186,8 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (16, 'Defence of the True and Catholic Doctrine of the Sacrament (1550)', 'The Word of God is the rule and guide of faith.', 'scripture,truth,faith,authority', true),
 (16, 'Address before his execution, Oxford (1556)', 'And as for the pope, I refuse him as Christ''s enemy and Antichrist, with all his false doctrine.', 'truth,courage,reformation,obedience', true),
 (16, 'Book of Common Prayer (1549)', 'Grant us therefore, gracious Lord, so to eat the flesh of thy dear Son Jesus Christ, and to drink his blood, that our sinful bodies may be made clean by his body, and our souls washed through his most precious blood.', 'communion,grace,holiness,love', true),
-(16, 'Letter to Henry VIII (1537)', 'Whatever will be most for the glory of God and the wealth of the realm, that will I defend to my power.', 'justice,obedience,calling,truth', true);
+(16, 'Letter to Henry VIII (1537)', 'Whatever will be most for the glory of God and the wealth of the realm, that will I defend to my power.', 'justice,obedience,calling,truth', false),
+(16, 'Book of Homilies, A Short Declaration of the True, Lively, and Christian Faith, Part 3 (1547)', 'If all the world were on our side, and God against us, what could the world avail us? Therefore let us set our whole faith and trust in God, and neither the world, the devil, nor all the power of them, shall prevail against us.', 'faith,trust,courage,sovereignty', true);
 
 -- 17: Martin Bucer
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -181,17 +195,22 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (17, 'Concerning the True Care of Souls (1538)', 'We must not abandon the wretched and the weak, but must draw them forward little by little.', 'compassion,service,patience,love', true),
 (17, 'The Ground and Reason of the Articles (1524)', 'The entire purpose of all the ordinances of God is that we should love one another and serve one another.', 'love,service,community,obedience', true),
 (17, 'De Regno Christi (1550)', 'The kingdom of Christ is not advanced by human craft or the sword of princes, but by the Spirit of God through the proclamation of his Word.', 'sovereignty,word_of_god,mission,truth', true),
-(17, 'Letter to Calvin (1538)', 'God is never more truly honored than when those he has called serve one another in love.', 'love,service,humility,worship', true);
+(17, 'Letter to Calvin (1538)', 'God is never more truly honored than when those he has called serve one another in love.', 'love,service,humility,worship', false),
+(17, 'De Regno Christi, Book 2, provision for the poor (1550)', 'For it is not ynough for the Congregations off Christ to prouyde, that men may onlie lyue, but that thei may lyue to the Lorde, for a certeyn and mutual profet betwene them selfs, and of the Churche, and commen welthe.', 'service,community,love,justice', true);
 
 -- 18: William Carey
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (18, 'Enquiry into the Obligations of Christians to Use Means for the Conversion of the Heathens (1792)', 'Expect great things from God; attempt great things for God.', 'faith,mission,boldness,calling', true),
-(18, 'Enquiry into the Obligations of Christians (1792)', 'Our God is great; the church of God is great; let us go forward.', 'faith,mission,courage,calling', true),
-(18, 'Letter to his son Jabez (1796)', 'I am not yet dead; I am still able to preach the gospel, still able to travel.', 'perseverance,mission,calling,faithfulness', true),
-(18, 'Letter to Andrew Fuller (1794)', 'I can plod. That is my only genius. I can persevere in any definite pursuit. To this I owe everything.', 'perseverance,diligence,calling,faithfulness', true),
+(18, 'Enquiry into the Obligations of Christians (1792)', 'Our God is great; the church of God is great; let us go forward.', 'faith,mission,courage,calling', false),
+(18, 'Letter to his son Jabez (1796)', 'I am not yet dead; I am still able to preach the gospel, still able to travel.', 'perseverance,mission,calling,faithfulness', false),
+(18, 'Letter to Andrew Fuller (1794)', 'I can plod. That is my only genius. I can persevere in any definite pursuit. To this I owe everything.', 'perseverance,diligence,calling,faithfulness', false),
 (18, 'Sermon at Nottingham (1792)', 'Expect great things; attempt great things. Is anything too hard for the Lord?', 'faith,hope,mission,sovereignty', true),
-(18, 'Letter to his sister (1800)', 'The gospel is making its way. Men are coming to the knowledge of Christ.', 'hope,mission,gospel,faith', true),
-(18, 'Memoir of William Carey, cited in George Smith''s biography (1885)', 'When I am gone, say nothing about Dr. Carey — speak about Dr. Carey''s Saviour.', 'humility,worship,service,calling', true);
+(18, 'Letter to his sister (1800)', 'The gospel is making its way. Men are coming to the knowledge of Christ.', 'hope,mission,gospel,faith', false),
+(18, 'Cited in George Smith, The Life of William Carey, Shoemaker and Missionary (1885)', 'When I am gone, say nothing about Dr. Carey — speak about Dr. Carey''s Saviour.', 'humility,worship,service,calling', true),
+(18, 'Enquiry into the Obligations of Christians to Use Means for the Conversion of the Heathens, Section 5 (1792)', 'Many can do nothing but pray, and prayer is perhaps the only thing in which Christians of all denominations can cordially, and unreservedly unite; but in this we may all be one, and in this the strictest unanimity ought to prevail.', 'prayer,unity,faith,community', true),
+(18, 'Enquiry into the Obligations of Christians to Use Means for the Conversion of the Heathens, Section 5 (1792)', 'We must not be contented however with praying, without exerting ourselves in the use of means for the obtaining of those things we pray for.', 'prayer,diligence,faith,calling', true),
+(18, 'Enquiry into the Obligations of Christians to Use Means for the Conversion of the Heathens, Section 5 (1792)', 'Let then every one in his station consider himself as bound to act with all his might, and in every possible way for God.', 'calling,service,diligence,mission', true),
+(18, 'Enquiry into the Obligations of Christians to Use Means for the Conversion of the Heathens, Section 5 (1792)', 'Surely a crown of rejoicing like this is worth aspiring to. Surely it is worth while to lay ourselves out with all our might, in promoting the cause, and kingdom of Christ.', 'hope,mission,perseverance,calling', true);
 
 -- 19: A.W. Tozer
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -208,11 +227,13 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 20: Jan Hus
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(20, 'Letter from Prison, Constance (1415)', 'I am willing to die today. Seek the truth, listen to the truth, learn the truth, love the truth, speak the truth, hold the truth, defend the truth till death.', 'truth,courage,moral_courage,martyrdom', true),
+(20, 'Letter from Prison, Constance (1415)', 'I am willing to die today. Seek the truth, listen to the truth, learn the truth, love the truth, speak the truth, hold the truth, defend the truth till death.', 'truth,courage,moral_courage,martyrdom', false),
 (20, 'On the Church (De Ecclesia, 1413)', 'I firmly hope to abide in the truth of God''s law, which I have preached, written, and taught.', 'truth,faith,obedience,perseverance', true),
-(20, 'Letter to his congregation in Bohemia (1415)', 'Stand firm in the truth you have heard me preach.', 'truth,courage,perseverance,faith', true),
+(20, 'Letter to his congregation in Bohemia (1415)', 'Stand firm in the truth you have heard me preach.', 'truth,courage,perseverance,faith', false),
 (20, 'On the Church (1413)', 'No one who is without repentance can be absolved by any pope.', 'repentance,truth,authority,reformation', true),
-(20, 'Final sermon before execution (1415)', 'God is my witness that the things charged against me I have never preached. In the same truth of the Gospel which I have written, taught, and preached, drawing upon the sayings and positions of the holy doctors, I am ready to die today.', 'truth,courage,integrity,martyrdom', true);
+(20, 'Cited in Peter of Mladoňovice, John Hus at the Council of Constance, tr. Matthew Spinka (1965)', 'God is my witness that the things charged against me I have never preached. In the same truth of the Gospel which I have written, taught, and preached, drawing upon the sayings and positions of the holy doctors, I am ready to die today.', 'truth,courage,integrity,martyrdom', true),
+(20, 'The Letters of John Hus, Letter 61, To Henry Skopek de Duba, 9 June 1415 (1904)', 'Fear Him as the Lord Almighty, love Him as the Father most holy, ever aim at Him in mind, works, and desire. For His sake carefully abstain from sin, do all the good you can, and be not afraid of the adversities of this world.', 'courage,love,holiness,obedience', true),
+(20, 'The Letters of John Hus, Letter 5, To the People of Laun, c.1410 (1904)', 'If here we have to suffer for Christ''s sake, there we shall be blessed. It is through a cross and through afflictions that we are tried, like gold in the fire, by the Builder who formed the world out of nothing. Blessed then shall we be, if we persevere in that which is good, even to the end.', 'suffering,perseverance,hope,faith', true);
 
 -- 21: Francis Schaeffer
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -231,7 +252,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (22, 'Spiritual Depression: Its Causes and Cures (1965)', 'The main art in the matter of spiritual living is to know how to handle yourself.', 'wisdom,holiness,self-awareness,discipleship', true),
 (22, 'Studies in the Sermon on the Mount, Vol. 1 (1959)', 'Seek ye first the kingdom of God, and then all the other things will be added. The tragedy is that we do not believe it.', 'faith,obedience,truth,discipleship', true),
 (22, 'Preaching and Preachers (1971)', 'What is the chief end of preaching? I like to think it is this: it is to give men and women a sense of God and his presence.', 'worship,preaching,truth,calling', true),
-(22, 'Spiritual Depression (1965)', 'Have you realized that most of your unhappiness in life is due to the fact that you are listening to yourself instead of talking to yourself?', 'faith,hope,wisdom,suffering', true),
+(22, 'Spiritual Depression: Its Causes and Cures (1965)', 'Have you realized that most of your unhappiness in life is due to the fact that you are listening to yourself instead of talking to yourself?', 'faith,hope,wisdom,suffering', true),
 (22, 'Romans: An Exposition, Vol. 1 (1985)', 'Faith is not a feeling. Faith is an act of the will responding to the truth revealed in the Word of God.', 'faith,truth,obedience,scripture', true),
 (22, 'God''s Way of Reconciliation: Studies in Ephesians 2 (1972)', 'The glory of the gospel is that when the church is absolutely different from the world, she invariably attracts it.', 'holiness,witness,gospel,truth', true),
 (22, 'Preaching and Preachers (1971)', 'The business of preaching is not to entertain but to lead people to salvation, to instruct them in the ways of God.', 'truth,calling,gospel,preaching', true);
@@ -254,9 +275,10 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (24, 'The Spiritual Letters of Fénelon (compiled 1718)', 'Abandon yourself to God, for nothing is impossible with him.', 'faith,surrender,sovereignty,trust', true),
 (24, 'Christian Perfection (written circa 1685)', 'God never works in us to please us; He works to accomplish his own purposes and to make us what He wants us to be.', 'sovereignty,holiness,obedience,transformation', true),
 (24, 'The Spiritual Letters of Fénelon (compiled 1718)', 'Self-love is the enemy of the love of God; we cannot have both.', 'love,humility,holiness,surrender', true),
-(24, 'On Pure Love (written circa 1697)', 'Pure love seeks God alone, without any seeking of self.', 'love,worship,holiness,surrender', true),
+(24, 'On Pure Love (written circa 1697)', 'Pure love seeks God alone, without any seeking of self.', 'love,worship,holiness,surrender', false),
 (24, 'The Spiritual Letters of Fénelon (compiled 1718)', 'Bear patiently all the troubles and vexations of life, great and small; never be disturbed at them, but receive them as from the hand of God.', 'suffering,trust,patience,sovereignty', true),
-(24, 'Christian Perfection (written circa 1685)', 'Resign everything to God and ask him to do with you exactly as he pleases.', 'surrender,obedience,trust,faith', true);
+(24, 'Christian Perfection (written circa 1685)', 'Resign everything to God and ask him to do with you exactly as he pleases.', 'surrender,obedience,trust,faith', true),
+(24, 'The Spiritual Letters of Fénelon, Letters to Men, Letter 4', 'Oh, how compassionate and comforting God is to those who go to Him with hearty confidence in their troubles! Men are hard, critical, harsh, never more than half-tolerant; but God bears with all, is pitiful to all. His Goodness, His Patience and Indulgence, are boundless.', 'compassion,trust,grace,patience', true);
 
 -- 25: Madame Guyon
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -340,7 +362,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 32: Francis of Assisi
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (32, 'The Canticle of the Sun (1224)', 'Praised be You, my Lord, with all Your creatures, especially Sir Brother Sun.', 'worship,creation,gratitude,joy', true),
-(32, 'The Rule of 1221, Chapter 17', 'All the friars must preach by their deeds.', 'service,integrity,calling,witness', true),
+(32, 'The Earlier Rule (Regula non bullata), Chapter 17 (1221)', 'All the friars must preach by their deeds.', 'service,integrity,calling,witness', true),
 (32, 'The Admonitions, Admonition 5 (circa 1220)', 'Where there is charity and wisdom, there is neither fear nor ignorance.', 'love,wisdom,faith,peace', true),
 (32, 'The Admonitions, Admonition 27 (circa 1220)', 'Blessed is the servant who loves his brother as much when he is sick and useless as when he is well and can be of service to him.', 'love,service,compassion,faithfulness', true),
 (32, 'The Canticle of the Sun (1224)', 'Praised be You, my Lord, through our Sister Bodily Death, from whom no living man can escape.', 'hope,eternity,peace,surrender', true),
@@ -502,7 +524,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 49: Jerome
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (49, 'Letter 52 to Nepotianus (394 AD)', 'Ignorance of Scripture is ignorance of Christ.', 'scripture,truth,word_of_god,faith', true),
-(49, 'Preface to Ezekiel (circa 415 AD)', 'The Scriptures are shallow enough for a babe to come and drink without fear of drowning, and deep enough for theologians to swim in without ever touching the bottom.', 'scripture,wisdom,truth,word_of_god', true),
+(49, 'Commentary on Ezekiel, Preface (circa 415 AD)', 'The Scriptures are shallow enough for a babe to come and drink without fear of drowning, and deep enough for theologians to swim in without ever touching the bottom.', 'scripture,wisdom,truth,word_of_god', true),
 (49, 'Letter 60 to Heliodorus (396 AD)', 'Love the knowledge of Scripture, and you will not love the vices of the flesh.', 'scripture,holiness,wisdom,obedience', true),
 (49, 'Commentary on Isaiah (circa 408 AD)', 'I interpreted not according to what I felt, but according to what was written.', 'scripture,truth,integrity,obedience', true),
 (49, 'Letter 22 to Eustochium (384 AD)', 'Do not let the women of Jerusalem see you walking in the street; let them not know your face; let them not know your name.', 'holiness,wisdom,purity,obedience', true),
@@ -523,24 +545,26 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (51, 'Letter from Birmingham Jail (April 16, 1963)', 'Injustice anywhere is a threat to justice everywhere. We are caught in an inescapable network of mutuality, tied in a single garment of destiny.', 'justice,love,community,truth', true),
 (51, 'Strength to Love (1963)', 'Darkness cannot drive out darkness; only light can do that. Hate cannot drive out hate; only love can do that.', 'love,hope,justice,truth', true),
 (51, 'Letter from Birmingham Jail (April 16, 1963)', 'One has not only a legal but a moral responsibility to obey just laws. Conversely, one has a moral responsibility to disobey unjust laws.', 'justice,moral_courage,obedience,truth', true),
-(51, 'I Have a Dream speech (August 28, 1963)', 'I have a dream that my four little children will one day live in a nation where they will not be judged by the color of their skin but by the content of their character.', 'hope,justice,equality,love', true),
+(51, 'I Have a Dream (August 28, 1963)', 'I have a dream that my four little children will one day live in a nation where they will not be judged by the color of their skin but by the content of their character.', 'hope,justice,equality,love', true),
 (51, 'Strength to Love (1963)', 'The church must be reminded that it is not the master or the servant of the state, but rather the conscience of the state.', 'justice,truth,calling,moral_courage', true),
 (51, 'Where Do We Go from Here: Chaos or Community? (1967)', 'Power without love is reckless and abusive, and love without power is sentimental and anaemic.', 'love,justice,truth,wisdom', true),
 (51, 'Strength to Love (1963)', 'We must develop and maintain the capacity to forgive. He who is devoid of the power to forgive is devoid of the power to love.', 'love,forgiveness,grace,compassion', true),
 (51, 'Letter from Birmingham Jail (April 16, 1963)', 'Human progress is neither automatic nor inevitable. Every step toward the goal of justice requires sacrifice, suffering, and struggle.', 'justice,suffering,perseverance,calling', true),
 (51, 'Strength to Love (1963)', 'The tough-minded person always examines the facts before he reaches conclusions. In short, he postulates that right and not may, that all men are created equal.', 'truth,justice,wisdom,courage', true),
-(51, 'I''ve Been to the Mountaintop speech (April 3, 1968)', 'I just want to do God''s will. And He''s allowed me to go up to the mountain. And I''ve looked over. And I''ve seen the Promised Land.', 'hope,faith,sovereignty,courage', true);
+(51, 'I''ve Been to the Mountaintop (April 3, 1968)', 'I just want to do God''s will. And He''s allowed me to go up to the mountain. And I''ve looked over. And I''ve seen the Promised Land.', 'hope,faith,sovereignty,courage', true);
 
 -- 52: William Wilberforce
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (52, 'A Practical View of Christianity (1797)', 'God Almighty has set before me two great objects, the suppression of the slave trade and the reformation of manners.', 'justice,calling,obedience,moral_courage', true),
 (52, 'A Practical View of Christianity (1797)', 'Christianity is not merely a system of ethics, but a supernatural religion. We must have a change of heart.', 'faith,transformation,gospel,truth', true),
-(52, 'Speech in the House of Commons (May 12, 1789)', 'Having heard all of this you may choose to look the other way but you can never again say that you did not know.', 'justice,moral_courage,truth,responsibility', true),
+(52, 'Speech in the House of Commons (May 12, 1789)', 'Having heard all of this you may choose to look the other way but you can never again say that you did not know.', 'justice,moral_courage,truth,responsibility', false),
 (52, 'Letter to William Hey (1801)', 'The objects of the present life fill the human eye with a false magnifying glass; it is only the eye of faith that sees the eternal world in its true proportions.', 'faith,eternity,truth,wisdom', true),
 (52, 'A Practical View of Christianity (1797)', 'If to be feelingly alive to the sufferings of my fellow creatures is to be a fanatic, I am one of the most incurable fanatics ever permitted to be at large.', 'compassion,justice,service,love', true),
-(52, 'Journal entry (1788)', 'Never, never will we desist till we have wiped away this scandal from the Christian name, released ourselves from the load of guilt.', 'justice,perseverance,moral_courage,calling', true),
+(52, 'Cited in Cobbett''s Parliamentary History of England, vol. 29 (1817)', 'Never, never will we desist till we have wiped away this scandal from the Christian name, released ourselves from the load of guilt.', 'justice,perseverance,moral_courage,calling', true),
 (52, 'A Practical View of Christianity (1797)', 'The objects of this world fill our eyes with a false magnifying power; it is only the eye of faith that can see the eternal world in its true proportions.', 'faith,wisdom,eternity,truth', true),
-(52, 'Real Christianity (A Practical View, popular edition title)', 'Is it not the great end of religion, and, in particular, the glory of Christianity, to extinguish the malignant passions?', 'holiness,love,truth,transformation', true);
+(52, 'Real Christianity (A Practical View, popular edition title)', 'Is it not the great end of religion, and, in particular, the glory of Christianity, to extinguish the malignant passions?', 'holiness,love,truth,transformation', false),
+(52, 'A Practical View of Christianity, Chapter 4, Section 1 (1797)', 'This is the Christian love of God! A love compounded of admiration, of preference, of hope, of trust, of joy: chastised by reverential awe, and wakeful with continual gratitude.', 'love,worship,gratitude,trust', true),
+(52, 'A Practical View of Christianity, Chapter 7 (1797)', 'Ever look to him for help: your only safety consists in a deep and permanent sense of your own weakness, and in a firm reliance on his strength.', 'humility,trust,faith,perseverance', true);
 
 -- 53: Harriet Tubman
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -552,7 +576,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 54: Sojourner Truth
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(54, 'Ain''t I a Woman? speech at the Women''s Rights Convention, Akron, Ohio (1851)', 'Ain''t I a woman? Look at me! Look at my arm! I have ploughed and planted, and gathered into barns, and no man could head me! And ain''t I a woman?', 'justice,equality,moral_courage,truth', true),
+(54, 'Ain''t I a Woman? Women''s Rights Convention, Akron, Ohio (1851)', 'Ain''t I a woman? Look at me! Look at my arm! I have ploughed and planted, and gathered into barns, and no man could head me! And ain''t I a woman?', 'justice,equality,moral_courage,truth', true),
 (54, 'Narrative of Sojourner Truth (1850)', 'I feel safe even in the midst of my enemies; for the truth is powerful and will prevail.', 'truth,faith,courage,hope', true),
 (54, 'Narrative of Sojourner Truth (1850)', 'God will not make me suffer any more than I can bear.', 'trust,sovereignty,suffering,faith', true),
 (54, 'Speech at the American Equal Rights Association (1867)', 'If women want any rights more than they''s got, why don''t they just take them, and not be talking about it?', 'justice,courage,moral_courage,calling', true),
@@ -563,9 +587,9 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (55, 'No Future Without Forgiveness (1999)', 'Without forgiveness, there is no future.', 'forgiveness,hope,love,reconciliation', true),
 (55, 'No Future Without Forgiveness (1999)', 'My humanity is bound up in yours, for we can only be human together.', 'love,community,justice,truth', true),
-(55, 'God Has a Dream: A Vision of Hope for Our Time (2004)', 'God''s dream is that you and I and all of us will realize that we are family, that we are made for togetherness, for goodness, and for compassion.', 'love,hope,community,justice', true),
+(55, 'Cited in publisher Q&A on God Has a Dream (2004)', 'God''s dream is that you and I and all of us will realize that we are family, that we are made for togetherness, for goodness, and for compassion.', 'love,hope,community,justice', true),
 (55, 'God Has a Dream (2004)', 'Do your little bit of good where you are; it''s those little bits of good put together that overwhelm the world.', 'service,love,hope,calling', true),
-(55, 'Address at the General Convention of the Episcopal Church (2006)', 'If you are neutral in situations of injustice, you have chosen the side of the oppressor.', 'justice,moral_courage,truth,calling', true),
+(55, 'Cited in Robert McAfee Brown, Unexpected News: Reading the Bible with Third World Eyes (1984)', 'If you are neutral in situations of injustice, you have chosen the side of the oppressor.', 'justice,moral_courage,truth,calling', true),
 (55, 'No Future Without Forgiveness (1999)', 'Forgiving is not forgetting; it''s actually remembering — remembering and not using your right to hit back.', 'forgiveness,love,grace,wisdom', true),
 (55, 'Crying in the Wilderness: The Struggle for Justice in South Africa (1982)', 'I am not interested in picking up crumbs of compassion thrown from the table of someone who considers himself my master.', 'justice,dignity,truth,moral_courage', true),
 (55, 'God Has a Dream (2004)', 'We are made for goodness. We are made for love. We are made for friendliness. We are made for togetherness.', 'love,joy,community,hope', true);
@@ -573,10 +597,10 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 56: Frederick Douglass
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (56, 'Narrative of the Life of Frederick Douglass (1845)', 'I would unite with anybody to do right and with nobody to do wrong.', 'justice,truth,moral_courage,integrity', true),
-(56, 'Speech: What to the Slave Is the Fourth of July? (July 5, 1852)', 'This Fourth July is yours, not mine. You may rejoice, I must mourn.', 'justice,truth,moral_courage,suffering', true),
+(56, 'What to the Slave Is the Fourth of July? (July 5, 1852)', 'This Fourth July is yours, not mine. You may rejoice, I must mourn.', 'justice,truth,moral_courage,suffering', true),
 (56, 'Life and Times of Frederick Douglass (1881)', 'If there is no struggle, there is no progress.', 'perseverance,justice,truth,courage', true),
 (56, 'Narrative of the Life of Frederick Douglass (1845)', 'I prayed for freedom for twenty years, but received no answer until I prayed with my legs.', 'faith,justice,action,courage', true),
-(56, 'Speech: What to the Slave Is the Fourth of July? (July 5, 1852)', 'The limits of tyrants are prescribed by the endurance of those whom they oppress.', 'justice,courage,truth,perseverance', true),
+(56, 'The Significance of Emancipation in the West Indies, address at Canandaigua, N.Y. (August 3, 1857)', 'The limits of tyrants are prescribed by the endurance of those whom they oppress.', 'justice,courage,truth,perseverance', true),
 (56, 'My Bondage and My Freedom (1855)', 'Knowledge makes a man unfit to be a slave.', 'truth,justice,wisdom,freedom', true),
 (56, 'Life and Times of Frederick Douglass (1881)', 'No man can put a chain about the ankle of his fellow man without at last finding the other end fastened about his own neck.', 'justice,truth,wisdom,moral_courage', true),
 (56, 'Narrative of the Life of Frederick Douglass (1845)', 'Once you learn to read, you will be forever free.', 'truth,freedom,wisdom,hope', true);
@@ -611,15 +635,19 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (59, 'The Disciplines of the Christian Life (1985, posthumous)', 'Absolute surrender to the will of God is the key to Christian joy.', 'surrender,joy,obedience,faith', true),
 (59, 'The Disciplines of the Christian Life (1985, posthumous)', 'In the dust of defeat as well as the laurels of victory there is a glory to be found if one has done his best.', 'perseverance,faithfulness,calling,integrity', true),
 (59, 'The Disciplines of the Christian Life (1985, posthumous)', 'Have patience with God. He never hurries, but He is always on time.', 'trust,patience,sovereignty,faith', true),
-(59, 'Letter from Weihsien internment camp (1943)', 'Christ for the world, for the world needs Christ.', 'mission,love,hope,calling', true);
+(59, 'Cited in Julian Wilson, Complete Surrender: A Biography of Eric Liddell (1996)', 'Christ for the world, for the world needs Christ.', 'mission,love,hope,calling', true);
 
 -- 60: Lord Shaftesbury (Anthony Ashley Cooper, 7th Earl)
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(60, 'Diary entry (cited in Edwin Hodder, The Life of the Earl of Shaftesbury, 1886)', 'I cannot bear to leave the world with all the misery in it.', 'service,compassion,justice,calling', true),
-(60, 'Address to Parliament (circa 1843)', 'The principle of the Ten Hours Bill is the right of the operatives to rest.', 'justice,service,calling,love', true),
-(60, 'Diary entry (cited in Edwin Hodder, The Life of the Earl of Shaftesbury, 1886)', 'Nothing is great and lasting but what is done for eternity.', 'eternity,calling,service,wisdom', true),
-(60, 'Speech in Parliament (1842)', 'What can I do, I ask myself, for the temporal and eternal welfare of these miserable beings?', 'service,justice,compassion,calling', true),
-(60, 'Diary entry (cited in Edwin Hodder, The Life of the Earl of Shaftesbury, 1886)', 'The Bible is not the book of the Church: it is the book of the people.', 'scripture,truth,equality,word_of_god', true);
+(60, 'Cited in Edwin Hodder, The Life and Work of the Seventh Earl of Shaftesbury (1886)', 'I cannot bear to leave the world with all the misery in it.', 'service,compassion,justice,calling', true),
+(60, 'Address to Parliament (circa 1843)', 'The principle of the Ten Hours Bill is the right of the operatives to rest.', 'justice,service,calling,love', false),
+(60, 'Diary entry (cited in Edwin Hodder, The Life of the Earl of Shaftesbury, 1886)', 'Nothing is great and lasting but what is done for eternity.', 'eternity,calling,service,wisdom', false),
+(60, 'Speech in Parliament (1842)', 'What can I do, I ask myself, for the temporal and eternal welfare of these miserable beings?', 'service,justice,compassion,calling', false),
+(60, 'Diary entry (cited in Edwin Hodder, The Life of the Earl of Shaftesbury, 1886)', 'The Bible is not the book of the Church: it is the book of the people.', 'scripture,truth,equality,word_of_god', false),
+(60, 'Speeches of the Earl of Shaftesbury, Legislation for the Labouring Classes, Manchester, 26 October 1844 (1868)', 'God has given me leisure and freedom from the necessity of daily toil; and I willingly therefore devote them to the service of those people who have neither the one nor the other of these responsible gifts.', 'service,calling,justice,compassion', true),
+(60, 'Speeches of the Earl of Shaftesbury, Young Men''s Christian Association, Manchester, 25 March 1856 (1868)', 'I know no sentiment that so tends to exalt, and at the same time so tends to humble the human heart, as does the sense of direct and immediate responsibility to Almighty God.', 'responsibility,humility,faith,calling', true),
+(60, 'Speeches of the Earl of Shaftesbury, Sanitary Legislation, Social Science Congress, 1858 (1868)', 'But when people say we should think more of the soul and less of the body, my answer is, that the same God who made the soul made the body also.', 'compassion,justice,service,creation', true),
+(60, 'Speeches of the Earl of Shaftesbury, Religious Service in Theatres, House of Lords, 24 February 1860 (1868)', 'These efforts, nevertheless, must be made; no good may be left unattempted; against hope we must believe in hope, and endeavour, though the mass be inaccessible, to rescue individuals.', 'hope,perseverance,service,compassion', true);
 
 -- 61: Charles Finney
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -640,7 +668,8 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (62, 'Letters of John Newton (compiled 1960)', 'My memory is nearly gone, but I remember two things: that I am a great sinner and that Christ is a great Saviour.', 'grace,humility,salvation,love', true),
 (62, 'Olney Hymns, Preface (1779)', 'The Christian life is not merely a changed life but an exchanged life.', 'transformation,grace,faith,discipleship', true),
 (62, 'Letters of John Newton (compiled 1960)', 'I endeavour to walk through the world as a physician goes through Bedlam: the patients make a noise, pester and tease him, but he does his best for their health.', 'service,love,compassion,wisdom', true),
-(62, 'Letter to William Cowper (circa 1780)', 'Solid lasting peace is not obtained by reasoning, but by trusting in the Lord.', 'trust,peace,faith,prayer', true);
+(62, 'Letter to William Cowper (circa 1780)', 'Solid lasting peace is not obtained by reasoning, but by trusting in the Lord.', 'trust,peace,faith,prayer', false),
+(62, 'Cardiphonia, Letter II to Mrs. G— (1781)', 'After all, I know the Lord keeps the key of comfort in His own hands, yet He has commanded us to attempt comforting one another.', 'comfort,encouragement,love,community', true);
 
 -- 63: Olaudah Equiano
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -675,7 +704,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (66, 'Opticks, Query 31 (1706)', 'This most beautiful system of the sun, planets, and comets, could only proceed from the counsel and dominion of an intelligent and powerful Being.', 'creation,sovereignty,wisdom,worship', true),
 (66, 'Letter to Richard Bentley (December 10, 1692)', 'When I wrote my treatise about our System I had an eye upon such principles as might work with considering men for the belief of a Deity.', 'faith,creation,wisdom,truth', true),
 (66, 'Observations upon the Prophecies of Daniel (published 1733)', 'I have a fundamental belief in the Bible as the Word of God, written by those who were inspired.', 'scripture,faith,truth,word_of_god', true),
-(66, 'Letter to the Royal Society (cited in Frank Manuel, A Portrait of Isaac Newton, 1968)', 'If I have seen further it is by standing on the shoulders of giants.', 'humility,wisdom,learning,truth', true),
+(66, 'Letter to Robert Hooke (February 5, 1676)', 'If I have seen further it is by standing on the shoulders of giants.', 'humility,wisdom,learning,truth', true),
 (66, 'Cited in David Brewster, Memoirs of the Life, Writings and Discoveries of Sir Isaac Newton (1855)', 'I do not know what I may appear to the world, but to myself I seem to have been only like a boy playing on the seashore.', 'humility,wisdom,wonder,truth', true),
 (66, 'The Principia: Mathematical Principles of Natural Philosophy, General Scholium (1687)', 'God governs all things, and knows all that is or can be done.', 'sovereignty,wisdom,trust,faith', true);
 
@@ -720,11 +749,11 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 70: Francis Bacon
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(70, 'Essays: Of Atheism (1601)', 'A little philosophy inclineth man''s mind to atheism, but depth in philosophy bringeth men''s minds about to religion.', 'faith,wisdom,truth,apologetics', true),
+(70, 'Essays, Of Atheism (1612)', 'A little philosophy inclineth man''s mind to atheism, but depth in philosophy bringeth men''s minds about to religion.', 'faith,wisdom,truth,apologetics', true),
 (70, 'The Advancement of Learning, Book I (1605)', 'God has framed the mind of man as a mirror or glass, capable of the image of the universal world, and joyful to receive the impression thereof.', 'creation,wisdom,truth,wonder', true),
-(70, 'Essays: Of Truth (1601)', 'What is truth? said jesting Pilate, and would not stay for an answer.', 'truth,wisdom,justice,discernment', true),
+(70, 'Essays, Of Truth (1625)', 'What is truth? said jesting Pilate, and would not stay for an answer.', 'truth,wisdom,justice,discernment', true),
 (70, 'Novum Organum, Aphorism 89 (1620)', 'A little science estranges a man from God; a lot of science brings him back.', 'faith,wisdom,creation,truth', true),
-(70, 'Essays: Of Adversity (1601)', 'Virtue is like a rich stone, best plain set.', 'holiness,simplicity,wisdom,truth', true);
+(70, 'Essays, Of Adversity (1625)', 'Virtue is like a rich stone, best plain set.', 'holiness,simplicity,wisdom,truth', true);
 
 -- 71: Galileo Galilei
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -738,7 +767,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (72, 'Mysterium Cosmographicum (1596)', 'I was merely thinking God''s thoughts after him. Since we astronomers are priests of the highest God in regard to the book of nature, it befits us to be thoughtful.', 'worship,creation,wisdom,calling', true),
 (72, 'Harmonices Mundi (1619)', 'The chief aim of all investigations of the external world should be to discover the rational order and harmony which has been imposed on it by God.', 'creation,wisdom,worship,truth', true),
 (72, 'Epitome of Copernican Astronomy (1618)', 'I give thanks to God, who is the author of my understanding; let Him deal with me according to His mercy.', 'gratitude,humility,worship,grace', true),
-(72, 'Letter (cited in Max Caspar, Kepler, 1959)', 'Since we astronomers are priests of the highest God in regard to the book of nature, we must not think about the fame of our own minds, but above all else of the glory of God.', 'worship,calling,humility,truth', true),
+(72, 'Cited in Max Caspar, Kepler (1959)', 'Since we astronomers are priests of the highest God in regard to the book of nature, we must not think about the fame of our own minds, but above all else of the glory of God.', 'worship,calling,humility,truth', true),
 (72, 'Harmonices Mundi (1619)', 'I thank Thee, Lord God our Creator, that Thou allowest me to see the beauty in Thy work of creation.', 'gratitude,worship,creation,joy', true),
 (72, 'Mysterium Cosmographicum, Dedication (1596)', 'I believe it was by divine ordinance that I obtained by chance the task of demonstrating God''s plan in creation.', 'calling,sovereignty,worship,truth', true);
 
@@ -766,7 +795,8 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (75, 'The Language of God (2006)', 'Faith in God and science can be fully compatible.', 'faith,truth,creation,wisdom', true),
 (75, 'The Language of God (2006)', 'The human genome is a record of God''s creation, written in the language of life.', 'creation,worship,truth,wonder', true),
 (75, 'The Language of God (2006)', 'When I hear the Hallelujah chorus, I am moved to tears. But this is not proof of God; it is evidence of transcendence.', 'worship,beauty,truth,faith', true),
-(75, 'BioLogos Forum (2009)', 'Evolution is the means by which God created us. This is not a position of compromise; it is a position of integration.', 'creation,faith,truth,wisdom', true);
+(75, 'BioLogos Forum (2009)', 'Evolution is the means by which God created us. This is not a position of compromise; it is a position of integration.', 'creation,faith,truth,wisdom', false),
+(75, 'Is There a God and Does He Care About Me? The Testimony of BioLogos Founder Francis Collins, BioLogos (2019)', 'I realized I’d really neglected the most important question that any of us ever asks: Is there a God, and does that God care about me?', 'faith,truth,seeking,conviction', true);
 
 -- 76: Alexis de Tocqueville
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -810,7 +840,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (80, 'God''s Undertaker: Has Science Buried God? (2007)', 'Statements about the existence of God are not statements that science can adjudicate.', 'faith,truth,wisdom,apologetics', true),
 (80, 'God and Stephen Hawking (2011)', 'If we are simply products of evolution, our belief in God becomes just another product of evolution — not necessarily true.', 'faith,truth,wisdom,apologetics', true),
 (80, 'Gunning for God (2011)', 'The New Atheism is not a serious intellectual movement; it is simply an expression of emotion and prejudice.', 'truth,wisdom,courage,apologetics', true),
-(80, 'God''s Undertaker (2007)', 'Science and faith are not in conflict. They are two ways of knowing the same universe.', 'faith,truth,creation,wisdom', true),
+(80, 'God''s Undertaker: Has Science Buried God? (2007)', 'Science and faith are not in conflict. They are two ways of knowing the same universe.', 'faith,truth,creation,wisdom', true),
 (80, 'Against the Flow (2015)', 'Daniel''s life shows that it is possible to maintain integrity in a corrupt environment.', 'integrity,courage,truth,obedience', true),
 (80, 'Against the Flow (2015)', 'The resurrection of Jesus is the best-attested fact in ancient history.', 'hope,truth,faith,resurrection', true),
 (80, 'God and Stephen Hawking (2011)', 'A new age of information does not make God obsolete; it reminds us that information is not self-creating.', 'truth,creation,wisdom,faith', true);
@@ -820,7 +850,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (81, 'A Simple Path (1995)', 'If you judge people, you have no time to love them.', 'love,compassion,service,wisdom', true),
 (81, 'In the Heart of the World (1997)', 'Not all of us can do great things. But we can do small things with great love.', 'service,love,humility,calling', true),
 (81, 'A Simple Path (1995)', 'We shall never know all the good that a simple smile can do.', 'love,joy,service,compassion', true),
-(81, 'Something Beautiful for God by Malcolm Muggeridge (1971)', 'I see God in every human being. When I wash the leper''s wounds I feel I am nursing the Lord himself.', 'service,love,worship,compassion', true),
+(81, 'Cited in Malcolm Muggeridge, Something Beautiful for God (1971)', 'I see God in every human being. When I wash the leper''s wounds I feel I am nursing the Lord himself.', 'service,love,worship,compassion', true),
 (81, 'A Simple Path (1995)', 'If we have no peace, it is because we have forgotten that we belong to each other.', 'peace,love,community,truth', true),
 (81, 'In the Heart of the World (1997)', 'Loneliness and the feeling of being unwanted is the most terrible poverty.', 'love,compassion,service,truth', true),
 (81, 'A Simple Path (1995)', 'The fruit of silence is prayer; the fruit of prayer is faith; the fruit of faith is love; the fruit of love is service; the fruit of service is peace.', 'prayer,faith,love,service', true),
@@ -831,12 +861,12 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 82: Hudson Taylor
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (82, 'Union and Communion (1894)', 'All God''s giants have been weak men who did great things for God because they reckoned on His being with them.', 'faith,humility,calling,sovereignty', true),
-(82, 'Hudson Taylor''s Spiritual Secret by Dr. and Mrs. Howard Taylor (1932)', 'The secret of a man''s life is what he does with his waiting.', 'faith,patience,trust,calling', true),
+(82, 'Cited in Howard Taylor and Geraldine Taylor, Hudson Taylor''s Spiritual Secret (1932)', 'The secret of a man''s life is what he does with his waiting.', 'faith,patience,trust,calling', true),
 (82, 'Retrospect (1894)', 'I have found that there are three stages in every great work of God: first, it is impossible, then it is difficult, then it is done.', 'faith,hope,perseverance,sovereignty', true),
-(82, 'Hudson Taylor''s Spiritual Secret (1932)', 'God chose me because I was weak enough. God does not do His great works by large committees. He trains somebody to be quiet enough, and little enough, and then He uses him.', 'humility,calling,grace,sovereignty', true),
+(82, 'Cited in Howard Taylor and Geraldine Taylor, Hudson Taylor''s Spiritual Secret (1932)', 'God chose me because I was weak enough. God does not do His great works by large committees. He trains somebody to be quiet enough, and little enough, and then He uses him.', 'humility,calling,grace,sovereignty', true),
 (82, 'China''s Spiritual Need and Claims (1865)', 'If I had a thousand pounds, China should have it. If I had a thousand lives, China should have them.', 'mission,sacrifice,love,calling', true),
 (82, 'Retrospect (1894)', 'Since the day I left England I have not for one single moment ceased to be a missionary.', 'faithfulness,calling,perseverance,mission', true),
-(82, 'Hudson Taylor''s Spiritual Secret (1932)', 'The prayer power has never been tried to its full capacity. If we want to see mighty wonders of divine grace and power wrought in the place of weakness, failure and disappointment, let us answer God''s standing challenge.', 'prayer,faith,sovereignty,mission', true),
+(82, 'Cited in Howard Taylor and Geraldine Taylor, Hudson Taylor''s Spiritual Secret (1932)', 'The prayer power has never been tried to its full capacity. If we want to see mighty wonders of divine grace and power wrought in the place of weakness, failure and disappointment, let us answer God''s standing challenge.', 'prayer,faith,sovereignty,mission', true),
 (82, 'Retrospect (1894)', 'Never mind how great the difficulties are; God has promised, and God will do it.', 'faith,trust,sovereignty,perseverance', true);
 
 -- 83: Amy Carmichael
@@ -853,52 +883,61 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 84: David Livingstone
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(84, 'Cambridge address, December 4, 1857', 'I beg to direct your attention to Africa. I know that in a few years I shall be cut off in that country, which is now open. Do not let it be shut again!', 'mission,calling,courage,service', true),
+(84, 'Dr. Livingstone''s Cambridge Lectures, Lecture I, Senate House (December 4, 1857)', 'I beg to direct your attention to Africa. I know that in a few years I shall be cut off in that country, which is now open. Do not let it be shut again!', 'mission,calling,courage,service', true),
 (84, 'Missionary Travels and Researches in South Africa (1857)', 'I place no value on anything I have or may possess, except in relation to the kingdom of God.', 'surrender,calling,faith,obedience', true),
 (84, 'Letter to his father (1838)', 'Nowhere have I ever appeared as a mere man of science, but as a Christian.', 'calling,integrity,truth,mission', true),
-(84, 'Journals of David Livingstone (cited in W. Garden Blaikie, The Personal Life of David Livingstone, 1880)', 'I am prepared to go anywhere, provided it be forward.', 'faith,courage,calling,obedience', true),
-(84, 'Cambridge address, December 4, 1857', 'Sending the gospel to the heathen must include the highest and best thing that England has yet to give.', 'mission,service,love,calling', true),
-(84, 'Journals (cited in Blaikie, 1880)', 'Fear God and work hard.', 'obedience,faith,diligence,truth', true),
-(84, 'Missionary Travels (1857)', 'All that I am I owe to Jesus Christ, revealed to me in His divine Book.', 'gratitude,scripture,faith,love', true);
+(84, 'Cited in William Garden Blaikie, The Personal Life of David Livingstone (1880)', 'I am prepared to go anywhere, provided it be forward.', 'faith,courage,calling,obedience', true),
+(84, 'Cambridge address, December 4, 1857', 'Sending the gospel to the heathen must include the highest and best thing that England has yet to give.', 'mission,service,love,calling', false),
+(84, 'Cited in William Garden Blaikie, The Personal Life of David Livingstone (1880)', 'Fear God and work hard.', 'obedience,faith,diligence,truth', true),
+(84, 'Missionary Travels (1857)', 'All that I am I owe to Jesus Christ, revealed to me in His divine Book.', 'gratitude,scripture,faith,love', false),
+(84, 'Missionary Travels and Researches in South Africa, Introduction (1857)', 'The perfect freeness with which the pardon of all our guilt is offered in God’s book drew forth feelings of affectionate love to Him who bought us with his blood, and a sense of deep obligation to Him for his mercy has influenced, in some small measure, my conduct ever since.', 'grace,forgiveness,gratitude,love', true),
+(84, 'Missionary Travels and Researches in South Africa, Chapter 32 (1857)', 'I have not mentioned half the favors bestowed, but I may just add that no one has cause for more abundant gratitude to his fellow-men and to his Maker than I have; and may God grant that the effect on my mind be such that I may be more humbly devoted to the service of the Author of all our mercies!', 'gratitude,humility,service,devotion', true);
 
 -- 85: Jim Elliot
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(85, 'Journal of Jim Elliot (October 28, 1949)', 'He is no fool who gives what he cannot keep to gain that which he cannot lose.', 'sacrifice,eternity,faith,wisdom', true),
-(85, 'Journal of Jim Elliot (1948)', 'Wherever you are, be all there.', 'obedience,calling,faith,presence', true),
-(85, 'Journal of Jim Elliot (1949)', 'God, I pray Thee, light these idle sticks of my life and may I burn for Thee.', 'prayer,calling,surrender,zeal', true),
-(85, 'Journal of Jim Elliot (1952)', 'I seek not a long life, but a full one, like you, Lord Jesus.', 'calling,faith,sacrifice,obedience', true),
-(85, 'Journal of Jim Elliot (1950)', 'The thinnest place between time and eternity is the place of prayer.', 'prayer,eternity,faith,devotion', true),
-(85, 'Journal of Jim Elliot (1948)', 'Make my life a prayer unto You — I want to do what You want me to do.', 'prayer,obedience,surrender,calling', true),
-(85, 'Journal of Jim Elliot (1951)', 'Am I ignitable? God deliver me from the dread asbestos of ''other things.''', 'zeal,obedience,surrender,calling', true),
-(85, 'Shadow of the Almighty by Elisabeth Elliot (1958)', 'When it comes time to die, make sure all you have to do is die.', 'holiness,wisdom,eternity,obedience', true);
+(85, 'The Journals of Jim Elliot (October 28, 1949)', 'He is no fool who gives what he cannot keep to gain that which he cannot lose.', 'sacrifice,eternity,faith,wisdom', true),
+(85, 'The Journals of Jim Elliot (1948)', 'Wherever you are, be all there.', 'obedience,calling,faith,presence', true),
+(85, 'The Journals of Jim Elliot (1949)', 'God, I pray Thee, light these idle sticks of my life and may I burn for Thee.', 'prayer,calling,surrender,zeal', true),
+(85, 'The Journals of Jim Elliot (1952)', 'I seek not a long life, but a full one, like you, Lord Jesus.', 'calling,faith,sacrifice,obedience', true),
+(85, 'The Journals of Jim Elliot (1950)', 'The thinnest place between time and eternity is the place of prayer.', 'prayer,eternity,faith,devotion', true),
+(85, 'The Journals of Jim Elliot (1948)', 'Make my life a prayer unto You — I want to do what You want me to do.', 'prayer,obedience,surrender,calling', true),
+(85, 'The Journals of Jim Elliot (1951)', 'Am I ignitable? God deliver me from the dread asbestos of ''other things.''', 'zeal,obedience,surrender,calling', true),
+(85, 'Cited in Elisabeth Elliot, Shadow of the Almighty (1958)', 'When it comes time to die, make sure all you have to do is die.', 'holiness,wisdom,eternity,obedience', true);
 
 -- 86: William Booth
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (86, 'In Darkest England and the Way Out (1890)', 'Not until I saw the misery of the poor in London did I understand the claims of Christ upon me.', 'service,compassion,calling,justice', true),
-(86, 'The Founder Speaks Again by Cyril Barnes (1960, compiled)', 'Go for souls, and go for the worst.', 'evangelism,service,love,calling', true),
+(86, 'Cited in Hulda Friedrichs, The Life of General Booth (1913)', 'Go for souls, and go for the worst.', 'evangelism,service,love,calling', true),
 (86, 'The Founder Speaks Again (1960, compiled)', 'I consider that the chief dangers which confront the coming century will be religion without the Holy Ghost, Christianity without Christ, forgiveness without repentance.', 'truth,warning,holiness,faith', true),
-(86, 'In Darkest England (1890)', 'While women weep as they do now, I''ll fight; while little children go hungry as they do now, I''ll fight.', 'justice,service,love,perseverance', true),
+(86, 'Cited in J. Evan Smith, Booth the Beloved (1949)', 'While women weep as they do now, I''ll fight; while little children go hungry as they do now, I''ll fight.', 'justice,service,love,perseverance', true),
 (86, 'The Founder Speaks Again (1960, compiled)', 'Love is the secret of the Cross.', 'love,cross,salvation,truth', true),
 (86, 'The Founder Speaks Again (1960, compiled)', 'A man who is doing something, even if he is wrong, is better than a man who does nothing.', 'service,calling,faith,diligence', true),
-(86, 'In Darkest England (1890)', 'What is the use of preaching the Gospel to men whose whole attention is concentrated upon a mad, desperate struggle to keep themselves alive?', 'service,justice,compassion,truth', true);
+(86, 'In Darkest England and the Way Out, Part 1, ch. 5 ''On the Verge of the Abyss'' (1890)', 'What is the use of preaching the Gospel to men whose whole attention is concentrated upon a mad, desperate struggle to keep themselves alive?', 'service,justice,compassion,truth', true);
 
 -- 87: Lottie Moon
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(87, 'Letter published in the Foreign Mission Journal (December 1887)', 'I pray that no missionary will ever be as lonely as I have been. And yet the loneliness has been the means of forcing me to lean on God.', 'prayer,suffering,trust,sovereignty', true),
-(87, 'Letter from China (1873)', 'I have a firm conviction that I am called to the work of a foreign missionary.', 'calling,faith,obedience,mission', true),
-(87, 'Letter published in the Foreign Mission Journal (1887)', 'I would I could have my life to live over again, and give it all to mission work.', 'calling,sacrifice,love,mission', true),
-(87, 'Letter from China (1880)', 'Is it not possible that women may do something for the evangelization of women?', 'calling,courage,justice,mission', true),
-(87, 'Letter published in the Foreign Mission Journal (1887)', 'I do hope that no one will try to lessen the spirit of self-sacrifice. That is what distinguishes true Christianity.', 'sacrifice,love,calling,truth', true),
-(87, 'Letter from China (1875)', 'God give us men and women, men and women filled with the spirit of God.', 'prayer,calling,holiness,mission', true);
+(87, 'Letter published in the Foreign Mission Journal (December 1887)', 'I pray that no missionary will ever be as lonely as I have been. And yet the loneliness has been the means of forcing me to lean on God.', 'prayer,suffering,trust,sovereignty', false),
+(87, 'Letter from China (1873)', 'I have a firm conviction that I am called to the work of a foreign missionary.', 'calling,faith,obedience,mission', false),
+(87, 'Letter published in the Foreign Mission Journal (1887)', 'I would I could have my life to live over again, and give it all to mission work.', 'calling,sacrifice,love,mission', false),
+(87, 'Letter from China (1880)', 'Is it not possible that women may do something for the evangelization of women?', 'calling,courage,justice,mission', false),
+(87, 'Letter published in the Foreign Mission Journal (1887)', 'I do hope that no one will try to lessen the spirit of self-sacrifice. That is what distinguishes true Christianity.', 'sacrifice,love,calling,truth', false),
+(87, 'Letter from China (1875)', 'God give us men and women, men and women filled with the spirit of God.', 'prayer,calling,holiness,mission', false),
+(87, 'Cited in Una Roberts Lawrence, Lottie Moon (1927)', 'As you wind your way from village to village you feel it is no idle fancy that the Master walks beside you.', 'presence,mission,faith,comfort', true),
+(87, 'Cited in Una Roberts Lawrence, Lottie Moon (1927)', 'I am more and more impressed by the belief that to win these people to God, we must first win them to ourselves. We need to go out and live among them, manifesting the gentle and loving spirit of our Lord.', 'love,mission,gentleness,evangelism', true),
+(87, 'Cited in Una Roberts Lawrence, Lottie Moon (1927)', 'The prayer in former times was that God would open China. God has answered that prayer, and now who goes forth to possess the land?', 'prayer,mission,calling,obedience', true),
+(87, 'Cited in Una Roberts Lawrence, Lottie Moon (1927)', 'The world is the field, and woman’s work for Christ is wherever there is a home to be reformed, or a soul to be redeemed.', 'calling,service,mission,women', true),
+(87, 'Cited in Una Roberts Lawrence, Lottie Moon (1927)', 'If the joy of the Lord be their strength, the blessedness of the work will more than compensate for its hardships. Let them come rejoicing to sacrifice for that Lord and Master who so freely gave himself for them.', 'joy,sacrifice,mission,strength', true),
+(87, 'Cited in Una Roberts Lawrence, Lottie Moon (1927)', 'I wish our people could realize that our Lord’s last command is as binding as is the command to baptize.', 'obedience,mission,calling,conviction', true);
 
 -- 88: Adoniram Judson
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (88, 'Cited in Francis Wayland, A Memoir of the Life and Labors of the Rev. Adoniram Judson (1853)', 'If I had not felt certain that every additional trial was ordered by infinite love and mercy, I could not have survived my accumulated sufferings.', 'suffering,trust,love,sovereignty', true),
 (88, 'Cited in Francis Wayland, A Memoir (1853)', 'God is God. Because he is God, He is worthy of my trust and obedience.', 'faith,obedience,trust,worship', true),
 (88, 'Cited in Courtney Anderson, To the Golden Shore (1956)', 'I am not tired of my work, neither am I tired of the world; yet when Christ calls me home, I shall go with the gladness of a boy bounding away from school.', 'hope,joy,eternity,faith', true),
-(88, 'Letter to his family (1831)', 'Come over to Macedonia and help us. The call is still ringing.', 'mission,calling,evangelism,obedience', true),
+(88, 'Letter to his family (1831)', 'Come over to Macedonia and help us. The call is still ringing.', 'mission,calling,evangelism,obedience', false),
 (88, 'Cited in Courtney Anderson, To the Golden Shore (1956)', 'I have now to ask, whether you can consent to part with your daughter early next spring, to see her no more in this world?', 'sacrifice,calling,love,mission', true),
-(88, 'Cited in Francis Wayland, A Memoir (1853)', 'Beware of the world, its cares, its friendships, its pleasures.', 'holiness,wisdom,obedience,warning', true);
+(88, 'Cited in Francis Wayland, A Memoir (1853)', 'Beware of the world, its cares, its friendships, its pleasures.', 'holiness,wisdom,obedience,warning', true),
+(88, 'Cited in Francis Wayland, A Memoir of the Life and Labors of the Rev. Adoniram Judson (1853)', 'But I hope I can say with truth that I love Christ above all; and I am striving, in the strength of my weak faith, to gird up my mind to face and welcome all his appointments.', 'surrender,love,faith,trust', true);
 
 -- 89: Mary Slessor
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -976,15 +1015,17 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (97, 'The Unoccupied Mission Fields of Africa and Asia (1911)', 'The chief sin of the church today is the sin of prayerlessness.', 'prayer,truth,calling,repentance', true),
 (97, 'Islam: A Challenge to Faith (1907)', 'Nothing is impossible to God. The evangelization of the Muslim world is not beyond the reach of the gospel.', 'faith,hope,mission,sovereignty', true),
 (97, 'Cited in J. Christy Wilson, Apostle to Islam (1952)', 'The greatest need of the Muslim world is Christ.', 'mission,love,truth,calling', true),
-(97, 'The Unoccupied Mission Fields (1911)', 'Why should I seek comfort when the Master went ahead of me in agony?', 'sacrifice,suffering,calling,obedience', true),
+(97, 'The Unoccupied Mission Fields of Africa and Asia (1911)', 'Why should I seek comfort when the Master went ahead of me in agony?', 'sacrifice,suffering,calling,obedience', true),
 (97, 'Cited in J. Christy Wilson, Apostle to Islam (1952)', 'A man who is not praying is not preparing.', 'prayer,wisdom,calling,obedience', true);
 
 -- 98: Nate Saint
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(98, 'Journal of Nate Saint (cited in Elisabeth Elliot, Through Gates of Splendor, 1957)', 'People who do not know the Lord ask why in the world we waste our lives as missionaries. They forget that they too are expending their lives, and that the difference is that we are driven by a higher purpose.', 'calling,sacrifice,mission,truth', true),
-(98, 'Letter to his son (January 1956)', 'As we weigh the future and seek the will of God, does it seem right that we should go on considering our own safety when a small group of men have not heard of the risen Christ?', 'mission,sacrifice,calling,obedience', true),
-(98, 'Journal of Nate Saint (cited in Elisabeth Elliot, Through Gates of Splendor, 1957)', 'If God would grant us the vision, the word sacrifice would disappear from our lips and thoughts.', 'calling,love,sacrifice,faith', true),
-(98, 'Journal of Nate Saint (1955)', 'We are not looking for a thrill or an adventure; we are looking to obey Christ.', 'obedience,calling,mission,faith', true);
+(98, 'Journal of Nate Saint (cited in Elisabeth Elliot, Through Gates of Splendor, 1957)', 'People who do not know the Lord ask why in the world we waste our lives as missionaries. They forget that they too are expending their lives, and that the difference is that we are driven by a higher purpose.', 'calling,sacrifice,mission,truth', false),
+(98, 'Letter to his son (January 1956)', 'As we weigh the future and seek the will of God, does it seem right that we should go on considering our own safety when a small group of men have not heard of the risen Christ?', 'mission,sacrifice,calling,obedience', false),
+(98, 'Cited in Elisabeth Elliot, Through Gates of Splendor (1957)', 'If God would grant us the vision, the word sacrifice would disappear from our lips and thoughts.', 'calling,love,sacrifice,faith', true),
+(98, 'Journal of Nate Saint (1955)', 'We are not looking for a thrill or an adventure; we are looking to obey Christ.', 'obedience,calling,mission,faith', false),
+(98, 'Letter to the Christian Airmen''s Missionary Fellowship (1945)', 'Til tonight I couldn’t see just why the Lord would want me because I have not had fitting training for the work so far but the Lord has given me an irresistible desire to take the Gospel to those who have never heard of His love.', 'calling,mission,surrender,love', true),
+(98, 'Letter to the Christian Airmen''s Missionary Fellowship (1945)', 'Last New Year’s eve in a watch-nite service I said “yes” to God on the missionary challenge.', 'calling,obedience,surrender,mission', true);
 
 -- 99: John G. Paton
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES

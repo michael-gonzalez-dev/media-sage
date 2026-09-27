@@ -18,7 +18,8 @@ object ServerDatabase {
                 QuoteTable,
                 HeadlineTable,
                 EncouragementCacheTable,
-                ClaudeCallLimitTable
+                ClaudeCallLimitTable,
+                WorkTable
             )
         }
     }
@@ -45,6 +46,7 @@ object ServerDatabase {
     fun fetchQuoteCandidates(): List<QuoteCandidate> = transaction {
         QuoteTable.join(FigureTable, JoinType.INNER, onColumn = QuoteTable.figureId, otherColumn = FigureTable.id)
             .selectAll()
+            .where { QuoteTable.verified eq true }
             .map { row ->
                 QuoteCandidate(
                     quoteId = row[QuoteTable.id],

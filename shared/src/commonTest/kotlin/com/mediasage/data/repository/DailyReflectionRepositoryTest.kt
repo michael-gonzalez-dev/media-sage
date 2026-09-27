@@ -150,6 +150,87 @@ class DailyReflectionRepositoryTest {
     }
 
     @Test
+    fun getOrFetch_sendsTheFullWeekOfScripturesAndBriefingsForTheFirstBriefingOfTheDay() = runTest {
+        // Regression: with no earlier briefing today, the week's history must still reach the
+        // server — previously only today's reflections were sent alongside the scripture list.
+        val today = localEpochDay(epochMillis())
+        val dao = FakeDailyReflectionDao()
+        (1L..7L).forEach { daysAgo ->
+            dao.upsert(
+                reflection(
+                    figureId = augustine.id, epochDay = today - daysAgo, tone = "morning",
+                    scriptureReference = "Psalm $daysAgo:1", insight = "Argument $daysAgo",
+                )
+            )
+        }
+        val api = FakeReflectionApi()
+
+        repo(dao = dao, api = api).getOrFetch(
+            figureId = augustine.id, figureName = augustine.name, headlines = emptyList(), tone = "morning"
+        )
+
+        val request = assertNotNull(api.lastRequest)
+        assertEquals((1..7).map { "Psalm $it:1" }.toSet(), request.previousScriptures.toSet())
+        assertEquals(7, request.previousReflections.size)
+        assertTrue(request.previousReflections.first().contains("Argument 7"))
+    }
+
+    @Test
+    fun getOrFetch_labelsTheWeeksBriefingsByDayAndToneInChronologicalOrder() = runTest {
+        val today = localEpochDay(epochMillis())
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(reflection(figureId = augustine.id, epochDay = today, tone = "morning", insight = "This morning"))
+        dao.upsert(reflection(figureId = augustine.id, epochDay = today - 1, tone = "evening", insight = "Last evening"))
+        dao.upsert(reflection(figureId = augustine.id, epochDay = today - 1, tone = "morning", insight = "Last morning"))
+        val api = FakeReflectionApi()
+
+        repo(dao = dao, api = api).getOrFetch(
+            figureId = augustine.id, figureName = augustine.name, headlines = emptyList(), tone = "evening"
+        )
+
+        val sent = assertNotNull(api.lastRequest).previousReflections
+        assertEquals(3, sent.size)
+        assertTrue(sent[0].endsWith("morning: Last morning implication inspiration"))
+        assertTrue(sent[1].endsWith("evening: Last evening implication inspiration"))
+        assertTrue(sent[2].startsWith("Earlier today (morning): This morning"))
+    }
+
+    @Test
+    fun getOrFetch_namesTheWorksEachEarlierBriefingDrewOn() = runTest {
+        val today = localEpochDay(epochMillis())
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(
+            reflection(figureId = augustine.id, epochDay = today - 1, tone = "morning", insight = "Rest")
+                .copy(sources = listOf("Confessions", "The City of God"))
+        )
+        val api = FakeReflectionApi()
+
+        repo(dao = dao, api = api).getOrFetch(
+            figureId = augustine.id, figureName = augustine.name, headlines = emptyList(), tone = "morning"
+        )
+
+        val sent = assertNotNull(api.lastRequest).previousReflections.single()
+        assertTrue(sent.endsWith("morning (drew on Confessions; The City of God): Rest implication inspiration"))
+    }
+
+    @Test
+    fun getOrFetch_leavesOutOtherFiguresAndBriefingsOlderThanAWeek() = runTest {
+        val today = localEpochDay(epochMillis())
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(reflection(figureId = lewis.id, epochDay = today - 1, tone = "morning", scriptureReference = "John 1:1"))
+        dao.upsert(reflection(figureId = augustine.id, epochDay = today - 8, tone = "morning", scriptureReference = "Psalm 8:1"))
+        val api = FakeReflectionApi()
+
+        repo(dao = dao, api = api).getOrFetch(
+            figureId = augustine.id, figureName = augustine.name, headlines = emptyList(), tone = "morning"
+        )
+
+        val request = assertNotNull(api.lastRequest)
+        assertTrue(request.previousScriptures.isEmpty())
+        assertTrue(request.previousReflections.isEmpty())
+    }
+
+    @Test
     fun isResolved_isFalseBeforeResolveIsCalled() = runTest {
         assertFalse(repo().isResolved.value)
     }
@@ -307,6 +388,7 @@ class DailyReflectionRepositoryTest {
         theme: String = "NEWS",
         scriptureReference: String = "ref",
         synced: Boolean = false,
+        insight: String = "insight",
     ) = DailyReflectionEntity(
         id = "${epochDay}_${tone}_$theme",
         figureId = figureId,
@@ -315,7 +397,7 @@ class DailyReflectionRepositoryTest {
         theme = theme,
         scriptureReference = scriptureReference,
         scriptureText = "text",
-        insight = "insight",
+        insight = insight,
         implication = "implication",
         inspiration = "inspiration",
         sources = emptyList(),
@@ -332,8 +414,8 @@ private class FakeDailyReflectionDao : DailyReflectionDao {
 
     override suspend fun getRawById(id: String): DailyReflectionEntity? = store[id]
 
-    override suspend fun getAllForDay(figureId: Long, epochDay: Long): List<DailyReflectionEntity> =
-        store.values.filter { it.figureId == figureId && it.epochDay == epochDay }
+    override suspend fun getRecentForFigure(figureId: Long, fromDay: Long, today: Long): List<DailyReflectionEntity> =
+        store.values.filter { it.figureId == figureId && it.epochDay in fromDay..today }
 
     override suspend fun getAllScripturesForDay(epochDay: Long): List<String> =
         store.values.filter { it.epochDay == epochDay }.map { it.scriptureReference }.distinct()
@@ -452,6 +534,7 @@ private class FakeReflectionApi(
     ),
 ) : MediaSageApi {
     var callCount = 0
+    var lastRequest: DailyReflectionRequestDto? = null
 
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = emptyList()
 
@@ -480,6 +563,7 @@ private class FakeReflectionApi(
 
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto {
         callCount++
+        lastRequest = request
         return response
     }
 }

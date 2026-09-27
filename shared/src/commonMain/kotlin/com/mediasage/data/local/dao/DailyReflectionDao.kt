@@ -15,8 +15,8 @@ interface DailyReflectionDao {
     @Query("SELECT * FROM daily_reflection WHERE id = :id")
     suspend fun getRawById(id: String): DailyReflectionEntity?
 
-    @Query("SELECT * FROM daily_reflection WHERE figureId = :figureId AND epochDay = :epochDay")
-    suspend fun getAllForDay(figureId: Long, epochDay: Long): List<DailyReflectionEntity>
+    @Query("SELECT * FROM daily_reflection WHERE figureId = :figureId AND epochDay >= :fromDay AND epochDay <= :today ORDER BY epochDay ASC")
+    suspend fun getRecentForFigure(figureId: Long, fromDay: Long, today: Long): List<DailyReflectionEntity>
 
     @Query("SELECT DISTINCT scriptureReference FROM daily_reflection WHERE epochDay = :epochDay")
     suspend fun getAllScripturesForDay(epochDay: Long): List<String>
