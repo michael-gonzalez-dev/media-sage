@@ -9,6 +9,17 @@ application {
     mainClass.set("com.mediasage.appserver.ApplicationKt")
 }
 
+// Briefing eval: on-demand scenarios run against the real Claude API (see docs/MS-765-briefing-eval.md).
+// Its own source set, so `test`, allTests and CI never compile or run it, and it never ships in the server.
+sourceSets {
+    create("eval") {
+        compileClasspath += sourceSets["main"].output
+        runtimeClasspath += sourceSets["main"].output
+    }
+}
+configurations["evalImplementation"].extendsFrom(configurations["implementation"])
+configurations["evalRuntimeOnly"].extendsFrom(configurations["runtimeOnly"])
+
 dependencies {
     // Ktor Server
     implementation(libs.ktor.server.core)
@@ -48,4 +59,33 @@ dependencies {
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.koin.test)
+
+    // Briefing eval
+    "evalImplementation"(libs.kotlin.testJunit)
+}
+
+tasks.register<Test>("briefingEval") {
+    group = "verification"
+    description = "Runs every briefing scenario (or -Pscenario=<name>) against the real Claude API. Needs CLAUDE_API_KEY."
+    testClassesDirs = sourceSets["eval"].output.classesDirs
+    classpath = sourceSets["eval"].runtimeClasspath
+    useJUnit()
+    project.findProperty("scenario")?.let { systemProperty("briefingEval.scenario", it) }
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+    outputs.upToDateWhen { false }
+}
+
+// Kover instruments every Test task and compiles every source set for its reports, so CI's koverXmlReport
+// would otherwise run (or at least build) the eval. Detekt only scans main/test by default.
+configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+    currentProject {
+        instrumentation { disabledForTestTasks.add("briefingEval") }
+        sources { excludedSourceSets.add("eval") }
+    }
+}
+configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+    source.from("src/eval/kotlin")
 }

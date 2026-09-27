@@ -1,0 +1,90 @@
+[
+  {
+    "name": "tozer-hope-full-week",
+    "description": "Theme lens with a full week of history. The obvious hope verses are all used, so the model must find a new passage and a new angle.",
+    "figureId": 19,
+    "figureName": "A.W. Tozer",
+    "tone": "morning",
+    "theme": "HOPE",
+    "date": "2026-09-26",
+    "previousScriptures": [
+      "Romans 15:13",
+      "Psalm 42:11",
+      "Lamentations 3:22-23",
+      "Hebrews 6:19",
+      "Romans 5:3-5",
+      "Isaiah 40:31",
+      "Romans 8:24-25",
+      "1 Peter 1:3",
+      "Jeremiah 29:11",
+      "Psalm 130:5",
+      "Titus 2:13",
+      "Hebrews 10:23"
+    ],
+    "previousReflections": [
+      "Sunday morning (drew on The Pursuit of God (1948)): Hope is not a mood we manufacture but the overflow of a heart that has found God Himself. To pursue God is to discover that He was pursuing us first. Let the God of hope fill you today, and your joy will not depend on your circumstances.",
+      "Sunday evening (drew on The Knowledge of the Holy (1961)): The soul that is downcast has forgotten who God is. We must preach His attributes back to our own hearts. Tonight, rest in the unchanging character of the One you will praise again.",
+      "Monday morning (drew on The Knowledge of the Holy (1961)): God's mercies are not rationed; they are as new as the morning light. His faithfulness does not wear thin with use. Begin this week leaning on a faithfulness that has never once failed.",
+      "Monday evening (drew on The Divine Conquest (1950)): Hope is an anchor, and an anchor holds only because it is fastened to something beyond the storm. Christ has gone behind the veil for us. Whatever tossed you today, your anchor did not move.",
+      "Tuesday morning (drew on The Root of the Righteous (1955)): Suffering is the soil in which God grows endurance, and endurance ripens into hope. The deep roots of the righteous are formed in dry seasons. Do not despise the trial that is making you steadfast.",
+      "Tuesday evening (drew on The Pursuit of God (1948)): Those who wait upon the Lord are not idle; they are being renewed. Waiting is an act of worship that confesses God's timing is better than ours. Tonight, let your strength be exchanged for His.",
+      "Wednesday morning (drew on Born After Midnight (1959)): We are saved in hope, and hope that is seen is no hope at all. The Christian walks by a light he cannot yet fully see. Go out today trusting what is promised more than what is visible.",
+      "Wednesday evening (drew on That Incredible Christian (1964)): The resurrection is the living root of our hope, not a doctrine to be merely admired. Because He lives, our future is not a guess. Lay down tonight as one who has been born again to a living hope.",
+      "Thursday morning (drew on Of God and Men (1960)): God's plans for His people are not for harm but for a future. The church too often plans without Him and then asks Him to bless the plan. Seek His purposes first, and your hope will rest on His design rather than yours.",
+      "Thursday evening (drew on The Divine Conquest (1950)): The soul that waits for the Lord is like a watchman longing for dawn. The night is real, but so is the morning. Wait for Him tonight with the certainty of one who knows the sun will rise.",
+      "Friday morning (drew on Man: The Dwelling Place of God (1966)): The blessed hope is the appearing of Christ, and the Christian who forgets it grows worldly. Heaven is not an escape but a homecoming. Live today as one who expects the King.",
+      "Friday evening (drew on The Root of the Righteous (1955)): He who promised is faithful, so we hold fast without wavering. Our confession is only as strong as the One we confess. Hold on tonight, not to your grip, but to His promise."
+    ]
+  },
+  {
+    "name": "bonhoeffer-headlines",
+    "description": "Headlines lens (no theme). The briefing should speak to the day's news in Bonhoeffer's voice without restating the last two days.",
+    "figureId": 3,
+    "figureName": "Dietrich Bonhoeffer",
+    "tone": "evening",
+    "date": "2026-09-26",
+    "headlines": [
+      "Flooding displaces thousands across river delta as relief groups scramble to reach cut-off towns",
+      "City council approves emergency shelter expansion ahead of winter",
+      "Striking nurses reach tentative agreement after three-week walkout",
+      "Report finds rising loneliness among adults under 30",
+      "Volunteers rebuild school library destroyed in wildfire"
+    ],
+    "previousScriptures": [
+      "Matthew 25:40",
+      "Galatians 6:2",
+      "Psalm 133:1"
+    ],
+    "previousReflections": [
+      "Thursday evening (drew on Life Together (1939)): Christian community is not an ideal we build but a gift God gives. We are brothers and sisters only through Jesus Christ. Receive tonight the people God has placed beside you, as they are.",
+      "Friday morning (drew on The Cost of Discipleship (1937)): Cheap grace forgives without asking us to follow. Costly grace calls us into the streets where Christ is found among the least. Go today to meet Him in the neighbour who needs you.",
+      "Friday evening (drew on Letters and Papers from Prison (1951)): The church is only the church when it exists for others. We bear one another's burdens because Christ first bore ours. Tonight, carry one person's weight to God in prayer."
+    ]
+  },
+  {
+    "name": "tubman-no-bibliography",
+    "description": "A figure with no bibliography. Claude should return no sources and still write in her voice.",
+    "figureId": 53,
+    "figureName": "Harriet Tubman",
+    "tone": "morning",
+    "theme": "PERSEVERANCE",
+    "date": "2026-09-26",
+    "previousScriptures": [
+      "Exodus 14:14",
+      "Psalm 23:4"
+    ],
+    "previousReflections": [
+      "Friday morning: The Lord fights for us when we cannot fight for ourselves. I never ran a train off the track because I trusted Him with every mile. Keep going today, even when the road is dark.",
+      "Friday evening: Even in the valley, His rod and staff are near. Fear walks beside us, but so does He. Rest tonight knowing you were not alone on today's road."
+    ]
+  },
+  {
+    "name": "augustine-first-day",
+    "description": "A figure's first day: no history at all. Checks the baseline briefing before any freshness pressure.",
+    "figureId": 36,
+    "figureName": "Augustine of Hippo",
+    "tone": "evening",
+    "theme": "GRACE",
+    "date": "2026-09-26"
+  }
+]
