@@ -1,0 +1,12 @@
+<!-- Eval only: logback prefers logback-test.xml over the server's logback.xml, so startup and SQL logs
+     don't bury the briefings being read. -->
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
