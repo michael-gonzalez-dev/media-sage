@@ -104,5 +104,41 @@
     "tone": "morning",
     "theme": "FAITH",
     "date": "2026-09-27"
+  },
+  {
+    "name": "tubman-full-week",
+    "description": "A week of Tubman briefings that have already used her best-known recorded sayings and the obvious scriptures. No theme and no headlines, the shape a Writings briefing will have. Does the seventh day still find something fresh, or does it repeat?",
+    "figureId": 53,
+    "figureName": "Harriet Tubman",
+    "tone": "morning",
+    "date": "2026-09-26",
+    "previousScriptures": [
+      "Exodus 14:14",
+      "Psalm 23:4",
+      "Isaiah 40:31",
+      "Exodus 3:7-8",
+      "Galatians 5:1",
+      "Psalm 121:1-2",
+      "Joshua 1:9",
+      "Isaiah 41:10",
+      "Psalm 27:1",
+      "Luke 4:18",
+      "2 Corinthians 12:9",
+      "Matthew 25:35"
+    ],
+    "previousReflections": [
+      "Sunday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I prayed to God to make me strong and able to fight, and He has answered that prayer every day since. Strength is not something you store up, it is something you ask for fresh each morning. Ask Him today, and walk out the door leaning on His answer.",
+      "Sunday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): When I crossed that line I looked at my hands to see if I was the same person. Freedom changes how you see yourself before it changes anything else. Tonight, look at your own hands and remember who set them free.",
+      "Monday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I never ran my train off the track and I never lost a passenger. That was never my doing. It was the Lord who kept every mile. Trust Him with the miles ahead of you this week.",
+      "Monday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): There was one of two things I had a right to, liberty or death. If I could not have the one, I would have the other. Rest tonight knowing that what God gives you a right to, no man can finally take.",
+      "Tuesday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I followed the North Star, but it was God who put it there and God who kept my eyes on it. Every guide we have in the dark is His gift. Look for the light He has set above your road today.",
+      "Tuesday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I always told God, I'm going to hold steady on to You, and You've got to see me through. That is the whole of my faith, holding on. Hold on tonight, and let Him do the seeing through.",
+      "Wednesday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): Go down, Moses, we sang, and the Lord heard the cry of His people then as He hears it now. He sees the misery and He comes down to deliver. Carry that song into your work today.",
+      "Wednesday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I was free, but there was no one to welcome me to the land of freedom. I was a stranger in a strange land. That is why I went back. Tonight, ask who is still waiting on the other side for you.",
+      "Thursday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): When I went to the Combahee River I did not go alone. The Lord went before us and hundreds walked out of bondage. Do not measure today's task by your own strength. Measure it by His.",
+      "Thursday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I nursed the soldiers in the war, bathing their wounds with what I had. Love does its work with whatever is in the hand. Tonight, thank God for what He has already put in yours.",
+      "Friday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I talked to God as a man talks to his friend, and He told me where to go and when. He still speaks to those who will listen. Be quiet enough this morning to hear the next step.",
+      "Friday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): In my old age I opened my home to the aged and the poor. The work of freedom does not end when the running stops. Rest tonight, and tomorrow look for someone to take in."
+    ]
   }
 ]
