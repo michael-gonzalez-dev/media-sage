@@ -62,8 +62,8 @@
     ]
   },
   {
-    "name": "tubman-no-bibliography",
-    "description": "A figure with no bibliography. Claude should return no sources and still write in her voice.",
+    "name": "tubman-recorded-words",
+    "description": "A figure who wrote nothing. Her briefing should draw on her own words as Sarah Bradford recorded them, not Bradford's narration about her, and cite Bradford's book as a record of her words.",
     "figureId": 53,
     "figureName": "Harriet Tubman",
     "tone": "morning",
@@ -94,6 +94,15 @@
     "figureName": "Mother Teresa",
     "tone": "morning",
     "theme": "LOVE",
+    "date": "2026-09-27"
+  },
+  {
+    "name": "liddell-own-and-recorded",
+    "description": "A figure with one work of his own and one book that recorded his words. Sources should list his own book first, and the recorded one as Sally Magnusson's record of his words.",
+    "figureId": 59,
+    "figureName": "Eric Liddell",
+    "tone": "morning",
+    "theme": "FAITH",
     "date": "2026-09-27"
   }
 ]

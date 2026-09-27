@@ -13,5 +13,8 @@ object WorkTable : Table("works") {
     val title = varchar("title", 512)
     val year = integer("year").nullable()
 
+    /** Who wrote the book when it isn't the figure: it preserves the figure's words as that person recorded them. */
+    val recordedBy = varchar("recorded_by", 256).nullable()
+
     override val primaryKey = PrimaryKey(id)
 }

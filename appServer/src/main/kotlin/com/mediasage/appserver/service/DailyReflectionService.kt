@@ -35,9 +35,11 @@ class DailyReflectionService(
         )
 
         val result = claudeApiClient.generateDailyReflection(systemPrompt, userMessage, request.tone)
-        // Checked against the whole bibliography, not just today's window — any real work of the
-        // figure is a legitimate source, but a title that isn't in it is never shown to the user.
-        return result.copy(sources = SourceWorks.matchSources(result.sources, bibliography))
+        // Any of the figure's own works is a legitimate source, not just today's window, but a title that
+        // isn't in the bibliography is never shown. A recorded work counts only when it was offered today,
+        // so a figure with a full window of their own works is never credited to someone else's book.
+        val citable = bibliography.filterNot { it.isRecorded } + works.filter { it.isRecorded }
+        return result.copy(sources = SourceWorks.matchSources(result.sources, citable))
     }
 
     data class DailyReflectionRequest(

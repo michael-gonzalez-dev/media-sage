@@ -90,6 +90,58 @@ class SourceWorksTest {
         assertTrue(SourceWorks.matchSources(listOf("Anything"), emptyList()).isEmpty())
     }
 
+    private val bradford = WorkData(53901, "Scenes in the Life of Harriet Tubman", 1869, recordedBy = "Sarah Bradford")
+    private val magnusson = WorkData(59901, "The Flying Scotsman", 1981, recordedBy = "Sally Magnusson")
+    private val disciplines = WorkData(59001, "The Disciplines of the Christian Life", 1985)
+
+    @Test
+    fun rotationWindow_neverOffersARecordedWorkToAFigureWithAFullWindowOfTheirOwn() {
+        val works = bibliography(12) + magnusson
+
+        (20_000L..20_014L).forEach { day ->
+            val window = SourceWorks.rotationWindow(works, day, isEvening = false, size = 5)
+            assertEquals(5, window.size)
+            assertTrue(window.none { it.isRecorded }, "day $day")
+        }
+    }
+
+    @Test
+    fun rotationWindow_fillsTheSlotsTheFiguresOwnWorksLeaveWithRecordedOnesAfterThem() {
+        val window = SourceWorks.rotationWindow(listOf(magnusson, disciplines), 20_000L, isEvening = false, size = 5)
+
+        assertEquals(listOf(disciplines, magnusson), window)
+    }
+
+    @Test
+    fun displayTitle_readsARecordedWorkAsSomeoneElsesRecordOfTheFiguresWords() {
+        assertEquals("words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)", bradford.displayTitle)
+        assertEquals("The Disciplines of the Christian Life (1985)", disciplines.displayTitle)
+    }
+
+    @Test
+    fun matchSources_matchesARecordedWorkByItsCitationOrItsBareTitle() {
+        val works = listOf(bradford)
+
+        assertEquals(
+            listOf(bradford.displayTitle),
+            SourceWorks.matchSources(listOf("words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)"), works)
+        )
+        assertEquals(listOf(bradford.displayTitle), SourceWorks.matchSources(listOf("Scenes in the Life of Harriet Tubman"), works))
+    }
+
+    @Test
+    fun matchSources_listsTheFiguresOwnWorksBeforeRecordedOnes() {
+        val matched = SourceWorks.matchSources(
+            listOf("The Flying Scotsman", "The Disciplines of the Christian Life"),
+            listOf(disciplines, magnusson)
+        )
+
+        assertEquals(
+            listOf("The Disciplines of the Christian Life (1985)", "words recorded by Sally Magnusson in The Flying Scotsman (1981)"),
+            matched
+        )
+    }
+
     @Test
     fun candidateTitles_stripsLocatorsAfterACommaOrAQuestionMark() {
         assertTrue("a mighty fortress is our god" in SourceWorks.candidateTitles("A Mighty Fortress Is Our God, hymn (1529)"))

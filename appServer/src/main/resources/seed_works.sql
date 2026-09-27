@@ -4,8 +4,10 @@
 --   sqlite3 $DB_PATH < appServer/src/main/resources/seed_works.sql   (skip the final setval line on SQLite)
 --
 -- Conventions:
---   * Only works the figure authored (wrote, dictated, delivered, or composed). Biographies about a
---     figure are never listed; quotes recorded in one use a "Cited in ..." source instead.
+--   * Works the figure authored (wrote, dictated, delivered, or composed) have no recorded_by. Biographies
+--     about a figure are never listed as the figure's own work; quotes recorded in one use a "Cited in ..." source.
+--   * A book someone else wrote that preserves the figure's words is listed only in the Recorded Words section
+--     at the end, with recorded_by naming its writer. See that section for when one is added.
 --   * title and year are separate; year only when a single year is well established, else NULL.
 --   * id = figure_id * 1000 + n, so editing one figure never renumbers another.
 --   * Upsert, not DELETE + INSERT: re-running never wipes columns added later (e.g. a work's content).
@@ -1196,6 +1198,31 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (100013, 100, 'The Full Blessing of Pentecost', 1908),
 (100014, 100, 'The Prayer Life', NULL)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
+
+-- Recorded Words: books by someone else that preserve a figure's own words, so every figure has a source to cite.
+-- A briefing reaches for one only when the figure has fewer than five works of their own to fill its sources, so
+-- only those figures are listed here. Each is drawn from that figure's "Cited in ..." quote sources, keeping just the
+-- earliest one, since an early or eyewitness record is the one the model knows best.
+-- id = figure_id * 1000 + 901, clear of the figure's own works. Needs the recorded_by column, which the server
+-- adds on start.
+INSERT INTO works (id, figure_id, title, year, recorded_by) VALUES
+(53901, 53, 'Scenes in the Life of Harriet Tubman', 1869, 'Sarah Bradford'),
+(59901, 59, 'The Flying Scotsman', 1981, 'Sally Magnusson'),
+(60901, 60, 'The Life and Work of the Seventh Earl of Shaftesbury', 1886, 'Edwin Hodder'), -- authorised biography built on his diaries
+(73901, 73, 'George Washington Carver: An American Biography', 1943, 'Rackham Holt'),
+(74901, 74, 'Life of Mendel', 1932, 'Hugo Iltis'), -- English translation; German original 1924
+(82901, 82, 'Hudson Taylor''s Spiritual Secret', 1932, 'Howard Taylor and Geraldine Taylor'),
+(85901, 85, 'Shadow of the Almighty', 1958, 'Elisabeth Elliot'),
+(86901, 86, 'The Life of General Booth', 1913, 'Hulda Friedrichs'),
+(87901, 87, 'Lottie Moon', 1927, 'Una Roberts Lawrence'),
+(88901, 88, 'A Memoir of the Life and Labors of the Rev. Adoniram Judson', 1853, 'Francis Wayland'),
+(89901, 89, 'Mary Slessor of Calabar', 1916, 'W.P. Livingstone'),
+(90901, 90, 'Zinzendorf the Ecumenical Pioneer', 1962, 'A.J. Lewis'), -- the only record cited; modern
+(92901, 92, 'The Small Woman', 1957, 'Alan Burgess'), -- written from interviews with Aylward
+(93901, 93, 'C.T. Studd: Cricketer and Pioneer', 1933, 'Norman Grubb'),
+(94901, 94, 'Goforth of China', 1937, 'Rosalind Goforth'), -- by his wife
+(98901, 98, 'Through Gates of Splendor', 1957, 'Elisabeth Elliot') -- quotes his journals
+ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year, recorded_by = excluded.recorded_by;
 
 -- Reset Postgres sequence after explicit ID inserts
 SELECT setval('works_id_seq', (SELECT MAX(id) FROM works));

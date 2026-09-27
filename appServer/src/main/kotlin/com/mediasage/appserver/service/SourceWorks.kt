@@ -14,19 +14,31 @@ object SourceWorks {
      * Consecutive briefings always see a different set whenever the bibliography is larger than the
      * window, yet overlap heavily, so a work stays available for several briefings in a row rather
      * than vanishing the next day — the weekly history, not the rotation, keeps the ideas fresh.
+     *
+     * The figure's own works always come first: recorded works only fill the slots their own works leave empty.
      */
     fun rotationWindow(works: List<WorkData>, epochDay: Long, isEvening: Boolean, size: Int): List<WorkData> {
-        if (works.size <= size) return works
+        val (recorded, own) = works.partition { it.isRecorded }
         val slot = epochDay * BRIEFINGS_PER_DAY + if (isEvening) 1 else 0
+        val ownWindow = slide(own, slot, size)
+        return ownWindow + slide(recorded, slot, size - ownWindow.size)
+    }
+
+    private fun slide(works: List<WorkData>, slot: Long, size: Int): List<WorkData> {
+        if (works.size <= size) return works
         val start = Math.floorMod(slot, works.size.toLong()).toInt()
         return List(size) { works[(start + it) % works.size] }
     }
 
-    /** The bibliography entries named by [sources], formatted for display; unmatched titles are dropped. */
+    /**
+     * The bibliography entries named by [sources], formatted for display, with the figure's own works before
+     * recorded ones; unmatched titles are dropped. A recorded work matches by its bare title or its full citation.
+     */
     fun matchSources(sources: List<String>, works: List<WorkData>): List<String> {
-        val byTitle = works.associateBy { normalize(it.title) }
+        val byTitle = works.flatMap { work -> listOf(normalize(work.title), normalize(work.citation)).map { it to work } }.toMap()
         return sources.mapNotNull { source -> candidateTitles(source).firstNotNullOfOrNull { byTitle[it] } }
             .distinct()
+            .sortedBy { it.isRecorded }
             .map { it.displayTitle }
     }
 

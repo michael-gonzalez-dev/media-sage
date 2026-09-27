@@ -28,6 +28,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -49,12 +50,13 @@ class DailyReflectionServiceTest {
         transaction { SchemaUtils.drop(WorkTable) }
     }
 
-    private fun seedWorks(figureId: Long, titles: List<String>) = transaction {
+    private fun seedWorks(figureId: Long, titles: List<String>, recordedBy: String? = null) = transaction {
         titles.forEach { title ->
             WorkTable.insert {
                 it[WorkTable.figureId] = figureId
                 it[WorkTable.title] = title
                 it[WorkTable.year] = null
+                it[WorkTable.recordedBy] = recordedBy
             }
         }
     }
@@ -129,6 +131,28 @@ class DailyReflectionServiceTest {
         assertEquals("Psalm 46:10", result.scriptureReference)
         assertTrue(result.sources.isEmpty())
         assertTrue(sentPrompts.single().contains("Return an empty sources list"))
+    }
+
+    @Test
+    fun generate_citesTheRecordOfTheirWordsForAFigureWhoWroteNothing() = runTest {
+        seedWorks(53, listOf("Scenes in the Life of Harriet Tubman"), recordedBy = "Sarah Bradford")
+
+        val result = service(returnedSources = listOf("words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman"))
+            .generate(DailyReflectionService.DailyReflectionRequest(figureId = 53, figureName = "Harriet Tubman"))
+
+        assertEquals(listOf("words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman"), result.sources)
+        assertTrue(sentPrompts.single().contains("Draw on Harriet Tubman's recorded words in it"))
+    }
+
+    @Test
+    fun generate_neverCreditsAFigureWithAFullWindowOfTheirOwnWorksToARecordedOne() = runTest {
+        seedWorks(19, (1..5).map { "Work $it" })
+        seedWorks(19, listOf("A Biography of Tozer"), recordedBy = "A Biographer")
+
+        val result = service(returnedSources = listOf("Work 1", "A Biography of Tozer")).generate(request())
+
+        assertEquals(listOf("Work 1"), result.sources)
+        assertFalse(sentPrompts.single().contains("A Biography of Tozer"))
     }
 
     private fun worksInPrompt(requestBody: String): Set<String> =
