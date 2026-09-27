@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.mediasage.LocalAppVersion
 import com.mediasage.LocalIsIos
 import com.mediasage.theme.MediaSageTheme
+import com.mediasage.ui.rememberInAppBrowserUriHandler
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.about_app_name
 import mediasage.composeapp.generated.resources.about_apple_eula
@@ -43,14 +44,12 @@ import mediasage.composeapp.generated.resources.about_section_legal
 import mediasage.composeapp.generated.resources.about_section_support
 import mediasage.composeapp.generated.resources.about_send_feedback
 import mediasage.composeapp.generated.resources.about_terms_of_service
-import mediasage.composeapp.generated.resources.about_website
 import mediasage.composeapp.generated.resources.app_icon
 import mediasage.composeapp.generated.resources.onos_monos_logo
 import mediasage.composeapp.generated.resources.title_about
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-private const val WEBSITE_URL = "https://thecouragepost.app"
 private const val PRIVACY_POLICY_URL = "https://thecouragepost.app/privacy"
 private const val TERMS_OF_SERVICE_URL = "https://thecouragepost.app/terms"
 private const val FEEDBACK_MAILTO_URL = "mailto:support@thecouragepost.app?subject=The%20Courage%20Post%20Feedback"
@@ -130,23 +129,19 @@ private fun SupportSection() {
         label = stringResource(Res.string.about_send_feedback),
         onClick = { openUriSafely(uriHandler, FEEDBACK_MAILTO_URL) },
     )
-    SettingsNavRow(
-        label = stringResource(Res.string.about_website),
-        onClick = { openUriSafely(uriHandler, WEBSITE_URL) },
-    )
 }
 
 @Composable
 private fun LegalSection() {
-    val uriHandler = LocalUriHandler.current
+    val browser = rememberInAppBrowserUriHandler()
     SettingsSectionHeader(stringResource(Res.string.about_section_legal))
     SettingsNavRow(
         label = stringResource(Res.string.about_terms_of_service),
-        onClick = { openUriSafely(uriHandler, TERMS_OF_SERVICE_URL) },
+        onClick = { openUriSafely(browser, TERMS_OF_SERVICE_URL) },
     )
     SettingsNavRow(
         label = stringResource(Res.string.about_privacy_policy),
-        onClick = { openUriSafely(uriHandler, PRIVACY_POLICY_URL) },
+        onClick = { openUriSafely(browser, PRIVACY_POLICY_URL) },
     )
     if (LocalIsIos.current) {
         Text(
