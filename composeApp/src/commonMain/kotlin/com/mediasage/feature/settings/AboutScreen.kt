@@ -44,14 +44,12 @@ import mediasage.composeapp.generated.resources.about_section_legal
 import mediasage.composeapp.generated.resources.about_section_support
 import mediasage.composeapp.generated.resources.about_send_feedback
 import mediasage.composeapp.generated.resources.about_terms_of_service
-import mediasage.composeapp.generated.resources.about_website
 import mediasage.composeapp.generated.resources.app_icon
 import mediasage.composeapp.generated.resources.onos_monos_logo
 import mediasage.composeapp.generated.resources.title_about
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-private const val WEBSITE_URL = "https://thecouragepost.app"
 private const val PRIVACY_POLICY_URL = "https://thecouragepost.app/privacy"
 private const val TERMS_OF_SERVICE_URL = "https://thecouragepost.app/terms"
 private const val FEEDBACK_MAILTO_URL = "mailto:support@thecouragepost.app?subject=The%20Courage%20Post%20Feedback"
@@ -125,17 +123,11 @@ private fun AboutHeader() {
 
 @Composable
 private fun SupportSection() {
-    // In-app browsers only show web pages — feedback is a mailto: link, so it stays on the system handler (mail app).
     val uriHandler = LocalUriHandler.current
-    val browser = rememberInAppBrowserUriHandler()
     SettingsSectionHeader(stringResource(Res.string.about_section_support))
     SettingsNavRow(
         label = stringResource(Res.string.about_send_feedback),
         onClick = { openUriSafely(uriHandler, FEEDBACK_MAILTO_URL) },
-    )
-    SettingsNavRow(
-        label = stringResource(Res.string.about_website),
-        onClick = { openUriSafely(browser, WEBSITE_URL) },
     )
 }
 
