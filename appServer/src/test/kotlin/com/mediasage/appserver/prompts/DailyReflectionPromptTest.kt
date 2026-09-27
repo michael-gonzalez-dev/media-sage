@@ -72,6 +72,21 @@ class DailyReflectionPromptTest {
     }
 
     @Test
+    fun asksForPlainWritingWithoutDashesAndUsesNoneItself() {
+        val fullWeek = params(
+            headlines = listOf("Floods displace thousands"),
+            previousScriptures = weekOfScriptures,
+            previousReflections = listOf("Monday morning: God is near.")
+        )
+        val prompt = DailyReflectionPrompt.buildSystemPrompt("A.W. Tozer") + DailyReflectionPrompt.buildUserMessage(fullWeek)
+
+        assertTrue(prompt.contains("## Writing Style"))
+        assertTrue(prompt.contains("Never use em dashes or en dashes"))
+        assertFalse(prompt.contains('—'), "the prompt models the style it asks for: no em dashes")
+        assertFalse(prompt.contains('–'), "the prompt models the style it asks for: no en dashes")
+    }
+
+    @Test
     fun keepsTodaysHeadlinesInTheHeadlinesLens() {
         val message = DailyReflectionPrompt.buildUserMessage(params(headlines = listOf("Floods displace thousands")))
 
