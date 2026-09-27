@@ -42,6 +42,20 @@ class BibliographySeedTest {
     }
 
     @Test
+    fun theSupabaseUpdateScriptUnverifiesExactlyTheQuotesTheSeedMarksUnverified() {
+        // Supabase is patched by update_quote_sources.sql, not re-seeded, so the two must agree —
+        // an un-verification present only in seed_quotes.sql would never reach production.
+        val unverifiedInSeed = UNVERIFIED_SEED_ROW.findAll(resource("seed_quotes.sql"))
+            .map { it.groupValues[1].toLong() to it.groupValues[2] }
+            .toSet()
+        val unverifiedByScript = UNVERIFY_STATEMENT.findAll(resource("update_quote_sources.sql"))
+            .map { it.groupValues[1].toLong() to it.groupValues[2] }
+            .toSet()
+
+        assertEquals(unverifiedInSeed, unverifiedByScript)
+    }
+
+    @Test
     fun everyFigureHasABibliographyUnlessTheyAuthoredNoWorks() {
         val withWorks = works.map { it.figureId }.toSet()
 
@@ -74,6 +88,14 @@ class BibliographySeedTest {
         const val SECONDARY_SOURCE_PREFIX = "Cited in "
         const val FIGURE_ID_BLOCK = 1000L
         val YEAR_IN_TITLE = Regex("""\(\s*c?\.?\s*\d{3,4}""")
+        val UNVERIFIED_SEED_ROW = Regex(
+            """^\((\d+), '(?:[^']|'')*', '((?:[^']|'')*)', '(?:[^']|'')*', false\)""",
+            RegexOption.MULTILINE
+        )
+        val UNVERIFY_STATEMENT = Regex(
+            """^UPDATE quotes SET verified = false WHERE figure_id = (\d+) AND text = '((?:[^']|'')*)';""",
+            RegexOption.MULTILINE
+        )
         /** Figures whose words survive only as recorded by others; reviewed and intentionally empty. */
         val FIGURES_WITHOUT_AUTHORED_WORKS = setOf(53L, 89L)
     }
