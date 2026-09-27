@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.mediasage.LocalAppVersion
 import com.mediasage.LocalIsIos
 import com.mediasage.theme.MediaSageTheme
+import com.mediasage.ui.rememberInAppBrowserUriHandler
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.about_app_name
 import mediasage.composeapp.generated.resources.about_apple_eula
@@ -124,7 +125,9 @@ private fun AboutHeader() {
 
 @Composable
 private fun SupportSection() {
+    // In-app browsers only show web pages — feedback is a mailto: link, so it stays on the system handler (mail app).
     val uriHandler = LocalUriHandler.current
+    val browser = rememberInAppBrowserUriHandler()
     SettingsSectionHeader(stringResource(Res.string.about_section_support))
     SettingsNavRow(
         label = stringResource(Res.string.about_send_feedback),
@@ -132,21 +135,21 @@ private fun SupportSection() {
     )
     SettingsNavRow(
         label = stringResource(Res.string.about_website),
-        onClick = { openUriSafely(uriHandler, WEBSITE_URL) },
+        onClick = { openUriSafely(browser, WEBSITE_URL) },
     )
 }
 
 @Composable
 private fun LegalSection() {
-    val uriHandler = LocalUriHandler.current
+    val browser = rememberInAppBrowserUriHandler()
     SettingsSectionHeader(stringResource(Res.string.about_section_legal))
     SettingsNavRow(
         label = stringResource(Res.string.about_terms_of_service),
-        onClick = { openUriSafely(uriHandler, TERMS_OF_SERVICE_URL) },
+        onClick = { openUriSafely(browser, TERMS_OF_SERVICE_URL) },
     )
     SettingsNavRow(
         label = stringResource(Res.string.about_privacy_policy),
-        onClick = { openUriSafely(uriHandler, PRIVACY_POLICY_URL) },
+        onClick = { openUriSafely(browser, PRIVACY_POLICY_URL) },
     )
     if (LocalIsIos.current) {
         Text(
