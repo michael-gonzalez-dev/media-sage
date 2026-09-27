@@ -72,7 +72,7 @@ class DailyReflectionPromptTest {
     }
 
     @Test
-    fun asksForPlainWritingWithoutDashesAndUsesNoneItself() {
+    fun asksForNoEmDashesOrSemicolonsAndUsesNoDashesItself() {
         val fullWeek = params(
             headlines = listOf("Floods displace thousands"),
             previousScriptures = weekOfScriptures,
@@ -80,19 +80,18 @@ class DailyReflectionPromptTest {
         )
         val prompt = DailyReflectionPrompt.buildSystemPrompt("A.W. Tozer") + DailyReflectionPrompt.buildUserMessage(fullWeek)
 
-        assertTrue(prompt.contains("## Writing Style"))
-        assertTrue(prompt.contains("Never use em dashes, en dashes, or semicolons"))
-        assertFalse(prompt.contains('—'), "the prompt models the style it asks for: no em dashes")
-        assertFalse(prompt.contains('–'), "the prompt models the style it asks for: no en dashes")
+        assertTrue(prompt.contains("Do not use em dashes or semicolons. Use periods and commas."))
+        assertFalse(prompt.contains('\u2014'), "the prompt models the style it asks for: no em dashes")
+        assertFalse(prompt.contains('\u2013'), "the prompt models the style it asks for: no en dashes")
     }
 
     @Test
-    fun asksForTwoFullSentencesPerSectionAsOneConnectedReflection() {
+    fun givesOneSentenceCountForEverySection() {
         val message = DailyReflectionPrompt.buildUserMessage(params())
 
-        assertTrue(message.contains("Each section is exactly 2 full sentences"))
-        assertTrue(message.contains("one reflection read top to bottom"))
-        assertFalse(message.contains("1-2 sentences"), "no leftover instruction allowing a single sentence")
+        assertTrue(message.contains("Each section must be exactly 2 sentences."))
+        assertFalse(message.contains("1-3 sentences"), "no conflicting sentence count")
+        assertFalse(message.contains("1-2 sentences"), "no conflicting sentence count")
     }
 
     @Test
