@@ -53,6 +53,7 @@ After merging and Railway deploying (Exposed creates the empty tables on startup
 
 1. Run `seed_figures.sql` in Supabase SQL Editor
 2. Run `seed_quotes.sql` in Supabase SQL Editor
+3. Run `seed_works.sql` in Supabase SQL Editor (per-figure bibliography, added in MS-763; see `docs/MS-763-fresh-weekly-briefings.md`)
 
 ## Local dev
 

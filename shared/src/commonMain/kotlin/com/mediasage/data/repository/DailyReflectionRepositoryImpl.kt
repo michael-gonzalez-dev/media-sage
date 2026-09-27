@@ -11,15 +11,13 @@ import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.DailyReflectionRepository
-import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.LocalDate
 
 class DailyReflectionRepositoryImpl(
     private val dao: DailyReflectionDao,
@@ -41,9 +39,7 @@ class DailyReflectionRepositoryImpl(
         theme: String?
     ): DailyReflection {
         val resolvedTheme = theme?.uppercase() ?: "NEWS"
-        val millis = currentTimeMillis()
-        val today = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val epochDay = localEpochDay(millis)
+        val epochDay = localEpochDay(currentTimeMillis())
         val cached = dao.get(figureId, epochDay, tone, resolvedTheme)
         if (cached != null) return cached.toDomain()
 
@@ -54,25 +50,8 @@ class DailyReflectionRepositoryImpl(
         // regardless of session-level sync timing.
         adoptFromRemote(epochDay, tone, resolvedTheme)?.let { return it }
 
-        val todaysEntries = dao.getAllForDay(figureId, epochDay)
-        val previousReflections = todaysEntries.map { "${it.insight} ${it.implication} ${it.inspiration}" }
-        val previousScriptures = (
-            dao.getAllScripturesForDay(epochDay) +
-            dao.getRecentScripturesForFigure(figureId, fromDay = epochDay - 7, today = epochDay)
-        ).distinct()
-        val dayOfWeek = today.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-
         val response = api.getDailyReflection(
-            DailyReflectionRequestDto(
-                figureId = figureId,
-                figureName = figureName,
-                headlines = headlines,
-                tone = tone,
-                dayOfWeek = dayOfWeek,
-                previousScriptures = previousScriptures,
-                previousReflections = previousReflections,
-                theme = resolvedTheme.takeIf { it != "NEWS" }
-            )
+            buildRequest(figureId, figureName, headlines, tone, resolvedTheme, epochDay)
         )
         val entity = DailyReflectionEntity(
             id = DailyReflection.id(epochDay, tone, resolvedTheme),
@@ -93,6 +72,45 @@ class DailyReflectionRepositoryImpl(
         pushRow(entity.id)
         return entity.toDomain()
     }
+
+    // Sends the figure's whole past week — every verse used and what each briefing said — so a
+    // new briefing can avoid repeating Monday's verse or argument on Thursday, not just this morning's.
+    private suspend fun buildRequest(
+        figureId: Long,
+        figureName: String,
+        headlines: List<String>,
+        tone: String,
+        theme: String,
+        epochDay: Long,
+    ): DailyReflectionRequestDto {
+        val fromDay = epochDay - HISTORY_DAYS
+        val previousReflections = dao.getRecentForFigure(figureId, fromDay, today = epochDay)
+            .sortedWith(compareBy({ it.epochDay }, { it.tone != TONE_MORNING }))
+            .map { "${historyLabel(it, epochDay)}: ${it.insight} ${it.implication} ${it.inspiration}" }
+        val previousScriptures = (
+            dao.getAllScripturesForDay(epochDay) +
+                dao.getRecentScripturesForFigure(figureId, fromDay = fromDay, today = epochDay)
+            ).distinct()
+        return DailyReflectionRequestDto(
+            figureId = figureId,
+            figureName = figureName,
+            headlines = headlines,
+            tone = tone,
+            dayOfWeek = dayName(epochDay),
+            previousScriptures = previousScriptures,
+            previousReflections = previousReflections,
+            theme = theme.takeIf { it != "NEWS" }
+        )
+    }
+
+    // Naming the works a briefing drew on lets the next one take a different part of the same book.
+    private fun historyLabel(entry: DailyReflectionEntity, today: Long): String {
+        val day = if (entry.epochDay == today) "Earlier today (${entry.tone})" else "${dayName(entry.epochDay)} ${entry.tone}"
+        return if (entry.sources.isEmpty()) day else "$day (drew on ${entry.sources.joinToString("; ")})"
+    }
+
+    private fun dayName(epochDay: Long): String =
+        LocalDate.fromEpochDays(epochDay.toInt()).dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
 
     private suspend fun adoptFromRemote(epochDay: Long, tone: String, theme: String): DailyReflection? {
         val remote = remote ?: return null
@@ -240,6 +258,7 @@ class DailyReflectionRepositoryImpl(
 
     private companion object {
         const val TONE_MORNING = "morning"
+        const val HISTORY_DAYS = 7
     }
 }
 

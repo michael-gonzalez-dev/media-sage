@@ -4,7 +4,7 @@ import com.mediasage.appserver.repository.ClaudeCallLimitRepository
 import com.mediasage.appserver.repository.EncouragementCacheRepository
 import com.mediasage.appserver.repository.FigureRepository
 import com.mediasage.appserver.repository.HeadlineRepository
-import com.mediasage.appserver.repository.QuoteRepository
+import com.mediasage.appserver.repository.WorkRepository
 import com.mediasage.appserver.service.ArticleScraperService
 import com.mediasage.appserver.service.ClaudeApiClient
 import com.mediasage.appserver.service.DailyReflectionService
@@ -48,7 +48,7 @@ fun serverModule(
     single { ScriptureApiClient(get(), scriptureApiKey) }
     single { ArticleScraperService() }
     single { FigureRepository(baseUrl) }
-    single { QuoteRepository() }
+    single { WorkRepository() }
     single { HeadlineRepository() }
     single { EncouragementCacheRepository() }
     single { ClaudeCallLimitRepository() }

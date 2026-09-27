@@ -132,8 +132,29 @@ class EncourageRoutesTest {
                 it[QuoteTable.figureId] = figureId
                 it[text] = "Be still and know that I am God."
                 it[sourceText] = "Psalms"
+                it[verified] = true
             }[QuoteTable.id]
         }
+    }
+
+    @Test
+    fun quoteCandidatesExcludeQuotesWhoseAttributionIsUnverified() {
+        transaction {
+            val figureId = FigureTable.insert {
+                it[name] = "Unverified Figure"
+                it[category] = "theologian"
+                it[century] = "18th"
+            }[FigureTable.id]
+            QuoteTable.insert {
+                it[QuoteTable.figureId] = figureId
+                it[text] = "A saying no source supports."
+                it[verified] = false
+            }
+        }
+
+        val candidates = ServerDatabase.fetchQuoteCandidates()
+
+        assertEquals(listOf(quoteId), candidates.map { it.quoteId })
     }
 
     @AfterTest

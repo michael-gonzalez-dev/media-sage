@@ -2,23 +2,29 @@ package com.mediasage.appserver.service
 
 import com.mediasage.appserver.prompts.DailyReflectionPrompt
 import com.mediasage.appserver.prompts.ReflectionTheme
-import com.mediasage.appserver.repository.QuoteData
-import com.mediasage.appserver.repository.QuoteRepository
+import com.mediasage.appserver.repository.WorkRepository
+import java.time.Clock
+import java.time.LocalDate
 
 class DailyReflectionService(
     private val claudeApiClient: ClaudeApiClient,
-    private val quoteRepository: QuoteRepository
+    private val workRepository: WorkRepository,
+    private val clock: Clock = Clock.systemUTC()
 ) {
     suspend fun generate(request: DailyReflectionRequest): DailyReflectionResult {
-        val allQuotes = quoteRepository.getVerifiedByFigureId(request.figureId)
-        val scored = scoreByTheme(allQuotes, request.headlines)
-        val top = scored.take(MAX_QUOTES)
+        val bibliography = workRepository.getByFigureId(request.figureId)
+        val works = SourceWorks.rotationWindow(
+            works = bibliography,
+            epochDay = LocalDate.now(clock).toEpochDay(),
+            isEvening = request.tone.equals("evening", ignoreCase = true),
+            size = MAX_WORKS
+        )
 
         val systemPrompt = DailyReflectionPrompt.buildSystemPrompt(request.figureName)
         val userMessage = DailyReflectionPrompt.buildUserMessage(
             DailyReflectionPrompt.Params(
                 figureName = request.figureName,
-                quotes = top,
+                works = works,
                 headlines = request.headlines,
                 tone = request.tone,
                 dayOfWeek = request.dayOfWeek,
@@ -28,7 +34,10 @@ class DailyReflectionService(
             )
         )
 
-        return claudeApiClient.generateDailyReflection(systemPrompt, userMessage, request.tone)
+        val result = claudeApiClient.generateDailyReflection(systemPrompt, userMessage, request.tone)
+        // Checked against the whole bibliography, not just today's window — any real work of the
+        // figure is a legitimate source, but a title that isn't in it is never shown to the user.
+        return result.copy(sources = SourceWorks.matchSources(result.sources, bibliography))
     }
 
     data class DailyReflectionRequest(
@@ -42,21 +51,8 @@ class DailyReflectionService(
         val theme: ReflectionTheme? = null
     )
 
-    private fun scoreByTheme(quotes: List<QuoteData>, headlines: List<String>): List<QuoteData> {
-        if (headlines.isEmpty()) return quotes
-        val headlineWords = headlines.joinToString(" ")
-            .lowercase()
-            .split(Regex("[^a-z]+"))
-            .filter { it.length > 3 }
-            .toSet()
-        return quotes.sortedByDescending { quote ->
-            quote.themes.lowercase().split(Regex("[^a-z]+"))
-                .count { it in headlineWords }
-        }
-    }
-
     companion object {
-        private const val MAX_QUOTES = 5
+        private const val MAX_WORKS = 5
     }
 }
 

@@ -1,0 +1,136 @@
+package com.mediasage.appserver.service
+
+import com.mediasage.appserver.db.ServerDatabase
+import com.mediasage.appserver.db.WorkTable
+import com.mediasage.appserver.repository.WorkRepository
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
+import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+
+class DailyReflectionServiceTest {
+
+    private val sentPrompts = mutableListOf<String>()
+
+    @BeforeTest
+    fun setup() {
+        ServerDatabase.init(":memory:")
+        transaction {
+            SchemaUtils.drop(WorkTable)
+            SchemaUtils.create(WorkTable)
+        }
+    }
+
+    @AfterTest
+    fun teardown() {
+        transaction { SchemaUtils.drop(WorkTable) }
+    }
+
+    private fun seedWorks(figureId: Long, titles: List<String>) = transaction {
+        titles.forEach { title ->
+            WorkTable.insert {
+                it[WorkTable.figureId] = figureId
+                it[WorkTable.title] = title
+                it[WorkTable.year] = null
+            }
+        }
+    }
+
+    private fun service(returnedSources: List<String>, day: String = "2026-09-24") = DailyReflectionService(
+        claudeApiClient = ClaudeApiClient(claudeClient(returnedSources), "test-key"),
+        workRepository = WorkRepository(),
+        clock = Clock.fixed(Instant.parse("${day}T12:00:00Z"), ZoneOffset.UTC)
+    )
+
+    private fun claudeClient(returnedSources: List<String>) = HttpClient(
+        MockEngine { request ->
+            sentPrompts += (request.body as TextContent).text
+            respond(
+                content = claudeResponse(returnedSources),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+    ) {
+        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+    }
+
+    private fun claudeResponse(sources: List<String>): String {
+        val reflection = buildJsonObject {
+            put("scriptureReference", "Psalm 46:10")
+            put("scriptureText", "Be still, and know that I am God.")
+            put("insight", "i")
+            put("implication", "im")
+            put("inspiration", "in")
+            put("sources", JsonArray(sources.map { JsonPrimitive(it) }))
+            put("challenge", "c")
+        }.toString()
+        return buildJsonObject {
+            put("id", "msg_1")
+            put("type", "message")
+            put("role", "assistant")
+            put("model", "test")
+            put("content", JsonArray(listOf(buildJsonObject { put("type", "text"); put("text", reflection) })))
+            put("usage", buildJsonObject { put("input_tokens", 1); put("output_tokens", 1) })
+        }.toString()
+    }
+
+    private fun request(tone: String = "morning") =
+        DailyReflectionService.DailyReflectionRequest(figureId = 19, figureName = "A.W. Tozer", tone = tone)
+
+    @Test
+    fun generate_dropsReturnedSourcesThatAreNotInTheFiguresBibliography() = runTest {
+        seedWorks(19, listOf("The Pursuit of God", "The Knowledge of the Holy"))
+
+        val result = service(returnedSources = listOf("The Pursuit of God", "A Treatise Tozer Never Wrote"))
+            .generate(request())
+
+        assertEquals(listOf("The Pursuit of God"), result.sources)
+    }
+
+    @Test
+    fun generate_pointsConsecutiveDaysAtDifferentWorks() = runTest {
+        seedWorks(19, (1..12).map { "Work $it" })
+
+        service(emptyList(), day = "2026-09-24").generate(request())
+        service(emptyList(), day = "2026-09-25").generate(request())
+
+        assertNotEquals(worksInPrompt(sentPrompts[0]), worksInPrompt(sentPrompts[1]))
+        assertEquals(5, worksInPrompt(sentPrompts[0]).size)
+    }
+
+    @Test
+    fun generate_stillProducesABriefingForAFigureWithNoBibliography() = runTest {
+        val result = service(returnedSources = listOf("Something Invented")).generate(request())
+
+        assertEquals("Psalm 46:10", result.scriptureReference)
+        assertTrue(result.sources.isEmpty())
+        assertTrue(sentPrompts.single().contains("Return an empty sources list"))
+    }
+
+    private fun worksInPrompt(requestBody: String): Set<String> =
+        Regex("""- (Work \d+)""").findAll(requestBody).map { it.groupValues[1] }.toSet()
+}

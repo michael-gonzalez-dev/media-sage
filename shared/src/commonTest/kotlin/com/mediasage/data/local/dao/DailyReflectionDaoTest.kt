@@ -123,8 +123,8 @@ private class FakeDailyReflectionDao(private val store: List<DailyReflectionEnti
 
     override suspend fun getRawById(id: String): DailyReflectionEntity? = store.find { it.id == id }
 
-    override suspend fun getAllForDay(figureId: Long, epochDay: Long): List<DailyReflectionEntity> =
-        store.filter { it.figureId == figureId && it.epochDay == epochDay }
+    override suspend fun getRecentForFigure(figureId: Long, fromDay: Long, today: Long): List<DailyReflectionEntity> =
+        store.filter { it.figureId == figureId && it.epochDay in fromDay..today }
 
     override suspend fun getAllScripturesForDay(epochDay: Long): List<String> =
         store.filter { it.epochDay == epochDay }.map { it.scriptureReference }.distinct()
