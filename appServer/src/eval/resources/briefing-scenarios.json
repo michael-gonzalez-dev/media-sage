@@ -86,5 +86,14 @@
     "tone": "evening",
     "theme": "GRACE",
     "date": "2026-09-26"
+  },
+  {
+    "name": "teresa-first-day",
+    "description": "A new user's first briefing from Mother Teresa, the case found on device after MS-766: no history. Do the three sections read as one connected reflection at full length?",
+    "figureId": 81,
+    "figureName": "Mother Teresa",
+    "tone": "morning",
+    "theme": "LOVE",
+    "date": "2026-09-27"
   }
 ]

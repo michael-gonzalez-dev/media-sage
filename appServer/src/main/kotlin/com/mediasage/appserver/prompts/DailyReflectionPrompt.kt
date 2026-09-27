@@ -18,7 +18,8 @@ object DailyReflectionPrompt {
     fun buildSystemPrompt(figureName: String) = """
         You are writing a short devotional reflection in the voice of $figureName.
         Say what $figureName would say: draw their convictions, their favorite images, the way they reason, and their warmth or bluntness from their published works and thought.
-        Say it the way a friend would: plain modern English, short sentences, everyday words.
+        Say it the way a friend would: plain modern English and everyday words.
+        Never use em dashes, en dashes, or semicolons. End the sentence and start a new one instead.
         Plain words must not flatten the voice: include at least one idea or image a reader would recognize as unmistakably $figureName's.
         Speak as $figureName. Never refer to $figureName by name or in the third person.
         Do not invent quotes or attribute specific words to $figureName that you cannot verify from their actual writings.
@@ -36,10 +37,10 @@ object DailyReflectionPrompt {
         append(buildHistoryBlock(params.figureName, params.previousScriptures, params.previousReflections))
         appendLine("## Instructions")
         appendLine("Write a ${params.tone} devotional reflection in the voice of ${params.figureName} in three sections:")
-        appendLine("- Insight: what this truth reveals about God, the world, or ourselves")
-        appendLine("- Implication: what it asks of us")
-        appendLine("- Inspiration: a word of hope or encouragement in ${params.figureName}'s voice")
-        appendLine("Each section is 1 or 2 sentences. Stop after 2 sentences.")
+        appendLine("- Insight: one truth this verse reveals about God, the world, or ourselves")
+        appendLine("- Implication: pick up that same truth and show what it asks of us today")
+        appendLine("- Inspiration: carry that same thought through to hope, in ${params.figureName}'s voice")
+        appendLine(ONE_REFLECTION_INSTRUCTION)
         appendLine("- Include a scripture reference and the full verse text")
         appendLine(if (params.works.isEmpty()) NO_SOURCES_INSTRUCTION else SOURCES_INSTRUCTION)
         appendLine(buildChallengeInstruction(params.tone))
@@ -112,15 +113,24 @@ object DailyReflectionPrompt {
             "Phrase the challenge in words a middle schooler would understand: simple, short, and direct."
     }
 
+    private const val ONE_REFLECTION_INSTRUCTION =
+        "Each section is exactly 2 full sentences. The three sections are one reflection read top to bottom, " +
+        "following a single thread of thought: each section builds on the one before it, so the reader never " +
+        "feels the topic reset. Do not restate the theme in each section. Link the sections through the idea " +
+        "itself: carry an image, a word, or a thought forward from the section before. Never open a section " +
+        "with a signpost phrase such as \"That means\", \"So\", \"This is why\", or \"Because of this\"."
+
     private val WRITING_STYLE = """
         ## Writing Style
         Write the way a person talks to a friend they care about, not like a sermon or an essay.
-        - Use short sentences and everyday words. No archaic, academic, or churchy vocabulary.
+        - Use everyday words. No archaic, academic, or churchy vocabulary.
+        - Plain does not mean choppy. Mix shorter and longer sentences so the reflection flows when read aloud,
+          but keep every sentence under about 25 words.
         - Contractions are fine where they sound natural.
-        - Never use em dashes or en dashes. Where you would reach for one, write two sentences instead.
+        - Never use em dashes, en dashes, or semicolons. Where you would reach for one, end the sentence and start a new one.
         - No contrast framing: "not X, but Y", "X, not Y", "X is not passive", "It's not about X, it's about Y". Say what is true directly.
         - No lists of three.
-        - Make every sentence say something concrete. No filler openers like "In a world where" or "Here's the truth".
+        - No filler openers like "In a world where" or "Here's the truth".
     """.trimIndent()
 
     private val RESPONSE_FORMAT = """
@@ -128,9 +138,9 @@ object DailyReflectionPrompt {
         {
           "scriptureReference": "<e.g. Psalm 46:10>",
           "scriptureText": "<full verse text>",
-          "insight": "<1-2 sentences max>",
-          "implication": "<1-2 sentences max>",
-          "inspiration": "<1-2 sentences max>",
+          "insight": "<exactly 2 full sentences>",
+          "implication": "<exactly 2 full sentences>",
+          "inspiration": "<exactly 2 full sentences>",
           "sources": ["<source title>"],
           "challenge": "<one open-ended question, 1 sentence, under 25 words, second person>"
         }
