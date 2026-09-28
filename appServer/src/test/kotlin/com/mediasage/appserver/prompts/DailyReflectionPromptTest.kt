@@ -139,8 +139,10 @@ class DailyReflectionPromptTest {
 
         assertTrue(writings.contains("just one of the source works above and list only that work"))
         assertTrue(writings.contains("Do not name the source work or refer to A.W. Tozer in the third person"))
+        assertTrue(writings.contains("not the same idea with a different verse"))
         assertFalse(headlines.contains("just one of the source works above"))
         assertFalse(headlines.contains("in the third person"))
+        assertFalse(headlines.contains("not the same idea with a different verse"))
         assertTrue(headlines.contains("List the source works you drew from"))
     }
 

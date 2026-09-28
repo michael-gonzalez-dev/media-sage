@@ -57,7 +57,9 @@ object DailyReflectionPrompt {
     // Pinned to one work, the model tends to describe the book rather than speak as its author.
     private fun writingsVoiceInstruction(figureName: String) =
         "Write as $figureName. Do not name the source work or refer to $figureName in the third person " +
-            "in the insight, implication or inspiration."
+            "in the insight, implication or inspiration.\n" +
+            "If you use the same work as the most recent briefing, take an idea from it that briefing did not " +
+            "cover, not the same idea with a different verse."
 
     private fun buildWorksBlock(figureName: String, works: List<WorkData>) = buildString {
         if (works.isEmpty()) return@buildString
