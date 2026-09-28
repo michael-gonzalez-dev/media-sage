@@ -1,6 +1,7 @@
 package com.mediasage.appserver.eval
 
 import com.mediasage.appserver.prompts.ReflectionTheme
+import com.mediasage.appserver.prompts.WRITINGS_LENS
 import com.mediasage.appserver.service.DailyReflectionService.DailyReflectionRequest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -18,7 +19,7 @@ data class BriefingScenario(
     val figureId: Long,
     val figureName: String,
     val tone: String = "morning",
-    /** A [ReflectionTheme] name such as "HOPE". Omitted for the Headlines lens. */
+    /** A [ReflectionTheme] name such as "HOPE", or [WRITINGS_LENS]. Omitted for the Headlines lens. */
     val theme: String? = null,
     val headlines: List<String> = emptyList(),
     /** ISO date of the briefing. Drives the bibliography rotation and the day of week; defaults to today (UTC). */
@@ -37,8 +38,11 @@ data class BriefingScenario(
         previousScriptures = previousScriptures,
         previousReflections = previousReflections,
         // valueOf, not the route's lenient parse: a typo in the scenario file should fail, not silently drop the theme.
-        theme = theme?.let { ReflectionTheme.valueOf(it.uppercase()) }
+        theme = theme?.takeUnless { isWritings }?.let { ReflectionTheme.valueOf(it.uppercase()) },
+        writingsOnly = isWritings
     )
+
+    private val isWritings: Boolean get() = theme.equals(WRITINGS_LENS, ignoreCase = true)
 
     companion object {
         private const val RESOURCE = "/briefing-scenarios.json"

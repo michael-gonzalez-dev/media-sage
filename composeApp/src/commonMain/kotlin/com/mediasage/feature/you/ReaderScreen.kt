@@ -80,6 +80,7 @@ import com.mediasage.theme.LensJustice
 import com.mediasage.theme.LensLove
 import com.mediasage.theme.LensPerseverance
 import com.mediasage.theme.LensRepentance
+import com.mediasage.theme.LensWritings
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.theme.rememberComicSurfaceColors
 import com.mediasage.ui.FigurePlaceholder
@@ -104,6 +105,7 @@ import mediasage.composeapp.generated.resources.you_lens_love
 import mediasage.composeapp.generated.resources.you_lens_perseverance
 import mediasage.composeapp.generated.resources.you_lens_repentance
 import mediasage.composeapp.generated.resources.you_lens_today
+import mediasage.composeapp.generated.resources.you_lens_writings
 import mediasage.composeapp.generated.resources.you_nav_saved
 import mediasage.composeapp.generated.resources.you_picker_back_description
 import mediasage.composeapp.generated.resources.you_picker_choose_theme
@@ -485,6 +487,7 @@ internal fun LensBadge(lens: LensFilter, modifier: Modifier = Modifier) {
 
 internal fun LensFilter.labelRes() = when (this) {
     LensFilter.NEWS -> Res.string.you_lens_today
+    LensFilter.WRITINGS -> Res.string.you_lens_writings
     LensFilter.LOVE -> Res.string.you_lens_love
     LensFilter.GRACE -> Res.string.you_lens_grace
     LensFilter.FAITH -> Res.string.you_lens_faith
@@ -498,6 +501,7 @@ internal fun LensFilter.labelRes() = when (this) {
 @Composable
 internal fun LensFilter.color(): Color = when (this) {
     LensFilter.NEWS -> MaterialTheme.colorScheme.primary
+    LensFilter.WRITINGS -> LensWritings
     LensFilter.LOVE -> LensLove
     LensFilter.GRACE -> LensGrace
     LensFilter.FAITH -> LensFaith

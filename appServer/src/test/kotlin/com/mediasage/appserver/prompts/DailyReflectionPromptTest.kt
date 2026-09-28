@@ -14,6 +14,8 @@ class DailyReflectionPromptTest {
         headlines: List<String> = emptyList(),
         previousScriptures: List<String> = emptyList(),
         previousReflections: List<String> = emptyList(),
+        theme: ReflectionTheme? = null,
+        writingsOnly: Boolean = false,
     ) = DailyReflectionPrompt.Params(
         figureName = "A.W. Tozer",
         works = works,
@@ -22,8 +24,11 @@ class DailyReflectionPromptTest {
         dayOfWeek = "Thursday",
         previousScriptures = previousScriptures,
         previousReflections = previousReflections,
-        theme = null
+        theme = theme,
+        writingsOnly = writingsOnly
     )
+
+    private val fromWorksLine = "Draw the insight, implication and inspiration from the source works above."
 
     @Test
     fun listsEveryScriptureFromThePastWeekEvenWithNoEarlierBriefingToday() {
@@ -115,5 +120,32 @@ class DailyReflectionPromptTest {
 
         assertTrue(message.contains("## Today's Headlines"))
         assertTrue(message.contains("- Floods displace thousands"))
+    }
+
+    @Test
+    fun writingsLensDrawsOnTheSourceWorksWithNoHeadlinesOrThemeFocus() {
+        val message = DailyReflectionPrompt.buildUserMessage(params(writingsOnly = true))
+
+        assertTrue(message.contains("## Source Works from A.W. Tozer"))
+        assertTrue(message.contains(fromWorksLine))
+        assertFalse(message.contains("Headlines"))
+        assertFalse(message.contains("Focus the scripture selection"))
+    }
+
+    @Test
+    fun writingsLineIsOmittedWhenTheFigureHasNoWorksToDrawOn() {
+        val message = DailyReflectionPrompt.buildUserMessage(params(works = emptyList(), writingsOnly = true))
+
+        assertFalse(message.contains(fromWorksLine))
+    }
+
+    @Test
+    fun themeAndHeadlinesLensesDoNotAskToDrawOnlyFromTheWorks() {
+        val themed = DailyReflectionPrompt.buildUserMessage(params(theme = ReflectionTheme.HOPE))
+        val headlines = DailyReflectionPrompt.buildUserMessage(params(headlines = listOf("Floods displace thousands")))
+
+        assertTrue(themed.contains("Focus the scripture selection and reflection on the theme of hope."))
+        assertFalse(themed.contains(fromWorksLine))
+        assertFalse(headlines.contains(fromWorksLine))
     }
 }

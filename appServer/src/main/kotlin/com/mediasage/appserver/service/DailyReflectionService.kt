@@ -30,7 +30,8 @@ class DailyReflectionService(
                 dayOfWeek = request.dayOfWeek,
                 previousScriptures = request.previousScriptures,
                 previousReflections = request.previousReflections,
-                theme = request.theme
+                theme = request.theme,
+                writingsOnly = request.writingsOnly
             )
         )
 
@@ -50,7 +51,8 @@ class DailyReflectionService(
         val dayOfWeek: String = "",
         val previousScriptures: List<String> = emptyList(),
         val previousReflections: List<String> = emptyList(),
-        val theme: ReflectionTheme? = null
+        val theme: ReflectionTheme? = null,
+        val writingsOnly: Boolean = false
     )
 
     companion object {
