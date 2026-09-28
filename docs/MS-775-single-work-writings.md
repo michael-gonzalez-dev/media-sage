@@ -66,7 +66,12 @@ stillness, seeking the kingdom first). The limit of 3 was hit once per reporter 
 
 The first one-work run had 5 voice breaks and one factual error: all three *Wingspread* briefings called it a
 life of "A.J. Gordon"; it is Tozer's biography of A.B. Simpson. After the voice line, a Tozer rerun had no
-third-person references or book names, and the *Wingspread* briefing named Simpson correctly.
+third-person references or book names, and the *Wingspread* briefing named Simpson correctly. A Hus rerun
+also had none (the first run had "Hus perceived…" and "On the Church teaches…").
+
+Two stays in all read close to a restatement: Hus's last two *On the Church* briefings in the first run, and
+two *On Simony* briefings in the rerun (both on corrupt clergy consuming the flock). The limit stays at 3 to
+gather more data; 2 is the fallback if real briefings keep showing this.
 
 ## Known gap
 
