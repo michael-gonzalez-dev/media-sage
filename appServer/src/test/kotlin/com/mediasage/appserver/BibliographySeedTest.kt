@@ -3,6 +3,7 @@ package com.mediasage.appserver
 import com.mediasage.appserver.service.SourceWorks
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -72,18 +73,42 @@ class BibliographySeedTest {
     }
 
     @Test
-    fun everyRecordedWorkIsDrawnFromThatFiguresCitedInQuoteSources() {
+    fun everyRecordedWorkIsDrawnFromItsFiguresQuotesAndTheyCiteItExactlyAsItsWorksEntryDoes() {
         val citedIn = quoteSources
             .filter { (_, source) -> source.startsWith(SECONDARY_SOURCE_PREFIX) }
-            .groupBy({ it.first }, { SourceWorks.normalize(it.second) })
+            .groupBy({ it.first }, { it.second })
 
-        val undrawn = recordedWorks.filterNot { work ->
-            citedIn[work.figureId].orEmpty().any { source ->
-                SourceWorks.normalize(work.title) in source && SourceWorks.normalize(work.recordedBy!!) in source
-            }
+        val mismatched = recordedWorks.flatMap { work ->
+            val expected = "$SECONDARY_SOURCE_PREFIX${work.recordedBy}, ${work.title}" + work.year?.let { " ($it)" }.orEmpty()
+            // Matched on the writer, so a shortened or reordered title for the same book is caught too.
+            val sameWriter = citedIn[work.figureId].orEmpty()
+                .filter { SourceWorks.normalize(work.recordedBy!!) in SourceWorks.normalize(it) }
+            if (sameWriter.isEmpty()) listOf("no source for ${work.title}") else sameWriter.filter { it != expected }
         }
 
-        assertEquals(emptyList(), undrawn.map { it.title }, "recorded works with no matching \"Cited in\" quote source")
+        assertEquals(emptyList(), mismatched, "\"Cited in\" quote sources must name a recorded work exactly as seed_works.sql does")
+    }
+
+    @Test
+    fun theRecordedSourcesPatchLeavesSupabaseMatchingTheSeed() {
+        // Supabase is patched by update_recorded_sources.sql, not re-seeded, so every change must land on the seed's values.
+        val patch = resource("update_recorded_sources.sql")
+
+        val statements = patch.lines().count { it.startsWith("UPDATE ") }
+        val checked = QUOTE_SOURCE_UPDATE.findAll(patch).count() + WORK_UPDATE.findAll(patch).count()
+        assertEquals(statements, checked, "every UPDATE is checked")
+
+        QUOTE_SOURCE_UPDATE.findAll(patch).forEach { match ->
+            val (newSource, figureId, oldSource) = match.destructured
+            assertTrue(figureId.toLong() to newSource.replace("''", "'") in quoteSources, "seed_quotes.sql lacks $newSource")
+            assertFalse(figureId.toLong() to oldSource.replace("''", "'") in quoteSources, "seed_quotes.sql still has $oldSource")
+        }
+        WORK_UPDATE.findAll(patch).forEach { match ->
+            val (assignments, id) = match.destructured
+            val work = works.single { it.id == id.toLong() }
+            YEAR_ASSIGNMENT.find(assignments)?.let { assertEquals(it.groupValues[1].toInt(), work.year, "year of $id") }
+            RECORDED_BY_ASSIGNMENT.find(assignments)?.let { assertEquals(it.groupValues[1], work.recordedBy, "recorded_by of $id") }
+        }
     }
 
     @Test
@@ -138,5 +163,12 @@ class BibliographySeedTest {
             RegexOption.MULTILINE
         )
         const val BRIEFING_WINDOW = 5
+        val QUOTE_SOURCE_UPDATE = Regex(
+            """^UPDATE quotes SET source = '((?:[^']|'')*)' WHERE figure_id = (\d+) AND source = '((?:[^']|'')*)';""",
+            RegexOption.MULTILINE
+        )
+        val WORK_UPDATE = Regex("""^UPDATE works SET (.+) WHERE id = (\d+);""", RegexOption.MULTILINE)
+        val YEAR_ASSIGNMENT = Regex("""year = (\d+)""")
+        val RECORDED_BY_ASSIGNMENT = Regex("""recorded_by = '((?:[^']|'')*)'""")
     }
 }

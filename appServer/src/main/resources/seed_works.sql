@@ -1213,10 +1213,10 @@ INSERT INTO works (id, figure_id, title, year, recorded_by) VALUES
 (74901, 74, 'Life of Mendel', 1932, 'Hugo Iltis'), -- English translation; German original 1924
 (82901, 82, 'Hudson Taylor''s Spiritual Secret', 1932, 'Howard Taylor and Geraldine Taylor'),
 (85901, 85, 'Shadow of the Almighty', 1958, 'Elisabeth Elliot'),
-(86901, 86, 'The Life of General Booth', 1913, 'Hulda Friedrichs'),
+(86901, 86, 'The Life of General Booth', 1912, 'Hulda Friederichs'),
 (87901, 87, 'Lottie Moon', 1927, 'Una Roberts Lawrence'),
 (88901, 88, 'A Memoir of the Life and Labors of the Rev. Adoniram Judson', 1853, 'Francis Wayland'),
-(89901, 89, 'Mary Slessor of Calabar', 1916, 'W.P. Livingstone'),
+(89901, 89, 'Mary Slessor of Calabar', 1915, 'W.P. Livingstone'),
 (90901, 90, 'Zinzendorf the Ecumenical Pioneer', 1962, 'A.J. Lewis'), -- the only record cited; modern
 (92901, 92, 'The Small Woman', 1957, 'Alan Burgess'), -- written from interviews with Aylward
 (93901, 93, 'C.T. Studd: Cricketer and Pioneer', 1933, 'Norman Grubb'),
