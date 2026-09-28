@@ -101,14 +101,16 @@ class BriefingViewModel(
         }
     }
 
+    /** Shows the note as saved immediately — the device write and its sync run in the background. */
     private fun saveReflectNote() {
         val success = _state.value as? BriefingContract.UiState.Success ?: return
         val ready = success.card as? BriefingContract.CardState.Ready ?: return
         val sheet = success.reflectSheet ?: return
         val noteText = sheet.noteText ?: return
+        if (sheet.savedNoteText == noteText) return
+        updateReflectSheet(sheet.copy(savedNoteText = noteText))
         viewModelScope.launch {
             userReflectionNoteRepository.saveNote(reflectionId(ready.tone, ready.theme), noteText)
-            updateReflectSheet(sheet.copy(savedNoteText = noteText))
         }
     }
 

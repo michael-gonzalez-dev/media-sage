@@ -84,12 +84,13 @@ class FigureDetailViewModel(
         }
     }
 
+    /** Clears the dialog immediately — the device write and its sync run in the background. */
     private fun handleConfirmReassignment() {
         val pending = input.value ?: return
+        input.value = null
         viewModelScope.launch {
             dayAssignmentRepository.assign(pending.todayOrdinal, figureId)
             analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
-            input.value = null
         }
     }
 
