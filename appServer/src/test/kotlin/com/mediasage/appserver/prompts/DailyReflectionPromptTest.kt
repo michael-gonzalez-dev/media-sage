@@ -2,6 +2,7 @@ package com.mediasage.appserver.prompts
 
 import com.mediasage.appserver.repository.WorkData
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -91,10 +92,11 @@ class DailyReflectionPromptTest {
     }
 
     @Test
-    fun givesOneSentenceCountForEverySection() {
+    fun givesOneSentenceCountAndWordLimitForEverySection() {
         val message = DailyReflectionPrompt.buildUserMessage(params())
 
-        assertTrue(message.contains("Each section must be exactly 2 sentences."))
+        assertTrue(message.contains("Each section must be exactly 2 short sentences, under 40 words in total."))
+        assertEquals(3, Regex(""""<2 short sentences, under 40 words>"""").findAll(message).count())
         assertFalse(message.contains("1-3 sentences"), "no conflicting sentence count")
         assertFalse(message.contains("1-2 sentences"), "no conflicting sentence count")
     }
