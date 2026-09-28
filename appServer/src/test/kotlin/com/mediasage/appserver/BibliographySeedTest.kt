@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
  */
 class BibliographySeedTest {
 
-    private data class SeedWork(val id: Long, val figureId: Long, val title: String, val year: Int?)
+    private data class SeedWork(val id: Long, val figureId: Long, val title: String, val year: Int?, val recordedBy: String?)
 
     private val figureIds = Regex("""VALUES \((\d+),'""").findAll(resource("seed_figures.sql"))
         .map { it.groupValues[1].toLong() }.toSet()
@@ -22,13 +22,22 @@ class BibliographySeedTest {
         .map { it.groupValues[1].toLong() to it.groupValues[2].replace("''", "'") }
         .toSet()
 
-    private val works = Regex("""^\((\d+), (\d+), '((?:[^']|'')*)', (\d+|NULL)\)""", RegexOption.MULTILINE)
+    // Rows are (id, figure_id, title, year) for the figure's own works, plus recorded_by in the Recorded Words section.
+    private val works = Regex("""^\((\d+), (\d+), '((?:[^']|'')*)', (\d+|NULL)(?:, '((?:[^']|'')*)')?\)""", RegexOption.MULTILINE)
         .findAll(resource("seed_works.sql"))
         .map { match ->
             val groups = match.groupValues
-            SeedWork(groups[1].toLong(), groups[2].toLong(), groups[3].replace("''", "'"), groups[4].toIntOrNull())
+            SeedWork(
+                id = groups[1].toLong(),
+                figureId = groups[2].toLong(),
+                title = groups[3].replace("''", "'"),
+                year = groups[4].toIntOrNull(),
+                recordedBy = groups[5].ifEmpty { null }?.replace("''", "'")
+            )
         }
         .toList()
+
+    private val recordedWorks = works.filter { it.recordedBy != null }
 
     @Test
     fun everyWorkCitedByAVerifiedQuoteIsInThatFiguresBibliography() {
@@ -56,10 +65,42 @@ class BibliographySeedTest {
     }
 
     @Test
-    fun everyFigureHasABibliographyUnlessTheyAuthoredNoWorks() {
+    fun everyFigureHasABibliographyEvenIfTheyAuthoredNoWorks() {
         val withWorks = works.map { it.figureId }.toSet()
 
-        assertEquals(figureIds - FIGURES_WITHOUT_AUTHORED_WORKS, withWorks)
+        assertEquals(figureIds, withWorks)
+    }
+
+    @Test
+    fun everyRecordedWorkIsDrawnFromThatFiguresCitedInQuoteSources() {
+        val citedIn = quoteSources
+            .filter { (_, source) -> source.startsWith(SECONDARY_SOURCE_PREFIX) }
+            .groupBy({ it.first }, { SourceWorks.normalize(it.second) })
+
+        val undrawn = recordedWorks.filterNot { work ->
+            citedIn[work.figureId].orEmpty().any { source ->
+                SourceWorks.normalize(work.title) in source && SourceWorks.normalize(work.recordedBy!!) in source
+            }
+        }
+
+        assertEquals(emptyList(), undrawn.map { it.title }, "recorded works with no matching \"Cited in\" quote source")
+    }
+
+    @Test
+    fun onlyFiguresWithFewerThanAFullWindowOfTheirOwnWorksHaveARecordedWork() {
+        // A briefing looks at five works; a figure with five of their own would never reach a recorded one.
+        val ownWorkCounts = works.filter { it.recordedBy == null }.groupingBy { it.figureId }.eachCount()
+
+        val unreachable = recordedWorks.filter { (ownWorkCounts[it.figureId] ?: 0) >= BRIEFING_WINDOW }
+
+        assertEquals(emptyList(), unreachable.map { it.title })
+    }
+
+    @Test
+    fun noFigureHasMoreThanOneRecordedWork() {
+        val repeated = recordedWorks.groupingBy { it.figureId }.eachCount().filterValues { it > 1 }.keys
+
+        assertEquals(emptySet(), repeated)
     }
 
     @Test
@@ -96,7 +137,6 @@ class BibliographySeedTest {
             """^UPDATE quotes SET verified = false WHERE figure_id = (\d+) AND text = '((?:[^']|'')*)';""",
             RegexOption.MULTILINE
         )
-        /** Figures whose words survive only as recorded by others; reviewed and intentionally empty. */
-        val FIGURES_WITHOUT_AUTHORED_WORKS = setOf(53L, 89L)
+        const val BRIEFING_WINDOW = 5
     }
 }

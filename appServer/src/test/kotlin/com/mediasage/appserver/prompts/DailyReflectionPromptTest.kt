@@ -95,6 +95,21 @@ class DailyReflectionPromptTest {
     }
 
     @Test
+    fun explainsThatARecordedWorkHoldsTheFiguresWordsNotTheWritersCommentary() {
+        val recorded = WorkData(53901, "Scenes in the Life of Harriet Tubman", 1869, recordedBy = "Sarah Bradford")
+
+        val message = DailyReflectionPrompt.buildUserMessage(params(works = listOf(recorded)))
+
+        assertTrue(message.contains("- words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)"))
+        assertTrue(message.contains("not on the writer's narration or commentary"))
+    }
+
+    @Test
+    fun saysNothingAboutRecordedWorksWhenEveryWorkIsTheFiguresOwn() {
+        assertFalse(DailyReflectionPrompt.buildUserMessage(params()).contains("words recorded by"))
+    }
+
+    @Test
     fun keepsTodaysHeadlinesInTheHeadlinesLens() {
         val message = DailyReflectionPrompt.buildUserMessage(params(headlines = listOf("Floods displace thousands")))
 

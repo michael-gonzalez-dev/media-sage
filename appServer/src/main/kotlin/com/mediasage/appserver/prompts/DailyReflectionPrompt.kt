@@ -52,6 +52,13 @@ object DailyReflectionPrompt {
         appendLine("Draw from your knowledge of these works to shape the theological voice and direction of the reflection.")
         appendLine()
         works.forEach { appendLine("- ${it.displayTitle}") }
+        if (works.any { it.isRecorded }) {
+            appendLine()
+            appendLine(
+                "A work listed as \"words recorded by\" someone was written by that person and preserves $figureName's own words. " +
+                    "Draw on $figureName's recorded words in it, not on the writer's narration or commentary."
+            )
+        }
         appendLine()
     }
 
