@@ -147,25 +147,25 @@ class FigureDetailViewModelTest {
     }
 
     @Test
-    fun pinToHome_reassigningTodaysAlreadyLockedFigureIsANoOp() = runTest(testDispatcher) {
-        // Regression test: Reporter Detail always assigns with no lens. If the figure being
-        // pinned is already the day's locked-in reporter (isPinned is false only because the
-        // weekday assignment row currently points elsewhere), assigning with no lens would
-        // silently switch today's lens to Headlines and generate a second briefing.
+    fun pinToHome_repinningTodaysLockedFigureKeepsTodaysLockedLens() = runTest(testDispatcher) {
+        // Regression test: Reporter Detail has no lens picker. If the figure being pinned is already
+        // the day's locked-in reporter (isPinned is false only because the weekday assignment row
+        // currently points elsewhere), assigning with no lens would silently switch today's lens to
+        // Headlines and generate a second briefing — it must restore the slot with the locked lens.
         val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 1L,
             figures = listOf(augustine, lewis),
             assignments = mapOf(todayOrdinal to DayAssignment(figureId = 2L, lens = null)),
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
+            lockedThemesByEpochDay = mapOf(todayEpochDay to LensFilter.HOPE),
         )
 
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
 
-        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
-        assertTrue(dayAssignmentRepo.clearCalls.isEmpty())
+        assertEquals(listOf(Triple(todayOrdinal, 1L, LensFilter.HOPE as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
-        assertTrue(analyticsService.loggedEvents.isEmpty())
+        assertEquals(listOf(AnalyticsEvents.FIGURE_PINNED), analyticsService.loggedEvents.map { it.first })
     }
 
     @Test
@@ -215,6 +215,7 @@ class FigureDetailViewModelTest {
         figures: List<Figure>,
         assignments: Map<Int, DayAssignment> = emptyMap(),
         lockedFigureIdsByEpochDay: Map<Long, Long> = emptyMap(),
+        lockedThemesByEpochDay: Map<Long, LensFilter> = emptyMap(),
         encouragements: List<Encouragement> = emptyList(),
         quoteRepo: DetailFakeQuoteRepository = DetailFakeQuoteRepository(),
         analyticsService: FakeAnalyticsServiceForFigureDetail = FakeAnalyticsServiceForFigureDetail(),
@@ -222,7 +223,7 @@ class FigureDetailViewModelTest {
         val figureRepo = DetailFakeFigureRepository(figures)
         val encouragementRepo = DetailFakeEncouragementRepository(encouragements)
         val dayAssignmentRepo = DetailFakeDayAssignmentRepository(MutableStateFlow(assignments))
-        val reflectionRepo = FakeDailyReflectionRepository(lockedFigureIdsByEpochDay)
+        val reflectionRepo = FakeDailyReflectionRepository(lockedFigureIdsByEpochDay, lockedThemesByEpochDay)
         val viewModel = FigureDetailViewModel(
             figureId, figureRepo, encouragementRepo, dayAssignmentRepo, reflectionRepo, quoteRepo, analyticsService,
         )
@@ -312,6 +313,7 @@ private class FakeAnalyticsServiceForFigureDetail : AnalyticsService {
 
 private class FakeDailyReflectionRepository(
     private val lockedFigureIdsByEpochDay: Map<Long, Long> = emptyMap(),
+    private val lockedThemesByEpochDay: Map<Long, LensFilter> = emptyMap(),
 ) : DailyReflectionRepository {
     override suspend fun getOrFetch(
         figureId: Long,
@@ -325,7 +327,7 @@ private class FakeDailyReflectionRepository(
     override suspend fun getForDay(epochDay: Long, tone: String): DailyReflection? = null
     override suspend fun getEarliestBriefingEpochDay(): Long? = null
     override suspend fun getLockedFigureId(epochDay: Long): Long? = lockedFigureIdsByEpochDay[epochDay]
-    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = null
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = lockedThemesByEpochDay[epochDay]
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolve(userId: String?) = Unit
 }

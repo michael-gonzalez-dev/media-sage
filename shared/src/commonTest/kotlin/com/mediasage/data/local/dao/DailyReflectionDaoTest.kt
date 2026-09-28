@@ -144,6 +144,9 @@ private class FakeDailyReflectionDao(private val store: List<DailyReflectionEnti
     override suspend fun getFigureIdForDay(epochDay: Long): Long? =
         store.firstOrNull { it.epochDay == epochDay }?.figureId
 
+    override suspend fun getThemeForDay(epochDay: Long): String? =
+        store.filter { it.epochDay == epochDay }.sortedBy { it.tone != "morning" }.firstOrNull()?.theme
+
     override suspend fun getPendingSync(): List<DailyReflectionEntity> = store.filterNot { it.synced }
 
     override suspend fun markSynced(id: String) {}

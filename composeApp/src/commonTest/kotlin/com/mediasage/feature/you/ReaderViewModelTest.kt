@@ -396,7 +396,7 @@ class ReaderViewModelTest {
         latestQuote: Quote?,
         extraFigures: List<Figure> = emptyList(),
         assignments: Map<Int, DayAssignment> = emptyMap(),
-    ): ReaderViewModel = readerViewModelWithRepo(figure, extraFigures, assignments, emptyList(), latestQuote).first
+    ): ReaderViewModel = readerViewModelWithRepo(figure, extraFigures, assignments, latestQuote = latestQuote).first
 
     private fun TestScope.readerViewModelWithRepo(
         figure: Figure,

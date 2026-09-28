@@ -91,7 +91,7 @@ fun FigureDetailScreen(
                     state.pendingReassignment?.let { pending ->
                         ReassignConfirmationDialog(
                             currentFigureName = pending.currentFigureName,
-                            newFigureName = pending.newFigureName,
+                            newAssignmentLabel = pending.newFigureName,
                             nextWeekdayLabel = pending.nextWeekdayLabel,
                             onConfirm = { onIntent(FigureDetailContract.Intent.ConfirmReassignment) },
                             onDismiss = { onIntent(FigureDetailContract.Intent.CancelReassignment) },
