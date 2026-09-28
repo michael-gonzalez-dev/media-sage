@@ -50,6 +50,7 @@ class BriefingViewModel(
     val sideEffects = _sideEffects.receiveAsFlow()
 
     private var loadJob: Job? = null
+    private var saveNoteJob: Job? = null
 
     init {
         loadCard()
@@ -109,7 +110,8 @@ class BriefingViewModel(
         val noteText = sheet.noteText ?: return
         if (sheet.savedNoteText == noteText) return
         updateReflectSheet(sheet.copy(savedNoteText = noteText))
-        viewModelScope.launch {
+        saveNoteJob?.cancel()
+        saveNoteJob = viewModelScope.launch {
             userReflectionNoteRepository.saveNote(reflectionId(ready.tone, ready.theme), noteText)
         }
     }

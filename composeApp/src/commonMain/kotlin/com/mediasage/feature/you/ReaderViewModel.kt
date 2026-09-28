@@ -191,10 +191,15 @@ class ReaderViewModel(
     /** Clears the dialog immediately — the device write and its sync run in the background. */
     private fun handleConfirmReassignment() {
         val pending = input.value.pendingReassignment ?: return
+        if (!writesInFlight.add(pending.dayOfWeek)) return
         input.update { it.copy(pendingReassignment = null) }
         viewModelScope.launch {
-            dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
-            logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN)
+            try {
+                dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN)
+            } finally {
+                writesInFlight.remove(pending.dayOfWeek)
+            }
         }
     }
 
