@@ -12,7 +12,8 @@ object DailyReflectionPrompt {
         val dayOfWeek: String,
         val previousScriptures: List<String>,
         val previousReflections: List<String>,
-        val theme: ReflectionTheme?
+        val theme: ReflectionTheme?,
+        val writingsOnly: Boolean = false
     )
 
     fun buildSystemPrompt(figureName: String) = """
@@ -30,7 +31,7 @@ object DailyReflectionPrompt {
             params.headlines.forEach { appendLine("- $it") }
             appendLine()
         }
-        append(buildContextBlock(params.tone, params.dayOfWeek, params.theme))
+        append(buildContextBlock(params.tone, params.dayOfWeek, params.theme, params.writingsOnly && params.works.isNotEmpty()))
         append(buildHistoryBlock(params.figureName, params.previousScriptures, params.previousReflections))
         appendLine("## Instructions")
         appendLine("Write a ${params.tone} devotional reflection in the voice of ${params.figureName} structured in three sections:")
@@ -62,12 +63,15 @@ object DailyReflectionPrompt {
         appendLine()
     }
 
-    private fun buildContextBlock(tone: String, dayOfWeek: String, theme: ReflectionTheme?) = buildString {
+    private fun buildContextBlock(tone: String, dayOfWeek: String, theme: ReflectionTheme?, fromWorks: Boolean) = buildString {
         val dayContext = if (dayOfWeek.isNotBlank()) "$dayOfWeek, " else ""
         appendLine("## Context")
         appendLine("Today is $dayContext$tone.")
         if (theme != null) {
             appendLine("Focus the scripture selection and reflection on the theme of ${theme.displayName}.")
+        }
+        if (fromWorks) {
+            appendLine("Draw the insight, implication and inspiration from the source works above.")
         }
         appendLine()
     }

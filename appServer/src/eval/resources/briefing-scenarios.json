@@ -140,5 +140,14 @@
       "Friday morning (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): I talked to God as a man talks to his friend, and He told me where to go and when. He still speaks to those who will listen. Be quiet enough this morning to hear the next step.",
       "Friday evening (drew on words recorded by Sarah Bradford in Scenes in the Life of Harriet Tubman (1869)): In my old age I opened my home to the aged and the poor. The work of freedom does not end when the running stops. Rest tonight, and tomorrow look for someone to take in."
     ]
+  },
+  {
+    "name": "tozer-writings",
+    "description": "Writings lens: no headlines and no theme. The reflection must grow out of the listed source works, and the sources must be Tozer's own.",
+    "figureId": 19,
+    "figureName": "A.W. Tozer",
+    "tone": "morning",
+    "theme": "WRITINGS",
+    "date": "2026-09-28"
   }
 ]

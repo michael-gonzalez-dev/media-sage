@@ -1,6 +1,7 @@
 package com.mediasage.appserver.routes
 
 import com.mediasage.appserver.prompts.ReflectionTheme
+import com.mediasage.appserver.prompts.WRITINGS_LENS
 import com.mediasage.appserver.service.DailyReflectionResult
 import com.mediasage.appserver.service.DailyReflectionService
 import io.ktor.http.HttpStatusCode
@@ -20,18 +21,7 @@ fun Route.dailyReflectionRoutes() {
             call.respond(HttpStatusCode.BadRequest, mapOf("error" to "figureId and figureName are required"))
             return@post
         }
-        val result = service.generate(
-            DailyReflectionService.DailyReflectionRequest(
-                figureId = request.figureId,
-                figureName = request.figureName,
-                headlines = request.headlines,
-                tone = request.tone.ifBlank { "morning" },
-                dayOfWeek = request.dayOfWeek,
-                previousScriptures = request.previousScriptures,
-                previousReflections = request.previousReflections,
-                theme = request.theme?.let { runCatching { ReflectionTheme.valueOf(it.uppercase()) }.getOrNull() }
-            )
-        )
+        val result = service.generate(request.toServiceRequest())
         call.respond(HttpStatusCode.OK, result.toResponse())
     }
 }
@@ -46,6 +36,18 @@ data class DailyReflectionRequest(
     val previousScriptures: List<String> = emptyList(),
     val previousReflections: List<String> = emptyList(),
     val theme: String? = null
+)
+
+internal fun DailyReflectionRequest.toServiceRequest() = DailyReflectionService.DailyReflectionRequest(
+    figureId = figureId,
+    figureName = figureName,
+    headlines = headlines,
+    tone = tone.ifBlank { "morning" },
+    dayOfWeek = dayOfWeek,
+    previousScriptures = previousScriptures,
+    previousReflections = previousReflections,
+    theme = theme?.let { runCatching { ReflectionTheme.valueOf(it.uppercase()) }.getOrNull() },
+    writingsOnly = theme.equals(WRITINGS_LENS, ignoreCase = true)
 )
 
 @Serializable

@@ -323,6 +323,38 @@ class BriefingViewModelTest {
     }
 
     @Test
+    fun loadCard_writingsLensSendsNoHeadlinesAndAsksForWritings() = runTest(testDispatcher) {
+        // A Writings briefing grows out of the figure's own works, so today's headlines are never
+        // sent even when they are available, and the lens reaches the server as WRITINGS, not a theme.
+        val reflectionRepo = FakeDailyReflectionRepository()
+        val headlines = listOf(
+            Headline(id = 1L, title = "World story", source = "src", url = "u1", imageUrl = null, publishedAt = 0, fetchedAt = 0, category = "world"),
+        )
+        val dayAssignmentRepo = FakeDayAssignmentRepository(
+            MutableStateFlow(mapOf(todayOrdinal to DayAssignment(figureId = 1L, lens = LensFilter.WRITINGS))),
+            resolveReporterResult = 1L,
+        )
+        val figureRepo = FakeFigureRepository(listOf(judson))
+        val viewModel = BriefingViewModel(
+            getBriefingLoadInputs = GetBriefingLoadInputsUseCase(dayAssignmentRepo, reflectionRepo, figureRepo),
+            dayAssignmentRepository = dayAssignmentRepo,
+            dailyReflectionRepository = reflectionRepo,
+            figureRepository = figureRepo,
+            headlineRepository = FakeHeadlineRepository(headlines),
+            userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
+            toneScheduler = FakeBriefingToneScheduler(),
+        )
+        backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(emptyList(), reflectionRepo.lastHeadlines)
+        assertEquals("WRITINGS", reflectionRepo.lastTheme)
+        val card = (viewModel.state.value as BriefingContract.UiState.Success).card as BriefingContract.CardState.Ready
+        assertEquals("WRITINGS", card.theme)
+    }
+
+    @Test
     fun reflectTapped_opensSheetWithChallengeAndSavedNote() = runTest(testDispatcher) {
         val noteRepo = FakeUserReflectionNoteRepository()
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(emptyMap()), resolveReporterResult = 1L)
@@ -545,6 +577,8 @@ private class FakeDailyReflectionRepository(
         private set
     var lastHeadlines: List<String> = emptyList()
         private set
+    var lastTheme: String? = null
+        private set
 
     override suspend fun getOrFetch(
         figureId: Long,
@@ -555,6 +589,7 @@ private class FakeDailyReflectionRepository(
     ): DailyReflection {
         fetchCount++
         lastHeadlines = headlines
+        lastTheme = theme
         if (fetchDelayMs > 0) delay(fetchDelayMs)
         return DailyReflection(
             scriptureReference = "John 3:16",

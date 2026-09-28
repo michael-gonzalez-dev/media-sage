@@ -35,6 +35,7 @@ import com.mediasage.theme.LensJustice
 import com.mediasage.theme.LensLove
 import com.mediasage.theme.LensPerseverance
 import com.mediasage.theme.LensRepentance
+import com.mediasage.theme.LensWritings
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.briefing_card_based_on
 import mediasage.composeapp.generated.resources.briefing_card_reflect_action
@@ -246,6 +247,7 @@ fun ThemeChip(theme: String) {
         "HOPE" -> LensHope
         "JUSTICE" -> LensJustice
         "PERSEVERANCE" -> LensPerseverance
+        "WRITINGS" -> LensWritings
         else -> MaterialTheme.colorScheme.primary
     }
     val label = if (theme.uppercase() == "NEWS") {
