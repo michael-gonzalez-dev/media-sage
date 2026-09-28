@@ -35,7 +35,7 @@ server falls back to the rotation and every briefing moves on. Nothing breaks.
 **Citing it.** `DailyReflectionService` accepts only a source that names one of the offered works and keeps
 the first. Sources are shown as the bibliography's display title, so a chapter or page never appears.
 
-**Prompt.** Two Writings-only lines:
+**Prompt.** Three Writings-only lines (the third is described under Eval):
 
 > Base the reflection on just one of the source works above and list only that work, copied exactly as
 > written in the Source Works list above
@@ -69,9 +69,17 @@ life of "A.J. Gordon"; it is Tozer's biography of A.B. Simpson. After the voice 
 third-person references or book names, and the *Wingspread* briefing named Simpson correctly. A Hus rerun
 also had none (the first run had "Hus perceived…" and "On the Church teaches…").
 
-Two stays in all read close to a restatement: Hus's last two *On the Church* briefings in the first run, and
-two *On Simony* briefings in the rerun (both on corrupt clergy consuming the flock). The limit stays at 3 to
-gather more data; 2 is the fallback if real briefings keep showing this.
+Several stays read close to a restatement: the same idea again with a different verse (Tozer on *The Pursuit
+of God*: thirst, then thirst again; Hus on *On Simony*: shepherds devouring the flock, twice). Two of the three
+came on a work's second use, so a lower limit would not have prevented them. A third Writings-only line fixes
+it at the prompt:
+
+> If you use the same work as the most recent briefing, take an idea from it that briefing did not cover, not
+> the same idea with a different verse.
+
+In the rerun of both reporters, 6 of 8 stays brought a clearly new idea and 2 were close (Tozer's *The Root
+of the Righteous*, Hus's *On Simony*, a book with one subject). Briefings stayed less often (4 of 13 for
+each reporter), and Tozer's week reached all 10 works. The limit stays at 3 to gather data from real use.
 
 ## Known gap
 
