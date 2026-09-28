@@ -151,4 +151,82 @@ class SourceWorksTest {
         )
         assertTrue("pensees" in SourceWorks.candidateTitles("Pensées, 277"))
     }
+
+    private fun writingsLine(day: String, work: WorkData) = "$day, Writings lens (drew on ${work.displayTitle}): An idea."
+
+    private fun choice(works: List<WorkData>, history: List<String>, maxInARow: Int = 3) =
+        SourceWorks.writingsChoice(works, history, epochDay = 20_000L, isEvening = false, maxInARow = maxInARow)
+
+    @Test
+    fun writingsChoice_offersOneWorkFromTheRotationWhenThereIsNoEarlierWritingsBriefing() {
+        val works = bibliography(10)
+
+        val offered = choice(works, history = listOf("Monday morning, Headlines lens (drew on Work 4; Work 7): An idea."))
+
+        assertEquals(1, offered.size)
+    }
+
+    @Test
+    fun writingsChoice_offersThePreviousWritingsWorkAndTheNextOne() {
+        val works = bibliography(10)
+
+        val offered = choice(works, history = listOf(writingsLine("Monday morning", works[2])))
+
+        assertEquals(listOf(works[2], works[3]), offered)
+    }
+
+    @Test
+    fun writingsChoice_ignoresWorksThatOtherLensesCited() {
+        val works = bibliography(10)
+        val history = listOf(
+            writingsLine("Monday morning", works[2]),
+            "Monday evening, Headlines lens (drew on ${works[8].displayTitle}): An idea.",
+        )
+
+        assertEquals(listOf(works[2], works[3]), choice(works, history))
+    }
+
+    @Test
+    fun writingsChoice_movesOnOnceAWorkHasBeenUsedTheMostTimesInARow() {
+        val works = bibliography(10)
+        val history = listOf("Monday morning", "Monday evening", "Tuesday morning").map { writingsLine(it, works[2]) }
+
+        assertEquals(listOf(works[3]), choice(works, history, maxInARow = 3))
+        assertEquals(listOf(works[2], works[3]), choice(works, history.take(2), maxInARow = 3))
+    }
+
+    @Test
+    fun writingsChoice_wrapsFromTheLastWorkBackToTheFirst() {
+        val works = bibliography(4)
+
+        assertEquals(listOf(works[3], works[0]), choice(works, listOf(writingsLine("Monday morning", works[3]))))
+    }
+
+    @Test
+    fun writingsChoice_reachesEveryWorkWhenEachBriefingMovesOn() {
+        val works = bibliography(7)
+        val history = mutableListOf<String>()
+        repeat(works.size) { history += writingsLine("Day $it", choice(works, history, maxInARow = 1).single()) }
+
+        assertEquals(works.toSet(), works.filter { work -> history.any { it.contains(work.displayTitle) } }.toSet())
+    }
+
+    @Test
+    fun writingsChoice_keepsOfferingTheOnlyWorkOfAFigureWithOne() {
+        val only = bibliography(1)
+        val history = (1..5).map { writingsLine("Day $it", only.single()) }
+
+        assertEquals(only, choice(only, history))
+    }
+
+    @Test
+    fun writingsChoice_usesRecordedWorksOnlyWhenTheFigureHasNoneOfTheirOwn() {
+        assertEquals(listOf(disciplines), choice(listOf(magnusson, disciplines), emptyList()))
+        assertEquals(listOf(bradford), choice(listOf(bradford), emptyList()))
+    }
+
+    @Test
+    fun writingsChoice_offersNothingToAFigureWithoutABibliography() {
+        assertTrue(choice(emptyList(), emptyList()).isEmpty())
+    }
 }

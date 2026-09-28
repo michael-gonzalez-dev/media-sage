@@ -191,9 +191,9 @@ class DailyReflectionRepositoryTest {
 
         val sent = assertNotNull(api.lastRequest).previousReflections
         assertEquals(3, sent.size)
-        assertTrue(sent[0].endsWith("morning: Last morning implication inspiration"))
-        assertTrue(sent[1].endsWith("evening: Last evening implication inspiration"))
-        assertTrue(sent[2].startsWith("Earlier today (morning): This morning"))
+        assertTrue(sent[0].endsWith("morning, Headlines lens: Last morning implication inspiration"))
+        assertTrue(sent[1].endsWith("evening, Headlines lens: Last evening implication inspiration"))
+        assertTrue(sent[2].startsWith("Earlier today (morning), Headlines lens: This morning"))
     }
 
     @Test
@@ -211,7 +211,27 @@ class DailyReflectionRepositoryTest {
         )
 
         val sent = assertNotNull(api.lastRequest).previousReflections.single()
-        assertTrue(sent.endsWith("morning (drew on Confessions; The City of God): Rest implication inspiration"))
+        assertTrue(sent.endsWith("morning, Headlines lens (drew on Confessions; The City of God): Rest implication inspiration"))
+    }
+
+    @Test
+    fun getOrFetch_namesTheLensEachEarlierBriefingUsed() = runTest {
+        val today = localEpochDay(epochMillis())
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(
+            reflection(figureId = augustine.id, epochDay = today - 1, tone = "morning", insight = "Rest", theme = "WRITINGS")
+                .copy(sources = listOf("Confessions"))
+        )
+        dao.upsert(reflection(figureId = augustine.id, epochDay = today - 1, tone = "evening", insight = "Hope", theme = "HOPE"))
+        val api = FakeReflectionApi()
+
+        repo(dao = dao, api = api).getOrFetch(
+            figureId = augustine.id, figureName = augustine.name, headlines = emptyList(), tone = "morning"
+        )
+
+        val sent = assertNotNull(api.lastRequest).previousReflections
+        assertTrue(sent[0].endsWith("morning, Writings lens (drew on Confessions): Rest implication inspiration"))
+        assertTrue(sent[1].endsWith("evening, Hope lens: Hope implication inspiration"))
     }
 
     @Test

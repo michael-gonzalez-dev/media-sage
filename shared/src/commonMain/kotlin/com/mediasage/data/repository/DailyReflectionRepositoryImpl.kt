@@ -104,10 +104,13 @@ class DailyReflectionRepositoryImpl(
         )
     }
 
-    // Naming the works a briefing drew on lets the next one take a different part of the same book.
+    // Naming the works a briefing drew on lets the next one take a different part of the same book,
+    // and naming its lens lets the server find the work the previous Writings briefing was based on.
     private fun historyLabel(entry: DailyReflectionEntity, today: Long): String {
         val day = if (entry.epochDay == today) "Earlier today (${entry.tone})" else "${dayName(entry.epochDay)} ${entry.tone}"
-        return if (entry.sources.isEmpty()) day else "$day (drew on ${entry.sources.joinToString("; ")})"
+        val lens = if (entry.theme == "NEWS") "Headlines" else entry.theme.lowercase().replaceFirstChar { it.uppercase() }
+        val label = "$day, $lens lens"
+        return if (entry.sources.isEmpty()) label else "$label (drew on ${entry.sources.joinToString("; ")})"
     }
 
     private fun dayName(epochDay: Long): String =
