@@ -8,6 +8,7 @@ import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Figure
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.model.Quote
 import com.mediasage.domain.model.ReaderCalendarData
 import com.mediasage.domain.model.UserSession
@@ -114,19 +115,28 @@ class ReaderViewModel(
         }
     }
 
-    /** Guards today's locked-in day: a different figure requires confirmation before it is assigned. */
+    /** Guards today's locked-in day: a different figure or lens requires confirmation before it is assigned. */
     private fun handleFigureAssigned(intent: ReaderContract.Intent.FigureAssigned) {
         viewModelScope.launch {
             val data = calendarData.first()
             val lockedFigureId = lockedFigureIdFor(intent.dayOfWeek, data)
-            if (lockedFigureId != null && lockedFigureId != intent.figureId) {
-                promptReassignment(intent, lockedFigureId, data)
+            if (lockedFigureId == null) {
+                applyAssignment(intent)
+                return@launch
+            }
+            val lockedLens = reflectionRepository.getLockedTheme(todayEpochDay)
+            if (lockedFigureId == intent.figureId && lockedLens == intent.lens) {
+                applyAssignment(intent)
             } else {
-                dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
-                logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN)
-                input.update { it.copy(activeSheet = null) }
+                promptReassignment(intent, lockedFigureId, lockedLens, data)
             }
         }
+    }
+
+    private suspend fun applyAssignment(intent: ReaderContract.Intent.FigureAssigned) {
+        dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
+        logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN)
+        input.update { it.copy(activeSheet = null) }
     }
 
     private fun lockedFigureIdFor(dayOfWeek: Int, data: ReaderCalendarData): Long? {
@@ -134,14 +144,21 @@ class ReaderViewModel(
         return data.briefingByDay[todayEpochDay]?.figureId
     }
 
+    /** Names whichever part of the schedule actually changes — the reporter always wins the framing when both change. */
     private fun promptReassignment(
         intent: ReaderContract.Intent.FigureAssigned,
         lockedFigureId: Long,
+        lockedLens: LensFilter?,
         data: ReaderCalendarData,
     ) {
         val figuresById = data.figures.associateBy { it.id }
         val currentName = figuresById[lockedFigureId]?.name ?: return
-        val newName = figuresById[intent.figureId]?.name ?: return
+        val change = if (lockedFigureId != intent.figureId) {
+            val newName = figuresById[intent.figureId]?.name ?: return
+            ReaderContract.ReassignmentChange.Reporter(newName)
+        } else {
+            ReaderContract.ReassignmentChange.Lens(intent.lens ?: LensFilter.NEWS)
+        }
         input.update {
             it.copy(
                 activeSheet = null,
@@ -150,7 +167,7 @@ class ReaderViewModel(
                     figureId = intent.figureId,
                     lens = intent.lens,
                     currentFigureName = currentName,
-                    newFigureName = newName,
+                    change = change,
                     nextWeekdayLabel = weekdayLabel(intent.dayOfWeek),
                 ),
             )

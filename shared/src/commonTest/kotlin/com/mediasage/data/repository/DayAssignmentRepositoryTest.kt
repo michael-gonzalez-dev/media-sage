@@ -22,6 +22,7 @@ import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.DailyReflectionRepository
@@ -452,6 +453,8 @@ private class FakeDailyReflectionRepository(
     override suspend fun getEarliestBriefingEpochDay(): Long? = null
 
     override suspend fun getLockedFigureId(epochDay: Long): Long? = lockedFigureIdsByEpochDay[epochDay]
+
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = null
 
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolve(userId: String?) = Unit

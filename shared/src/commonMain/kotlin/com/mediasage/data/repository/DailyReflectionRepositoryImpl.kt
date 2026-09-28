@@ -9,6 +9,7 @@ import com.mediasage.data.remote.DailyReflectionRequestDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.DailyReflectionRepository
 import kotlinx.coroutines.CancellationException
@@ -160,6 +161,11 @@ class DailyReflectionRepositoryImpl(
     override suspend fun getEarliestBriefingEpochDay(): Long? = dao.getEarliestEpochDay()
 
     override suspend fun getLockedFigureId(epochDay: Long): Long? = dao.getFigureIdForDay(epochDay)
+
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? {
+        val theme = dao.getThemeForDay(epochDay)?.takeIf { it != "NEWS" } ?: return null
+        return LensFilter.entries.firstOrNull { it.name == theme }
+    }
 
     override suspend fun resolve(userId: String?) {
         // Flips back to false for the duration of *every* resolve pass — see the matching

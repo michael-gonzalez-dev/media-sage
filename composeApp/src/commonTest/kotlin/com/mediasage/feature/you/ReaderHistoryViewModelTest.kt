@@ -296,6 +296,7 @@ private class HistoryFakeDailyReflectionRepository(
     override suspend fun getForDay(epochDay: Long, tone: String): DailyReflection? = null
     override suspend fun getEarliestBriefingEpochDay(): Long? = briefings.minOfOrNull { it.epochDay }
     override suspend fun getLockedFigureId(epochDay: Long): Long? = null
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = null
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolve(userId: String?) = Unit
 }

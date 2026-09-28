@@ -2,6 +2,7 @@ package com.mediasage.domain.repository
 
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
+import com.mediasage.domain.model.LensFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -22,6 +23,9 @@ interface DailyReflectionRepository {
 
     /** The figure id already briefed for [epochDay], if any — that day's reporter is locked. */
     suspend fun getLockedFigureId(epochDay: Long): Long?
+
+    /** The lens already locked in for [epochDay]'s briefing, if any — null means the default News lens. */
+    suspend fun getLockedTheme(epochDay: Long): LensFilter?
 
     /** True once [resolve] has settled at least once this process — never true before then. */
     val isResolved: StateFlow<Boolean>

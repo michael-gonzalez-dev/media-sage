@@ -39,13 +39,18 @@ object ReaderContract {
         data class WeekSlotPicker(val dayOfWeek: Int) : ActiveSheet
     }
 
-    /** Awaiting user confirmation to reassign a locked-in day to a different figure. */
+    sealed interface ReassignmentChange {
+        data class Reporter(val newFigureName: String) : ReassignmentChange
+        data class Lens(val newLens: LensFilter) : ReassignmentChange
+    }
+
+    /** Awaiting user confirmation to reassign a locked-in day to a different figure and/or lens. */
     data class PendingReassignment(
         val dayOfWeek: Int,
         val figureId: Long,
         val lens: LensFilter?,
         val currentFigureName: String,
-        val newFigureName: String,
+        val change: ReassignmentChange,
         val nextWeekdayLabel: String,
     )
 

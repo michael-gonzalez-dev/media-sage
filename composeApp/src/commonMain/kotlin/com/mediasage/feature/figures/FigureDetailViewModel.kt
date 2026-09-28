@@ -65,17 +65,23 @@ class FigureDetailViewModel(
         }
         viewModelScope.launch {
             val lockedFigureId = dailyReflectionRepository.getLockedFigureId(todayEpochDay())
-            if (lockedFigureId != null && lockedFigureId != figureId) {
-                val lockedFigureName = figureRepository.getFigureById(lockedFigureId)?.name ?: return@launch
-                input.value = FigureDetailContract.PendingReassignment(
-                    todayOrdinal = todayOrdinal,
-                    currentFigureName = lockedFigureName,
-                    newFigureName = current.figureName,
-                    nextWeekdayLabel = weekdayLabel(todayOrdinal),
-                )
-            } else {
-                dayAssignmentRepository.assign(todayOrdinal, figureId)
-                analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
+            when {
+                lockedFigureId != null && lockedFigureId != figureId -> {
+                    val lockedFigureName = figureRepository.getFigureById(lockedFigureId)?.name ?: return@launch
+                    input.value = FigureDetailContract.PendingReassignment(
+                        todayOrdinal = todayOrdinal,
+                        currentFigureName = lockedFigureName,
+                        newFigureName = current.figureName,
+                        nextWeekdayLabel = weekdayLabel(todayOrdinal),
+                    )
+                }
+                // Already locked in for today — assigning with no lens would silently switch
+                // today's briefing to Headlines and generate a second one.
+                lockedFigureId == figureId -> Unit
+                else -> {
+                    dayAssignmentRepository.assign(todayOrdinal, figureId)
+                    analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
+                }
             }
         }
     }

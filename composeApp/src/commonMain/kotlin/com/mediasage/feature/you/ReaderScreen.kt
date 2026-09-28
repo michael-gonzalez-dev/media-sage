@@ -162,9 +162,13 @@ fun ReaderScreen(
     }
 
     ready?.pendingReassignment?.let { pending ->
+        val changeLabel = when (val change = pending.change) {
+            is ReaderContract.ReassignmentChange.Reporter -> change.newFigureName
+            is ReaderContract.ReassignmentChange.Lens -> stringResource(change.newLens.labelRes())
+        }
         ReassignConfirmationDialog(
             currentFigureName = pending.currentFigureName,
-            newFigureName = pending.newFigureName,
+            newFigureName = changeLabel,
             nextWeekdayLabel = pending.nextWeekdayLabel,
             onConfirm = { onIntent(ReaderContract.Intent.ConfirmReassignment) },
             onDismiss = { onIntent(ReaderContract.Intent.CancelReassignment) },

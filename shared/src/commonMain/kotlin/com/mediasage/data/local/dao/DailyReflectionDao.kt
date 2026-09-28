@@ -36,6 +36,12 @@ interface DailyReflectionDao {
     @Query("SELECT figureId FROM daily_reflection WHERE epochDay = :epochDay LIMIT 1")
     suspend fun getFigureIdForDay(epochDay: Long): Long?
 
+    @Query(
+        "SELECT theme FROM daily_reflection WHERE epochDay = :epochDay " +
+            "ORDER BY CASE WHEN tone = 'morning' THEN 0 ELSE 1 END LIMIT 1"
+    )
+    suspend fun getThemeForDay(epochDay: Long): String?
+
     @Query("SELECT * FROM daily_reflection WHERE synced = 0")
     suspend fun getPendingSync(): List<DailyReflectionEntity>
 

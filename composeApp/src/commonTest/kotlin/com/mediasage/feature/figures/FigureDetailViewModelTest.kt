@@ -147,6 +147,28 @@ class FigureDetailViewModelTest {
     }
 
     @Test
+    fun pinToHome_reassigningTodaysAlreadyLockedFigureIsANoOp() = runTest(testDispatcher) {
+        // Regression test: Reporter Detail always assigns with no lens. If the figure being
+        // pinned is already the day's locked-in reporter (isPinned is false only because the
+        // weekday assignment row currently points elsewhere), assigning with no lens would
+        // silently switch today's lens to Headlines and generate a second briefing.
+        val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
+            figureId = 1L,
+            figures = listOf(augustine, lewis),
+            assignments = mapOf(todayOrdinal to DayAssignment(figureId = 2L, lens = null)),
+            lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
+        )
+
+        viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+        assertTrue(dayAssignmentRepo.clearCalls.isEmpty())
+        val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertNull(state.pendingReassignment)
+        assertTrue(analyticsService.loggedEvents.isEmpty())
+    }
+
+    @Test
     fun pinQuote_memorizesTheQuoteForThisFigure() = runTest(testDispatcher) {
         val quoteRepo = DetailFakeQuoteRepository()
         val (viewModel, _, analyticsService) = figureDetailViewModel(
@@ -303,6 +325,7 @@ private class FakeDailyReflectionRepository(
     override suspend fun getForDay(epochDay: Long, tone: String): DailyReflection? = null
     override suspend fun getEarliestBriefingEpochDay(): Long? = null
     override suspend fun getLockedFigureId(epochDay: Long): Long? = lockedFigureIdsByEpochDay[epochDay]
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = null
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolve(userId: String?) = Unit
 }

@@ -153,23 +153,26 @@ class BriefingViewModel(
                         emitLoadingSuccess()
                         return@collectLatest
                     }
-                    fetchAndUpdateCard(figureId, resolveLens(figureId, todayOrdinal, inputs.assignments))
+                    fetchAndUpdateCard(figureId, resolveLens(todayOrdinal, inputs.assignments))
                 }
         }
     }
 
     /**
-     * Once today is locked to a figure, a newer weekday reassignment may no longer describe that
-     * figure's lens — fall back to the theme already cached on today's reflection in that case.
+     * Once a briefing exists for today, the day's lens is locked to whatever theme that first
+     * (morning) briefing used — a later lens change to the weekday assignment must never affect
+     * today's already-generated briefing, morning or evening. Only an unlocked day (no briefing
+     * yet) reads the lens straight off the live assignment.
      */
     private suspend fun resolveLens(
-        figureId: Long,
         dayOfWeek: Int,
         assignments: Map<Int, DayAssignment>,
     ): LensFilter? {
-        assignments[dayOfWeek]?.takeIf { it.figureId == figureId }?.let { return it.lens }
-        val cachedTheme = dailyReflectionRepository.getForDay(todayEpochDay(), currentTone())?.theme
-        return cachedTheme?.let { name -> LensFilter.entries.firstOrNull { it.name == name } }
+        val epochDay = todayEpochDay()
+        if (dailyReflectionRepository.getLockedFigureId(epochDay) != null) {
+            return dailyReflectionRepository.getLockedTheme(epochDay)
+        }
+        return assignments[dayOfWeek]?.lens
     }
 
     private suspend fun fetchAndUpdateCard(figureId: Long, lens: LensFilter?) {

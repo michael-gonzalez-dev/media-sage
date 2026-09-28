@@ -355,6 +355,35 @@ class BriefingViewModelTest {
     }
 
     @Test
+    fun loadCard_usesLockedThemeOnceLockedEvenWhenAssignmentPointsToADifferentLens() = runTest(testDispatcher) {
+        // Regression test: once today is locked (a briefing already exists), a later lens change
+        // to the weekday assignment must not affect today's already-generated briefing — morning
+        // or evening both keep the theme the locked reflection was originally generated with.
+        val reflectionRepo = FakeDailyReflectionRepository(lockedFigureId = 1L, lockedTheme = LensFilter.HOPE)
+        val dayAssignmentRepo = FakeDayAssignmentRepository(
+            MutableStateFlow(mapOf(todayOrdinal to DayAssignment(figureId = 1L, lens = LensFilter.GRIEF))),
+            resolveReporterResult = 1L,
+        )
+        val figureRepo = FakeFigureRepository(listOf(judson))
+        val viewModel = BriefingViewModel(
+            getBriefingLoadInputs = GetBriefingLoadInputsUseCase(dayAssignmentRepo, reflectionRepo, figureRepo),
+            dayAssignmentRepository = dayAssignmentRepo,
+            dailyReflectionRepository = reflectionRepo,
+            figureRepository = figureRepo,
+            headlineRepository = FakeHeadlineRepository(),
+            userReflectionNoteRepository = FakeUserReflectionNoteRepository(),
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
+            toneScheduler = FakeBriefingToneScheduler(),
+        )
+        backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
+        advanceUntilIdle()
+
+        assertEquals("HOPE", reflectionRepo.lastTheme)
+        val card = (viewModel.state.value as BriefingContract.UiState.Success).card as BriefingContract.CardState.Ready
+        assertEquals("HOPE", card.theme)
+    }
+
+    @Test
     fun reflectTapped_opensSheetWithChallengeAndSavedNote() = runTest(testDispatcher) {
         val noteRepo = FakeUserReflectionNoteRepository()
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(emptyMap()), resolveReporterResult = 1L)
@@ -571,6 +600,8 @@ private class FakeDayAssignmentRepository(
 private class FakeDailyReflectionRepository(
     private val fetchDelayMs: Long = 0,
     private val challenge: String? = null,
+    private val lockedFigureId: Long? = null,
+    private val lockedTheme: LensFilter? = null,
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true),
 ) : DailyReflectionRepository {
     var fetchCount = 0
@@ -607,7 +638,8 @@ private class FakeDailyReflectionRepository(
         MutableStateFlow(emptyList())
     override suspend fun getForDay(epochDay: Long, tone: String): DailyReflection? = null
     override suspend fun getEarliestBriefingEpochDay(): Long? = null
-    override suspend fun getLockedFigureId(epochDay: Long): Long? = null
+    override suspend fun getLockedFigureId(epochDay: Long): Long? = lockedFigureId
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = lockedTheme
     override suspend fun resolve(userId: String?) = Unit
 }
 
