@@ -135,7 +135,8 @@ class ReaderViewModelTest {
         val pending = state.pendingReassignment
         assertNotNull(pending)
         assertEquals("Augustine of Hippo", pending.currentFigureName)
-        assertEquals("C.S. Lewis", pending.newFigureName)
+        val change = pending.change as ReaderContract.ReassignmentChange.Reporter
+        assertEquals("C.S. Lewis", change.newFigureName)
     }
 
     @Test
@@ -243,6 +244,58 @@ class ReaderViewModelTest {
     }
 
     @Test
+    fun figureAssigned_promptsConfirmationWhenSameReporterButDifferentLensOnALockedDay() = runTest(testDispatcher) {
+        val briefing = BriefingDay(epochDay = todayEpochDay, figureId = 1L, scriptureReference = "John 3:16", scriptureText = "…")
+        val (viewModel, dayAssignmentRepo) = readerViewModelWithRepo(
+            figure = testFigure,
+            briefings = listOf(briefing),
+            lockedTheme = LensFilter.HOPE,
+        )
+
+        viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 1L, lens = LensFilter.GRIEF))
+
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+        val state = viewModel.state.value as ReaderContract.UiState.Ready
+        val pending = state.pendingReassignment
+        assertNotNull(pending)
+        val change = pending.change as ReaderContract.ReassignmentChange.Lens
+        assertEquals(LensFilter.GRIEF, change.newLens)
+    }
+
+    @Test
+    fun confirmReassignment_appliesTheNewLensWhenOnlyTheLensChangedOnALockedDay() = runTest(testDispatcher) {
+        val briefing = BriefingDay(epochDay = todayEpochDay, figureId = 1L, scriptureReference = "John 3:16", scriptureText = "…")
+        val (viewModel, dayAssignmentRepo) = readerViewModelWithRepo(
+            figure = testFigure,
+            briefings = listOf(briefing),
+            lockedTheme = LensFilter.HOPE,
+        )
+        viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 1L, lens = LensFilter.GRIEF))
+
+        viewModel.onIntent(ReaderContract.Intent.ConfirmReassignment)
+
+        assertEquals(listOf(Triple(todayOrdinal, 1L, LensFilter.GRIEF as LensFilter?)), dayAssignmentRepo.assignCalls)
+        val state = viewModel.state.value as ReaderContract.UiState.Ready
+        assertNull(state.pendingReassignment)
+    }
+
+    @Test
+    fun figureAssigned_appliesImmediatelyWhenSameReporterAndSameLensOnALockedDay() = runTest(testDispatcher) {
+        val briefing = BriefingDay(epochDay = todayEpochDay, figureId = 1L, scriptureReference = "John 3:16", scriptureText = "…")
+        val (viewModel, dayAssignmentRepo) = readerViewModelWithRepo(
+            figure = testFigure,
+            briefings = listOf(briefing),
+            lockedTheme = LensFilter.HOPE,
+        )
+
+        viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 1L, lens = LensFilter.HOPE))
+
+        assertEquals(listOf(Triple(todayOrdinal, 1L, LensFilter.HOPE as LensFilter?)), dayAssignmentRepo.assignCalls)
+        val state = viewModel.state.value as ReaderContract.UiState.Ready
+        assertNull(state.pendingReassignment)
+    }
+
+    @Test
     fun pastBriefingsShowsMostRecentReflectionsFirstAndExcludesToday() = runTest(testDispatcher) {
         val todaysBriefing = BriefingDay(epochDay = todayEpochDay, figureId = 1L, inspiration = "Today's word")
         val yesterday = BriefingDay(epochDay = todayEpochDay - 1, figureId = 1L, inspiration = "Yesterday's word")
@@ -343,13 +396,14 @@ class ReaderViewModelTest {
         latestQuote: Quote?,
         extraFigures: List<Figure> = emptyList(),
         assignments: Map<Int, DayAssignment> = emptyMap(),
-    ): ReaderViewModel = readerViewModelWithRepo(figure, extraFigures, assignments, emptyList(), latestQuote).first
+    ): ReaderViewModel = readerViewModelWithRepo(figure, extraFigures, assignments, latestQuote = latestQuote).first
 
     private fun TestScope.readerViewModelWithRepo(
         figure: Figure,
         extraFigures: List<Figure> = emptyList(),
         assignments: Map<Int, DayAssignment> = emptyMap(),
         briefings: List<BriefingDay> = emptyList(),
+        lockedTheme: LensFilter? = null,
         latestQuote: Quote? = null,
         session: UserSession? = null,
         analyticsService: FakeAnalyticsServiceForReaderScreen = FakeAnalyticsServiceForReaderScreen(),
@@ -357,7 +411,7 @@ class ReaderViewModelTest {
         val figureRepo = FakeFigureRepository(listOf(figure) + extraFigures)
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(assignments))
         val quoteRepo = FakeQuoteRepository(latestQuote)
-        val reflectionRepo = FakeDailyReflectionRepository(briefings)
+        val reflectionRepo = FakeDailyReflectionRepository(briefings, lockedTheme)
         val authRepo = FakeAuthRepository(session)
         val viewModel = ReaderViewModel(
             getReaderCalendar = GetReaderCalendarUseCase(figureRepo, dayAssignmentRepo, quoteRepo, reflectionRepo),
@@ -413,6 +467,7 @@ private class FakeDayAssignmentRepository(
 
 private class FakeDailyReflectionRepository(
     private val briefings: List<BriefingDay> = emptyList(),
+    private val lockedTheme: LensFilter? = null,
 ) : DailyReflectionRepository {
     override suspend fun getOrFetch(
         figureId: Long,
@@ -427,6 +482,7 @@ private class FakeDailyReflectionRepository(
     override suspend fun getEarliestBriefingEpochDay(): Long? = briefings.minOfOrNull { it.epochDay }
     override suspend fun getLockedFigureId(epochDay: Long): Long? =
         briefings.firstOrNull { it.epochDay == epochDay }?.figureId
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = lockedTheme
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolve(userId: String?) = Unit
 }

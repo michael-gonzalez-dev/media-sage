@@ -64,7 +64,8 @@ class FigureDetailViewModel(
             return
         }
         viewModelScope.launch {
-            val lockedFigureId = dailyReflectionRepository.getLockedFigureId(todayEpochDay())
+            val epochDay = todayEpochDay()
+            val lockedFigureId = dailyReflectionRepository.getLockedFigureId(epochDay)
             if (lockedFigureId != null && lockedFigureId != figureId) {
                 val lockedFigureName = figureRepository.getFigureById(lockedFigureId)?.name ?: return@launch
                 input.value = FigureDetailContract.PendingReassignment(
@@ -74,7 +75,10 @@ class FigureDetailViewModel(
                     nextWeekdayLabel = weekdayLabel(todayOrdinal),
                 )
             } else {
-                dayAssignmentRepository.assign(todayOrdinal, figureId)
+                // Re-pinning today's locked-in reporter keeps today's lens — assigning with no lens
+                // would silently switch today's briefing to Headlines and generate a second one.
+                val lens = if (lockedFigureId == figureId) dailyReflectionRepository.getLockedTheme(epochDay) else null
+                dayAssignmentRepository.assign(todayOrdinal, figureId, lens)
                 analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
             }
         }

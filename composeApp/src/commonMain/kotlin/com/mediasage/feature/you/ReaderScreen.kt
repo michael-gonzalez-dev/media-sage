@@ -94,6 +94,7 @@ import mediasage.composeapp.generated.resources.reader_briefings_empty_subtitle
 import mediasage.composeapp.generated.resources.reader_briefings_empty_title
 import mediasage.composeapp.generated.resources.reader_quote_empty_subtitle
 import mediasage.composeapp.generated.resources.reader_quote_empty_title
+import mediasage.composeapp.generated.resources.reassign_dialog_lens_label
 import mediasage.composeapp.generated.resources.saved_insights_banner
 import mediasage.composeapp.generated.resources.you_carousel_assign_hint
 import mediasage.composeapp.generated.resources.you_lens_faith
@@ -162,9 +163,14 @@ fun ReaderScreen(
     }
 
     ready?.pendingReassignment?.let { pending ->
+        val changeLabel = when (val change = pending.change) {
+            is ReaderContract.ReassignmentChange.Reporter -> change.newFigureName
+            is ReaderContract.ReassignmentChange.Lens ->
+                stringResource(Res.string.reassign_dialog_lens_label, stringResource(change.newLens.labelRes()))
+        }
         ReassignConfirmationDialog(
             currentFigureName = pending.currentFigureName,
-            newFigureName = pending.newFigureName,
+            newAssignmentLabel = changeLabel,
             nextWeekdayLabel = pending.nextWeekdayLabel,
             onConfirm = { onIntent(ReaderContract.Intent.ConfirmReassignment) },
             onDismiss = { onIntent(ReaderContract.Intent.CancelReassignment) },

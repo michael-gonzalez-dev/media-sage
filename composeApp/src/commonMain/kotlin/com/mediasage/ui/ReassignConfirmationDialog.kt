@@ -21,7 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ReassignConfirmationDialog(
     currentFigureName: String,
-    newFigureName: String,
+    newAssignmentLabel: String,
     nextWeekdayLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -47,7 +47,7 @@ fun ReassignConfirmationDialog(
                     text = stringResource(
                         Res.string.reassign_dialog_message,
                         currentFigureName,
-                        newFigureName,
+                        newAssignmentLabel,
                         nextWeekdayLabel,
                     ),
                     style = MaterialTheme.typography.bodyMedium,

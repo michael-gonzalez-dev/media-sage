@@ -19,6 +19,7 @@ import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.domain.model.BriefingDay
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -381,6 +382,34 @@ class DailyReflectionRepositoryTest {
         assertTrue(repository.isResolved.value)
     }
 
+    @Test
+    fun getLockedTheme_returnsTheMorningRowsThemeEvenWhenAnEveningRowExists() = runTest {
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 700L, tone = "morning", theme = "HOPE"))
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 700L, tone = "evening", theme = "GRIEF"))
+
+        val locked = repo(dao = dao).getLockedTheme(700L)
+
+        assertEquals(LensFilter.HOPE, locked)
+    }
+
+    @Test
+    fun getLockedTheme_returnsNullWhenTheLockedThemeIsNews() = runTest {
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 800L, tone = "morning", theme = "NEWS"))
+
+        val locked = repo(dao = dao).getLockedTheme(800L)
+
+        assertNull(locked)
+    }
+
+    @Test
+    fun getLockedTheme_returnsNullWhenNoReflectionExistsForTheDay() = runTest {
+        val locked = repo().getLockedTheme(900L)
+
+        assertNull(locked)
+    }
+
     private fun reflection(
         figureId: Long,
         epochDay: Long,
@@ -434,6 +463,11 @@ private class FakeDailyReflectionDao : DailyReflectionDao {
 
     override suspend fun getFigureIdForDay(epochDay: Long): Long? =
         store.values.find { it.epochDay == epochDay }?.figureId
+
+    override suspend fun getThemeForDay(epochDay: Long): String? =
+        store.values.filter { it.epochDay == epochDay }
+            .sortedBy { it.tone != "morning" }
+            .firstOrNull()?.theme
 
     override suspend fun getPendingSync(): List<DailyReflectionEntity> = store.values.filterNot { it.synced }
 
