@@ -19,6 +19,7 @@ import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.QuoteRepository
 import com.mediasage.domain.usecase.GetReaderCalendarUseCase
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -374,6 +376,51 @@ class ReaderViewModelTest {
     }
 
     @Test
+    fun confirmReassignment_clearsDialogImmediatelyAndIgnoresASecondTapWhileSyncStillInProgress() = runTest(testDispatcher) {
+        val otherFigure = Figure(id = 2L, name = "C.S. Lewis", category = FigureCategory.THEOLOGIAN, century = "20th", role = "Author")
+        val briefing = BriefingDay(epochDay = todayEpochDay, figureId = 1L, scriptureReference = "John 3:16", scriptureText = "…")
+        val gate = CompletableDeferred<Unit>()
+        val (viewModel, dayAssignmentRepo) = readerViewModelWithRepo(
+            figure = testFigure,
+            extraFigures = listOf(otherFigure),
+            briefings = listOf(briefing),
+            holdWrites = gate,
+        )
+        viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 2L, lens = null))
+
+        viewModel.onIntent(ReaderContract.Intent.ConfirmReassignment)
+
+        val stateAfterFirstTap = viewModel.state.value as ReaderContract.UiState.Ready
+        assertNull(stateAfterFirstTap.pendingReassignment)
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+
+        viewModel.onIntent(ReaderContract.Intent.ConfirmReassignment)
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
+    }
+
+    @Test
+    fun assignmentCleared_closesSheetImmediatelyAndIgnoresASecondTapWhileSyncStillInProgress() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val (viewModel, dayAssignmentRepo) = readerViewModelWithRepo(figure = testFigure, holdWrites = gate)
+        viewModel.onIntent(ReaderContract.Intent.DaySlotTapped(index = todayOrdinal))
+
+        viewModel.onIntent(ReaderContract.Intent.AssignmentCleared(dayOfWeek = todayOrdinal))
+
+        val stateAfterFirstTap = viewModel.state.value as ReaderContract.UiState.Ready
+        assertNull(stateAfterFirstTap.activeSheet)
+        assertTrue(dayAssignmentRepo.clearCalls.isEmpty())
+
+        viewModel.onIntent(ReaderContract.Intent.AssignmentCleared(dayOfWeek = todayOrdinal))
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(todayOrdinal), dayAssignmentRepo.clearCalls)
+    }
+
+    @Test
     fun hasMorePastBriefingsIsFalseWhenCountIsAtOrBelowTheCap() = runTest(testDispatcher) {
         val briefings = (1..7).map { daysAgo ->
             BriefingDay(epochDay = todayEpochDay - daysAgo, figureId = 1L, inspiration = "Word $daysAgo")
@@ -407,9 +454,10 @@ class ReaderViewModelTest {
         latestQuote: Quote? = null,
         session: UserSession? = null,
         analyticsService: FakeAnalyticsServiceForReaderScreen = FakeAnalyticsServiceForReaderScreen(),
+        holdWrites: CompletableDeferred<Unit>? = null,
     ): Pair<ReaderViewModel, FakeDayAssignmentRepository> {
         val figureRepo = FakeFigureRepository(listOf(figure) + extraFigures)
-        val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(assignments))
+        val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(assignments), holdWrites)
         val quoteRepo = FakeQuoteRepository(latestQuote)
         val reflectionRepo = FakeDailyReflectionRepository(briefings, lockedTheme)
         val authRepo = FakeAuthRepository(session)
@@ -449,15 +497,18 @@ private class FakeFigureRepository(private val figures: List<Figure>) : FigureRe
 }
 
 private class FakeDayAssignmentRepository(
-    private val assignmentsFlow: MutableStateFlow<Map<Int, DayAssignment>>
+    private val assignmentsFlow: MutableStateFlow<Map<Int, DayAssignment>>,
+    private val holdWrites: CompletableDeferred<Unit>? = null,
 ) : DayAssignmentRepository {
     val assignCalls = mutableListOf<Triple<Int, Long, LensFilter?>>()
     val clearCalls = mutableListOf<Int>()
     override fun observeAssignments(): Flow<Map<Int, DayAssignment>> = assignmentsFlow
     override suspend fun assign(dayOfWeek: Int, figureId: Long, lens: LensFilter?) {
+        holdWrites?.await()
         assignCalls.add(Triple(dayOfWeek, figureId, lens))
     }
     override suspend fun clear(dayOfWeek: Int) {
+        holdWrites?.await()
         clearCalls.add(dayOfWeek)
     }
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)

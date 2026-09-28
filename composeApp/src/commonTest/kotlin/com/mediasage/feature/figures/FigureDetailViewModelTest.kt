@@ -18,6 +18,7 @@ import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.QuoteRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -169,6 +171,30 @@ class FigureDetailViewModelTest {
     }
 
     @Test
+    fun confirmReassignment_clearsDialogImmediatelyAndIgnoresASecondTapWhileSyncStillInProgress() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val (viewModel, dayAssignmentRepo, _) = figureDetailViewModel(
+            figureId = 2L,
+            figures = listOf(augustine, lewis),
+            lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
+            holdWrites = gate,
+        )
+        viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        viewModel.onIntent(FigureDetailContract.Intent.ConfirmReassignment)
+
+        val stateAfterFirstTap = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertNull(stateAfterFirstTap.pendingReassignment)
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+
+        viewModel.onIntent(FigureDetailContract.Intent.ConfirmReassignment)
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
+    }
+
+    @Test
     fun pinQuote_memorizesTheQuoteForThisFigure() = runTest(testDispatcher) {
         val quoteRepo = DetailFakeQuoteRepository()
         val (viewModel, _, analyticsService) = figureDetailViewModel(
@@ -219,10 +245,11 @@ class FigureDetailViewModelTest {
         encouragements: List<Encouragement> = emptyList(),
         quoteRepo: DetailFakeQuoteRepository = DetailFakeQuoteRepository(),
         analyticsService: FakeAnalyticsServiceForFigureDetail = FakeAnalyticsServiceForFigureDetail(),
+        holdWrites: CompletableDeferred<Unit>? = null,
     ): Triple<FigureDetailViewModel, DetailFakeDayAssignmentRepository, FakeAnalyticsServiceForFigureDetail> {
         val figureRepo = DetailFakeFigureRepository(figures)
         val encouragementRepo = DetailFakeEncouragementRepository(encouragements)
-        val dayAssignmentRepo = DetailFakeDayAssignmentRepository(MutableStateFlow(assignments))
+        val dayAssignmentRepo = DetailFakeDayAssignmentRepository(MutableStateFlow(assignments), holdWrites)
         val reflectionRepo = FakeDailyReflectionRepository(lockedFigureIdsByEpochDay, lockedThemesByEpochDay)
         val viewModel = FigureDetailViewModel(
             figureId, figureRepo, encouragementRepo, dayAssignmentRepo, reflectionRepo, quoteRepo, analyticsService,
@@ -272,12 +299,14 @@ private class DetailFakeEncouragementRepository(
 }
 
 private class DetailFakeDayAssignmentRepository(
-    private val assignmentsFlow: MutableStateFlow<Map<Int, DayAssignment>>
+    private val assignmentsFlow: MutableStateFlow<Map<Int, DayAssignment>>,
+    private val holdWrites: CompletableDeferred<Unit>? = null,
 ) : DayAssignmentRepository {
     val assignCalls = mutableListOf<Triple<Int, Long, LensFilter?>>()
     val clearCalls = mutableListOf<Int>()
     override fun observeAssignments(): Flow<Map<Int, DayAssignment>> = assignmentsFlow
     override suspend fun assign(dayOfWeek: Int, figureId: Long, lens: LensFilter?) {
+        holdWrites?.await()
         assignCalls.add(Triple(dayOfWeek, figureId, lens))
     }
     override suspend fun clear(dayOfWeek: Int) {

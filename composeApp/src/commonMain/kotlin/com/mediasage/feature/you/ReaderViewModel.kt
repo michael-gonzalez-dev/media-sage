@@ -65,6 +65,9 @@ class ReaderViewModel(
     /** The only user selection this screen owns: the open picker sheet and any pending reassignment. */
     private val input = MutableStateFlow(ScreenInput())
 
+    /** Days with a schedule write in flight — blocks a second tap from repeating it while it syncs. */
+    private val writesInFlight = mutableSetOf<Int>()
+
     private val calendarData: Flow<ReaderCalendarData> = getReaderCalendar(startOfWeekEpochDay, endOfWeekEpochDay)
 
     /**
@@ -98,20 +101,23 @@ class ReaderViewModel(
                 input.update { it.copy(activeSheet = ReaderContract.ActiveSheet.WeekSlotPicker(intent.index)) }
             is ReaderContract.Intent.PickerDismissed -> input.update { it.copy(activeSheet = null) }
             is ReaderContract.Intent.FigureAssigned -> handleFigureAssigned(intent)
-            is ReaderContract.Intent.AssignmentCleared -> writeThenCloseSheet {
-                dayAssignmentRepository.clear(intent.dayOfWeek)
-                logAssignmentEvent(AnalyticsEvents.Values.ACTION_CLEAR)
-            }
+            is ReaderContract.Intent.AssignmentCleared -> handleAssignmentCleared(intent)
             is ReaderContract.Intent.ConfirmReassignment -> handleConfirmReassignment()
             is ReaderContract.Intent.CancelReassignment -> input.update { it.copy(pendingReassignment = null) }
         }
     }
 
-    /** Run a repository write event, then close the open sheet once it completes. */
-    private fun writeThenCloseSheet(block: suspend () -> Unit) {
+    /** Closes the sheet immediately — the device write and its sync run in the background. */
+    private fun handleAssignmentCleared(intent: ReaderContract.Intent.AssignmentCleared) {
+        if (!writesInFlight.add(intent.dayOfWeek)) return
+        input.update { it.copy(activeSheet = null) }
         viewModelScope.launch {
-            block()
-            input.update { it.copy(activeSheet = null) }
+            try {
+                dayAssignmentRepository.clear(intent.dayOfWeek)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_CLEAR)
+            } finally {
+                writesInFlight.remove(intent.dayOfWeek)
+            }
         }
     }
 
@@ -133,10 +139,18 @@ class ReaderViewModel(
         }
     }
 
-    private suspend fun applyAssignment(intent: ReaderContract.Intent.FigureAssigned) {
-        dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
-        logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN)
+    /** Closes the sheet immediately — the device write and its sync run in the background. */
+    private fun applyAssignment(intent: ReaderContract.Intent.FigureAssigned) {
+        if (!writesInFlight.add(intent.dayOfWeek)) return
         input.update { it.copy(activeSheet = null) }
+        viewModelScope.launch {
+            try {
+                dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN)
+            } finally {
+                writesInFlight.remove(intent.dayOfWeek)
+            }
+        }
     }
 
     private fun lockedFigureIdFor(dayOfWeek: Int, data: ReaderCalendarData): Long? {
@@ -174,12 +188,18 @@ class ReaderViewModel(
         }
     }
 
+    /** Clears the dialog immediately — the device write and its sync run in the background. */
     private fun handleConfirmReassignment() {
         val pending = input.value.pendingReassignment ?: return
+        if (!writesInFlight.add(pending.dayOfWeek)) return
+        input.update { it.copy(pendingReassignment = null) }
         viewModelScope.launch {
-            dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
-            logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN)
-            input.update { it.copy(pendingReassignment = null) }
+            try {
+                dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN)
+            } finally {
+                writesInFlight.remove(pending.dayOfWeek)
+            }
         }
     }
 

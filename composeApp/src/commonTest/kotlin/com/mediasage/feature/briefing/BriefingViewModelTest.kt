@@ -18,6 +18,7 @@ import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.HeadlineRepository
 import com.mediasage.domain.repository.UserReflectionNoteRepository
 import com.mediasage.domain.usecase.GetBriefingLoadInputsUseCase
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -443,6 +444,42 @@ class BriefingViewModelTest {
     }
 
     @Test
+    fun reflectNoteSaved_showsSavedImmediatelyAndIgnoresASecondTapWhileSyncStillInProgress() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val noteRepo = FakeUserReflectionNoteRepository(holdWrites = gate)
+        val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(emptyMap()), resolveReporterResult = 1L)
+        val reflectionRepo = FakeDailyReflectionRepository(challenge = "What is one way to show love today?")
+        val figureRepo = FakeFigureRepository(listOf(judson))
+        val viewModel = BriefingViewModel(
+            getBriefingLoadInputs = GetBriefingLoadInputsUseCase(dayAssignmentRepo, reflectionRepo, figureRepo),
+            dayAssignmentRepository = dayAssignmentRepo,
+            dailyReflectionRepository = reflectionRepo,
+            figureRepository = figureRepo,
+            headlineRepository = FakeHeadlineRepository(),
+            userReflectionNoteRepository = noteRepo,
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
+            toneScheduler = FakeBriefingToneScheduler(),
+        )
+        backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onIntent(BriefingContract.Intent.ReflectTapped)
+        advanceUntilIdle()
+        viewModel.onIntent(BriefingContract.Intent.ReflectNoteChanged("Called my neighbor."))
+        viewModel.onIntent(BriefingContract.Intent.ReflectNoteSaved)
+
+        val stateAfterFirstTap = viewModel.state.value as BriefingContract.UiState.Success
+        assertEquals("Called my neighbor.", stateAfterFirstTap.reflectSheet?.savedNoteText)
+        assertEquals(0, noteRepo.savedNotes.size)
+
+        viewModel.onIntent(BriefingContract.Intent.ReflectNoteSaved)
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(1, noteRepo.savedNotes.size)
+    }
+
+    @Test
     fun reflectNoteChanged_capsAtMaxLength() = runTest(testDispatcher) {
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(emptyMap()), resolveReporterResult = 1L)
         val reflectionRepo = FakeDailyReflectionRepository(challenge = "What is one way to show love today?")
@@ -661,11 +698,14 @@ private class FakeBriefingToneScheduler : BriefingToneScheduler {
     suspend fun crossBoundary() = boundaryCrossed.send(Unit)
 }
 
-private class FakeUserReflectionNoteRepository : UserReflectionNoteRepository {
+private class FakeUserReflectionNoteRepository(
+    private val holdWrites: CompletableDeferred<Unit>? = null,
+) : UserReflectionNoteRepository {
     private val notes = mutableMapOf<String, String>()
     val savedNotes: Map<String, String> get() = notes
     override suspend fun getNote(reflectionId: String): String? = notes[reflectionId]
     override suspend fun saveNote(reflectionId: String, noteText: String) {
+        holdWrites?.await()
         notes[reflectionId] = noteText
     }
     override suspend fun resolve(userId: String?) = Unit
