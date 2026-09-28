@@ -2,6 +2,7 @@ package com.mediasage.appserver.service
 
 import com.mediasage.appserver.prompts.DailyReflectionPrompt
 import com.mediasage.appserver.prompts.ReflectionTheme
+import com.mediasage.appserver.repository.WorkData
 import com.mediasage.appserver.repository.WorkRepository
 import java.time.Clock
 import java.time.LocalDate
@@ -13,12 +14,7 @@ class DailyReflectionService(
 ) {
     suspend fun generate(request: DailyReflectionRequest): DailyReflectionResult {
         val bibliography = workRepository.getByFigureId(request.figureId)
-        val works = SourceWorks.rotationWindow(
-            works = bibliography,
-            epochDay = LocalDate.now(clock).toEpochDay(),
-            isEvening = request.tone.equals("evening", ignoreCase = true),
-            size = MAX_WORKS
-        )
+        val works = offeredWorks(request, bibliography)
 
         val systemPrompt = DailyReflectionPrompt.buildSystemPrompt(request.figureName)
         val userMessage = DailyReflectionPrompt.buildUserMessage(
@@ -36,11 +32,26 @@ class DailyReflectionService(
         )
 
         val result = claudeApiClient.generateDailyReflection(systemPrompt, userMessage, request.tone)
+        // A Writings briefing is based on one work, so it may cite only one of the works it was offered.
+        if (request.writingsOnly) {
+            return result.copy(sources = SourceWorks.matchSources(result.sources, works).take(1))
+        }
         // Any of the figure's own works is a legitimate source, not just today's window, but a title that
         // isn't in the bibliography is never shown. A recorded work counts only when it was offered today,
         // so a figure with a full window of their own works is never credited to someone else's book.
         val citable = bibliography.filterNot { it.isRecorded } + works.filter { it.isRecorded }
         return result.copy(sources = SourceWorks.matchSources(result.sources, citable))
+    }
+
+    // A Writings briefing is offered one or two works to base itself on; every other lens gets a wider window.
+    private fun offeredWorks(request: DailyReflectionRequest, bibliography: List<WorkData>): List<WorkData> {
+        val epochDay = LocalDate.now(clock).toEpochDay()
+        val isEvening = request.tone.equals("evening", ignoreCase = true)
+        return if (request.writingsOnly) {
+            SourceWorks.writingsChoice(bibliography, request.previousReflections, epochDay, isEvening, MAX_WRITINGS_IN_A_ROW)
+        } else {
+            SourceWorks.rotationWindow(works = bibliography, epochDay = epochDay, isEvening = isEvening, size = MAX_WORKS)
+        }
     }
 
     data class DailyReflectionRequest(
@@ -57,6 +68,7 @@ class DailyReflectionService(
 
     companion object {
         private const val MAX_WORKS = 5
+        private const val MAX_WRITINGS_IN_A_ROW = 3
     }
 }
 

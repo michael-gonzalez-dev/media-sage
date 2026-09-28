@@ -31,6 +31,31 @@ object SourceWorks {
     }
 
     /**
+     * The one or two works a Writings briefing may be based on: the work the reporter's previous Writings
+     * briefing used, so it can take a different idea from it, and the next work in the bibliography.
+     * Staying is dropped once a work has been used [maxInARow] times in a row, so every work gets a turn.
+     * With no earlier Writings briefing in [history], the server's rotation picks the single work.
+     *
+     * Recorded works are used only when the figure has none of their own.
+     */
+    fun writingsChoice(
+        works: List<WorkData>,
+        history: List<String>,
+        epochDay: Long,
+        isEvening: Boolean,
+        maxInARow: Int,
+    ): List<WorkData> {
+        val pool = works.filterNot { it.isRecorded }.ifEmpty { works }
+        if (pool.isEmpty()) return emptyList()
+        val used = history.mapNotNull { line -> pool.firstOrNull { line.contains("$WRITINGS_LABEL${it.displayTitle}): ") } }
+        val previous = used.lastOrNull()
+            ?: return listOf(pool[Math.floorMod(epochDay * BRIEFINGS_PER_DAY + if (isEvening) 1 else 0, pool.size.toLong()).toInt()])
+        val inARow = used.takeLastWhile { it == previous }.size
+        val next = pool[(pool.indexOf(previous) + 1) % pool.size]
+        return if (inARow < maxInARow) listOf(previous, next).distinct() else listOf(next)
+    }
+
+    /**
      * The bibliography entries named by [sources], formatted for display, with the figure's own works before
      * recorded ones; unmatched titles are dropped. A recorded work matches by its bare title or its full citation.
      */
@@ -63,6 +88,9 @@ object SourceWorks {
             .removePrefix("the ")
 
     private const val BRIEFINGS_PER_DAY = 2
+
+    // How the app labels an earlier Writings briefing in the history it sends, followed by its one source.
+    private const val WRITINGS_LABEL = ", Writings lens (drew on "
     private val TRAILING_PARENTHETICAL = Regex("""\s*\([^()]*\)\s*$""")
     private val COMMA_BOUNDARY = Regex(", ")
     private val QUESTION_BOUNDARY = Regex("[?!] ")

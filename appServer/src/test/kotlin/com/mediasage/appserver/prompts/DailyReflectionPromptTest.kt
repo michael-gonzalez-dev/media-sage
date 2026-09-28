@@ -133,6 +133,18 @@ class DailyReflectionPromptTest {
     }
 
     @Test
+    fun writingsLensAsksForOneWorkAndOnlyThatSource() {
+        val writings = DailyReflectionPrompt.buildUserMessage(params(writingsOnly = true))
+        val headlines = DailyReflectionPrompt.buildUserMessage(params())
+
+        assertTrue(writings.contains("just one of the source works above and list only that work"))
+        assertTrue(writings.contains("Do not name the source work or refer to A.W. Tozer in the third person"))
+        assertFalse(headlines.contains("just one of the source works above"))
+        assertFalse(headlines.contains("in the third person"))
+        assertTrue(headlines.contains("List the source works you drew from"))
+    }
+
+    @Test
     fun writingsLineIsOmittedWhenTheFigureHasNoWorksToDrawOn() {
         val message = DailyReflectionPrompt.buildUserMessage(params(works = emptyList(), writingsOnly = true))
 

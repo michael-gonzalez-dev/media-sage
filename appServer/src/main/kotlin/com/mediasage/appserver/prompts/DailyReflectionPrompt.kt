@@ -39,13 +39,25 @@ object DailyReflectionPrompt {
         appendLine("- Implication: what it asks of us")
         appendLine("- Inspiration: a word of hope or encouragement in ${params.figureName}'s voice")
         appendLine("Maintain ${params.figureName}'s voice throughout.")
+        if (params.writingsOnly && params.works.isNotEmpty()) appendLine(writingsVoiceInstruction(params.figureName))
         appendLine("Each section must be exactly 2 sentences.")
         appendLine("- Include a scripture reference and the full verse text")
-        appendLine(if (params.works.isEmpty()) NO_SOURCES_INSTRUCTION else SOURCES_INSTRUCTION)
+        appendLine(sourcesInstruction(params))
         appendLine(buildChallengeInstruction(params.tone))
         appendLine()
         appendLine(RESPONSE_FORMAT)
     }
+
+    private fun sourcesInstruction(params: Params) = when {
+        params.works.isEmpty() -> NO_SOURCES_INSTRUCTION
+        params.writingsOnly -> WRITINGS_SOURCES_INSTRUCTION
+        else -> SOURCES_INSTRUCTION
+    }
+
+    // Pinned to one work, the model tends to describe the book rather than speak as its author.
+    private fun writingsVoiceInstruction(figureName: String) =
+        "Write as $figureName. Do not name the source work or refer to $figureName in the third person " +
+            "in the insight, implication or inspiration."
 
     private fun buildWorksBlock(figureName: String, works: List<WorkData>) = buildString {
         if (works.isEmpty()) return@buildString
@@ -105,6 +117,10 @@ object DailyReflectionPrompt {
 
     private const val SOURCES_INSTRUCTION =
         "- List the source works you drew from, copied exactly as written in the Source Works list above"
+
+    private const val WRITINGS_SOURCES_INSTRUCTION =
+        "- Base the reflection on just one of the source works above and list only that work, " +
+            "copied exactly as written in the Source Works list above"
 
     private const val NO_SOURCES_INSTRUCTION = "- Return an empty sources list"
 

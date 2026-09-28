@@ -155,6 +155,50 @@ class DailyReflectionServiceTest {
         assertFalse(sentPrompts.single().contains("A Biography of Tozer"))
     }
 
+    private fun writingsRequest(history: List<String> = emptyList()) = DailyReflectionService.DailyReflectionRequest(
+        figureId = 19, figureName = "A.W. Tozer", writingsOnly = true, previousReflections = history
+    )
+
+    @Test
+    fun generate_writingsBriefingListsExactlyOneSourceWithNoChapter() = runTest {
+        seedWorks(19, listOf("The Pursuit of God"))
+
+        val result = service(returnedSources = listOf("The Pursuit of God, Chapter 7", "The Pursuit of God"))
+            .generate(writingsRequest())
+
+        assertEquals(listOf("The Pursuit of God"), result.sources)
+    }
+
+    @Test
+    fun generate_writingsBriefingNeverCitesAWorkItWasNotOffered() = runTest {
+        seedWorks(19, (1..10).map { "Work $it" })
+        val history = listOf("Monday morning, Writings lens (drew on Work 3): An idea.")
+
+        val result = service(returnedSources = listOf("Work 9", "Work 4")).generate(writingsRequest(history))
+
+        assertEquals(setOf("Work 3", "Work 4"), worksInPrompt(sentPrompts.single()))
+        assertEquals(listOf("Work 4"), result.sources)
+    }
+
+    @Test
+    fun generate_writingsBriefingAsksForJustOneWork() = runTest {
+        seedWorks(19, listOf("The Pursuit of God", "The Knowledge of the Holy"))
+
+        service(emptyList()).generate(writingsRequest())
+
+        assertTrue(sentPrompts.single().contains("just one of the source works above"))
+    }
+
+    @Test
+    fun generate_otherLensesStillListEveryWorkTheyDrewOn() = runTest {
+        seedWorks(19, (1..5).map { "Work $it" })
+
+        val result = service(returnedSources = listOf("Work 1", "Work 2", "Work 3")).generate(request())
+
+        assertEquals(listOf("Work 1", "Work 2", "Work 3"), result.sources)
+        assertFalse(sentPrompts.single().contains("just one of the source works above"))
+    }
+
     private fun worksInPrompt(requestBody: String): Set<String> =
         Regex("""- (Work \d+)""").findAll(requestBody).map { it.groupValues[1] }.toSet()
 }
