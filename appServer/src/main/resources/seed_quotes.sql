@@ -631,7 +631,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 
 -- 59: Eric Liddell
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(59, 'Cited in The Flying Scotsman by Sally Magnusson (1981)', 'I believe God made me for a purpose, but He also made me fast. And when I run I feel His pleasure.', 'calling,joy,worship,purpose', true),
+(59, 'Cited in Sally Magnusson, The Flying Scotsman (1981)', 'I believe God made me for a purpose, but He also made me fast. And when I run I feel His pleasure.', 'calling,joy,worship,purpose', true),
 (59, 'The Disciplines of the Christian Life (1985, posthumous)', 'Absolute surrender to the will of God is the key to Christian joy.', 'surrender,joy,obedience,faith', true),
 (59, 'The Disciplines of the Christian Life (1985, posthumous)', 'In the dust of defeat as well as the laurels of victory there is a glory to be found if one has done his best.', 'perseverance,faithfulness,calling,integrity', true),
 (59, 'The Disciplines of the Christian Life (1985, posthumous)', 'Have patience with God. He never hurries, but He is always on time.', 'trust,patience,sovereignty,faith', true),
@@ -774,10 +774,10 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 73: George Washington Carver
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (73, 'Cited in Rackham Holt, George Washington Carver: An American Biography (1943)', 'I go to the laboratory early every morning. I never know what I am going to find out. I get down on my knees and pray, and then I go to work.', 'prayer,calling,devotion,service', true),
-(73, 'Cited in Rackham Holt, George Washington Carver (1943)', 'I love to think of nature as an unlimited broadcasting station, through which God speaks to us every hour.', 'creation,prayer,worship,trust', true),
-(73, 'Cited in Rackham Holt, George Washington Carver (1943)', 'When you do the common things in life in an uncommon way, you will command the attention of the world.', 'service,calling,faithfulness,integrity', true),
-(73, 'Cited in Rackham Holt, George Washington Carver (1943)', 'Fear of something is at the root of hate for others, and hate within will eventually destroy the hater.', 'love,wisdom,truth,justice', true),
-(73, 'Cited in Rackham Holt, George Washington Carver (1943)', 'Reading about nature is fine, but if a person walks in the woods and listens carefully, he can learn more than what is in books.', 'wisdom,creation,truth,wonder', true),
+(73, 'Cited in Rackham Holt, George Washington Carver: An American Biography (1943)', 'I love to think of nature as an unlimited broadcasting station, through which God speaks to us every hour.', 'creation,prayer,worship,trust', true),
+(73, 'Cited in Rackham Holt, George Washington Carver: An American Biography (1943)', 'When you do the common things in life in an uncommon way, you will command the attention of the world.', 'service,calling,faithfulness,integrity', true),
+(73, 'Cited in Rackham Holt, George Washington Carver: An American Biography (1943)', 'Fear of something is at the root of hate for others, and hate within will eventually destroy the hater.', 'love,wisdom,truth,justice', true),
+(73, 'Cited in Rackham Holt, George Washington Carver: An American Biography (1943)', 'Reading about nature is fine, but if a person walks in the woods and listens carefully, he can learn more than what is in books.', 'wisdom,creation,truth,wonder', true),
 (73, 'Cited in Gary Kremer, George Washington Carver: In His Own Words (1987)', 'It is simply service that measures success.', 'service,humility,calling,truth', true),
 (73, 'Cited in Gary Kremer, George Washington Carver: In His Own Words (1987)', 'I never grope for methods. The method is revealed the moment I am inspired to create something new.', 'faith,calling,creativity,trust', true);
 
@@ -907,7 +907,7 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 86: William Booth
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (86, 'In Darkest England and the Way Out (1890)', 'Not until I saw the misery of the poor in London did I understand the claims of Christ upon me.', 'service,compassion,calling,justice', true),
-(86, 'Cited in Hulda Friedrichs, The Life of General Booth (1913)', 'Go for souls, and go for the worst.', 'evangelism,service,love,calling', true),
+(86, 'Cited in Hulda Friederichs, The Life of General Booth (1912)', 'Go for souls, and go for the worst.', 'evangelism,service,love,calling', true),
 (86, 'The Founder Speaks Again (1960, compiled)', 'I consider that the chief dangers which confront the coming century will be religion without the Holy Ghost, Christianity without Christ, forgiveness without repentance.', 'truth,warning,holiness,faith', true),
 (86, 'Cited in J. Evan Smith, Booth the Beloved (1949)', 'While women weep as they do now, I''ll fight; while little children go hungry as they do now, I''ll fight.', 'justice,service,love,perseverance', true),
 (86, 'The Founder Speaks Again (1960, compiled)', 'Love is the secret of the Cross.', 'love,cross,salvation,truth', true),
@@ -932,19 +932,19 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 -- 88: Adoniram Judson
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (88, 'Cited in Francis Wayland, A Memoir of the Life and Labors of the Rev. Adoniram Judson (1853)', 'If I had not felt certain that every additional trial was ordered by infinite love and mercy, I could not have survived my accumulated sufferings.', 'suffering,trust,love,sovereignty', true),
-(88, 'Cited in Francis Wayland, A Memoir (1853)', 'God is God. Because he is God, He is worthy of my trust and obedience.', 'faith,obedience,trust,worship', true),
+(88, 'Cited in Francis Wayland, A Memoir of the Life and Labors of the Rev. Adoniram Judson (1853)', 'God is God. Because he is God, He is worthy of my trust and obedience.', 'faith,obedience,trust,worship', true),
 (88, 'Cited in Courtney Anderson, To the Golden Shore (1956)', 'I am not tired of my work, neither am I tired of the world; yet when Christ calls me home, I shall go with the gladness of a boy bounding away from school.', 'hope,joy,eternity,faith', true),
 (88, 'Letter to his family (1831)', 'Come over to Macedonia and help us. The call is still ringing.', 'mission,calling,evangelism,obedience', false),
 (88, 'Cited in Courtney Anderson, To the Golden Shore (1956)', 'I have now to ask, whether you can consent to part with your daughter early next spring, to see her no more in this world?', 'sacrifice,calling,love,mission', true),
-(88, 'Cited in Francis Wayland, A Memoir (1853)', 'Beware of the world, its cares, its friendships, its pleasures.', 'holiness,wisdom,obedience,warning', true),
+(88, 'Cited in Francis Wayland, A Memoir of the Life and Labors of the Rev. Adoniram Judson (1853)', 'Beware of the world, its cares, its friendships, its pleasures.', 'holiness,wisdom,obedience,warning', true),
 (88, 'Cited in Francis Wayland, A Memoir of the Life and Labors of the Rev. Adoniram Judson (1853)', 'But I hope I can say with truth that I love Christ above all; and I am striving, in the strength of my weak faith, to gird up my mind to face and welcome all his appointments.', 'surrender,love,faith,trust', true);
 
 -- 89: Mary Slessor
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
-(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1916)', 'God and one is always a majority.', 'faith,courage,sovereignty,truth', true),
-(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1916)', 'Lord, the task is impossible for me but not for Thee. Lead the way and I will follow.', 'prayer,obedience,trust,calling', true),
-(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1916)', 'Christ is very near to me, and His presence makes all things lovely.', 'love,joy,presence,faith', true),
-(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1916)', 'Pray on, workers, away on the lone, dark places. Don''t weary of praying; it is the greatest work you can do.', 'prayer,mission,perseverance,calling', true);
+(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1915)', 'God and one is always a majority.', 'faith,courage,sovereignty,truth', true),
+(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1915)', 'Lord, the task is impossible for me but not for Thee. Lead the way and I will follow.', 'prayer,obedience,trust,calling', true),
+(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1915)', 'Christ is very near to me, and His presence makes all things lovely.', 'love,joy,presence,faith', true),
+(89, 'Cited in W.P. Livingstone, Mary Slessor of Calabar (1915)', 'Pray on, workers, away on the lone, dark places. Don''t weary of praying; it is the greatest work you can do.', 'prayer,mission,perseverance,calling', true);
 
 -- 90: Count Zinzendorf
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
@@ -977,10 +977,10 @@ INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
 (93, 'The Chocolate Soldier (1912)', 'If Jesus Christ be God and died for me, then no sacrifice can be too great for me to make for Him.', 'sacrifice,love,faith,calling', true),
 (93, 'Cited in Norman Grubb, C.T. Studd: Cricketer and Pioneer (1933)', 'Some want to live within the sound of church or chapel bell; I want to run a rescue shop within a yard of hell.', 'mission,courage,love,calling', true),
-(93, 'Cited in Norman Grubb, C.T. Studd (1933)', 'Only one life, twill soon be past, only what''s done for Christ will last.', 'calling,eternity,sacrifice,wisdom', true),
-(93, 'Cited in Norman Grubb, C.T. Studd (1933)', 'Not to do what seems impossible, but to do what God commands, is our business.', 'obedience,faith,calling,courage', true),
-(93, 'Cited in Norman Grubb, C.T. Studd (1933)', 'How could I spend the best years of my life in living for the honours of this world, when thousands of souls are perishing?', 'sacrifice,calling,mission,love', true),
-(93, 'Cited in Norman Grubb, C.T. Studd (1933)', 'If God calls you to be a missionary, don''t stoop to be a king.', 'calling,humility,service,truth', true);
+(93, 'Cited in Norman Grubb, C.T. Studd: Cricketer and Pioneer (1933)', 'Only one life, twill soon be past, only what''s done for Christ will last.', 'calling,eternity,sacrifice,wisdom', true),
+(93, 'Cited in Norman Grubb, C.T. Studd: Cricketer and Pioneer (1933)', 'Not to do what seems impossible, but to do what God commands, is our business.', 'obedience,faith,calling,courage', true),
+(93, 'Cited in Norman Grubb, C.T. Studd: Cricketer and Pioneer (1933)', 'How could I spend the best years of my life in living for the honours of this world, when thousands of souls are perishing?', 'sacrifice,calling,mission,love', true),
+(93, 'Cited in Norman Grubb, C.T. Studd: Cricketer and Pioneer (1933)', 'If God calls you to be a missionary, don''t stoop to be a king.', 'calling,humility,service,truth', true);
 
 -- 94: Jonathan Goforth
 INSERT INTO quotes (figure_id, source, text, themes, verified) VALUES
