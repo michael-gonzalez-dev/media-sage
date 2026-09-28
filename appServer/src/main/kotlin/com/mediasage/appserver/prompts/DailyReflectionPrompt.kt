@@ -40,7 +40,7 @@ object DailyReflectionPrompt {
         appendLine("- Inspiration: a word of hope or encouragement in ${params.figureName}'s voice")
         appendLine("Maintain ${params.figureName}'s voice throughout.")
         if (params.writingsOnly && params.works.isNotEmpty()) appendLine(writingsVoiceInstruction(params.figureName))
-        appendLine("Each section must be exactly 2 sentences.")
+        appendLine("Each section must be exactly 2 short sentences, under 40 words in total.")
         appendLine("- Include a scripture reference and the full verse text")
         appendLine(sourcesInstruction(params))
         appendLine(buildChallengeInstruction(params.tone))
@@ -146,9 +146,9 @@ object DailyReflectionPrompt {
         {
           "scriptureReference": "<e.g. Psalm 46:10>",
           "scriptureText": "<full verse text>",
-          "insight": "<2 sentences>",
-          "implication": "<2 sentences>",
-          "inspiration": "<2 sentences>",
+          "insight": "<2 short sentences, under 40 words>",
+          "implication": "<2 short sentences, under 40 words>",
+          "inspiration": "<2 short sentences, under 40 words>",
           "sources": ["<source title>"],
           "challenge": "<one open-ended question, 1 sentence, under 25 words, second person>"
         }
