@@ -8,6 +8,7 @@
 --     about a figure are never listed as the figure's own work; quotes recorded in one use a "Cited in ..." source.
 --   * A book someone else wrote that preserves the figure's words is listed only in the Recorded Words section
 --     at the end, with recorded_by naming its writer. See that section for when one is added.
+--   * A work the figure wrote about another person's life is flagged in the Lives of Others section at the end.
 --   * title and year are separate; year only when a single year is well established, else NULL.
 --   * id = figure_id * 1000 + n, so editing one figure never renumbers another.
 --   * Upsert, not DELETE + INSERT: re-running never wipes columns added later (e.g. a work's content).
@@ -1223,6 +1224,15 @@ INSERT INTO works (id, figure_id, title, year, recorded_by) VALUES
 (94901, 94, 'Goforth of China', 1937, 'Rosalind Goforth'), -- by his wife
 (98901, 98, 'Through Gates of Splendor', 1957, 'Elisabeth Elliot') -- quotes his journals
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year, recorded_by = excluded.recorded_by;
+
+-- Lives of Others: works a figure wrote about another person's life. A Writings briefing based on one retells that
+-- life instead of the figure's own thought, so it skips them unless the figure has nothing else. Every other lens
+-- still offers and cites them. Flagged only where a Writings briefing has been shown to go wrong on the work: the
+-- early-church lives (Malachy, Antony, Macrina, Jerome's lives and Letter 108) were evaluated and stay unflagged,
+-- because their briefings stayed on the right person and carried the author's own teaching.
+-- Needs the is_life_of_another column, which the server adds on start. Run this section on its own to patch Supabase.
+UPDATE works SET is_life_of_another = true WHERE id = 19001; -- Wingspread: A.B. Simpson
+UPDATE works SET is_life_of_another = true WHERE id = 19002; -- Let My People Go: Robert Jaffray
 
 -- Reset Postgres sequence after explicit ID inserts
 SELECT setval('works_id_seq', (SELECT MAX(id) FROM works));

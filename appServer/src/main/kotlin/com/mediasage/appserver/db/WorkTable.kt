@@ -16,5 +16,8 @@ object WorkTable : Table("works") {
     /** Who wrote the book when it isn't the figure: it preserves the figure's words as that person recorded them. */
     val recordedBy = varchar("recorded_by", 256).nullable()
 
+    /** The figure wrote it, but about another person's life, so it carries little of the figure's own thought. */
+    val isLifeOfAnother = bool("is_life_of_another").default(false)
+
     override val primaryKey = PrimaryKey(id)
 }

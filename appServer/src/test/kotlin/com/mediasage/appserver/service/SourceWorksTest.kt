@@ -225,6 +225,43 @@ class SourceWorksTest {
         assertEquals(listOf(bradford), choice(listOf(bradford), emptyList()))
     }
 
+    private fun withLifeOfAnother(works: List<WorkData>, vararg indexes: Int) =
+        works.mapIndexed { i, work -> if (i in indexes) work.copy(isLifeOfAnother = true) else work }
+
+    @Test
+    fun writingsChoice_skipsALifeOfAnotherThatIsNextInTheRotation() {
+        val works = withLifeOfAnother(bibliography(5), 3)
+
+        assertEquals(listOf(works[2], works[4]), choice(works, listOf(writingsLine("Monday morning", works[2]))))
+    }
+
+    @Test
+    fun writingsChoice_neverStaysOnALifeOfAnotherThePreviousWritingsBriefingUsed() {
+        val works = withLifeOfAnother(bibliography(5), 3)
+        val history = listOf(writingsLine("Monday morning", works[1]), writingsLine("Monday evening", works[3]))
+
+        assertEquals(listOf(works[1], works[2]), choice(works, history))
+    }
+
+    @Test
+    fun writingsChoice_neverStartsTheRotationOnALifeOfAnother() {
+        val works = withLifeOfAnother(bibliography(4), 0, 2)
+
+        (20_000L..20_007L).forEach { day ->
+            listOf(false, true).forEach { isEvening ->
+                val offered = SourceWorks.writingsChoice(works, emptyList(), day, isEvening, maxInARow = 3)
+                assertTrue(offered.none { it.isLifeOfAnother }, "day $day, evening $isEvening")
+            }
+        }
+    }
+
+    @Test
+    fun writingsChoice_usesLivesOfOthersWhenTheFigureHasNothingElseOfTheirOwn() {
+        val lives = withLifeOfAnother(bibliography(2), 0, 1)
+
+        assertEquals(listOf(lives[0], lives[1]), choice(lives + bradford, listOf(writingsLine("Monday morning", lives[0]))))
+    }
+
     @Test
     fun writingsChoice_offersNothingToAFigureWithoutABibliography() {
         assertTrue(choice(emptyList(), emptyList()).isEmpty())

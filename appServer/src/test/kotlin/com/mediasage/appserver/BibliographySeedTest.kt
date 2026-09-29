@@ -142,6 +142,14 @@ class BibliographySeedTest {
     }
 
     @Test
+    fun everyLifeOfAnotherIsOneOfTheFiguresOwnWorks() {
+        val flagged = LIFE_OF_ANOTHER_UPDATE.findAll(resource("seed_works.sql")).map { it.groupValues[1].toLong() }.toList()
+
+        assertTrue(flagged.isNotEmpty())
+        assertEquals(emptyList(), flagged.filterNot { id -> works.any { it.id == id && it.recordedBy == null } })
+    }
+
+    @Test
     fun titlesKeepTheYearInItsOwnColumn() {
         assertTrue(works.none { YEAR_IN_TITLE.containsMatchIn(it.title) })
     }
@@ -170,5 +178,6 @@ class BibliographySeedTest {
         val WORK_UPDATE = Regex("""^UPDATE works SET (.+) WHERE id = (\d+);""", RegexOption.MULTILINE)
         val YEAR_ASSIGNMENT = Regex("""year = (\d+)""")
         val RECORDED_BY_ASSIGNMENT = Regex("""recorded_by = '((?:[^']|'')*)'""")
+        val LIFE_OF_ANOTHER_UPDATE = Regex("""^UPDATE works SET is_life_of_another = true WHERE id = (\d+);""", RegexOption.MULTILINE)
     }
 }

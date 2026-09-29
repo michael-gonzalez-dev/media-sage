@@ -50,13 +50,19 @@ class DailyReflectionServiceTest {
         transaction { SchemaUtils.drop(WorkTable) }
     }
 
-    private fun seedWorks(figureId: Long, titles: List<String>, recordedBy: String? = null) = transaction {
+    private fun seedWorks(
+        figureId: Long,
+        titles: List<String>,
+        recordedBy: String? = null,
+        isLifeOfAnother: Boolean = false,
+    ) = transaction {
         titles.forEach { title ->
             WorkTable.insert {
                 it[WorkTable.figureId] = figureId
                 it[WorkTable.title] = title
                 it[WorkTable.year] = null
                 it[WorkTable.recordedBy] = recordedBy
+                it[WorkTable.isLifeOfAnother] = isLifeOfAnother
             }
         }
     }
@@ -197,6 +203,28 @@ class DailyReflectionServiceTest {
 
         assertEquals(listOf("Work 1", "Work 2", "Work 3"), result.sources)
         assertFalse(sentPrompts.single().contains("just one of the source works above"))
+    }
+
+    @Test
+    fun generate_otherLensesStillOfferAndCiteALifeOfAnother() = runTest {
+        seedWorks(19, listOf("Wingspread"), isLifeOfAnother = true)
+        seedWorks(19, listOf("The Pursuit of God"))
+
+        val result = service(returnedSources = listOf("Wingspread", "The Pursuit of God")).generate(request())
+
+        assertEquals(listOf("Wingspread", "The Pursuit of God"), result.sources)
+        assertTrue(sentPrompts.single().contains("- Wingspread"))
+    }
+
+    @Test
+    fun generate_writingsBriefingIsNeverOfferedALifeOfAnother() = runTest {
+        seedWorks(19, listOf("The Pursuit of God"))
+        seedWorks(19, listOf("Wingspread"), isLifeOfAnother = true)
+        val history = listOf("Monday morning, Writings lens (drew on The Pursuit of God): An idea.")
+
+        service(emptyList()).generate(writingsRequest(history))
+
+        assertFalse(sentPrompts.single().contains("Wingspread"))
     }
 
     private fun worksInPrompt(requestBody: String): Set<String> =
