@@ -72,6 +72,7 @@ tasks.register<Test>("briefingEval") {
     useJUnit()
     project.findProperty("scenario")?.let { systemProperty("briefingEval.scenario", it) }
     project.findProperty("week")?.let { systemProperty("briefingEval.week", it) }
+    project.findProperty("lives")?.let { systemProperty("briefingEval.lives", it) }
     testLogging {
         showStandardStreams = true
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

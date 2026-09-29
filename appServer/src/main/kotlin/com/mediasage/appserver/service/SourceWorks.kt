@@ -36,7 +36,8 @@ object SourceWorks {
      * Staying is dropped once a work has been used [maxInARow] times in a row, so every work gets a turn.
      * With no earlier Writings briefing in [history], the server's rotation picks the single work.
      *
-     * Recorded works are used only when the figure has none of their own.
+     * Recorded works are used only when the figure has none of their own, and a work the figure wrote about another
+     * person's life only when every one of their own works is one.
      */
     fun writingsChoice(
         works: List<WorkData>,
@@ -45,7 +46,8 @@ object SourceWorks {
         isEvening: Boolean,
         maxInARow: Int,
     ): List<WorkData> {
-        val pool = works.filterNot { it.isRecorded }.ifEmpty { works }
+        val own = works.filterNot { it.isRecorded }
+        val pool = own.filterNot { it.isLifeOfAnother }.ifEmpty { own }.ifEmpty { works }
         if (pool.isEmpty()) return emptyList()
         val used = history.mapNotNull { line -> pool.firstOrNull { line.contains("$WRITINGS_LABEL${it.displayTitle}): ") } }
         val previous = used.lastOrNull()

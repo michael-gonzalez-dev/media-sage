@@ -18,14 +18,21 @@ class WorkRepository {
                         id = it[WorkTable.id],
                         title = it[WorkTable.title],
                         year = it[WorkTable.year],
-                        recordedBy = it[WorkTable.recordedBy]
+                        recordedBy = it[WorkTable.recordedBy],
+                        isLifeOfAnother = it[WorkTable.isLifeOfAnother]
                     )
                 }
         }
     }
 }
 
-data class WorkData(val id: Long, val title: String, val year: Int?, val recordedBy: String? = null) {
+data class WorkData(
+    val id: Long,
+    val title: String,
+    val year: Int?,
+    val recordedBy: String? = null,
+    val isLifeOfAnother: Boolean = false,
+) {
     /** A book someone else wrote that preserves the figure's words, rather than the figure's own work. */
     val isRecorded: Boolean get() = recordedBy != null
 
