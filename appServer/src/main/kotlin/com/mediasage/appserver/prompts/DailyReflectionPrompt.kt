@@ -13,7 +13,9 @@ object DailyReflectionPrompt {
         val previousScriptures: List<String>,
         val previousReflections: List<String>,
         val theme: ReflectionTheme?,
-        val writingsOnly: Boolean = false
+        val writingsOnly: Boolean = false,
+        // The wording's time of day. A daytime (morning-slot) briefing first opened after noon is an afternoon one.
+        val timeOfDay: String = tone
     )
 
     fun buildSystemPrompt(figureName: String) = """
@@ -31,10 +33,13 @@ object DailyReflectionPrompt {
             params.headlines.forEach { appendLine("- $it") }
             appendLine()
         }
-        append(buildContextBlock(params.tone, params.dayOfWeek, params.theme, params.writingsOnly && params.works.isNotEmpty()))
+        append(buildContextBlock(params.timeOfDay, params.dayOfWeek, params.theme, params.writingsOnly && params.works.isNotEmpty()))
         append(buildHistoryBlock(params.figureName, params.previousScriptures, params.previousReflections))
         appendLine("## Instructions")
-        appendLine("Write a ${params.tone} devotional reflection in the voice of ${params.figureName} structured in three sections:")
+        appendLine(
+            "Write ${withArticle(params.timeOfDay)} devotional reflection in the voice of ${params.figureName} " +
+                "structured in three sections:"
+        )
         appendLine("- Insight: what this truth reveals about God, the world, or ourselves")
         appendLine("- Implication: what it asks of us")
         appendLine("- Inspiration: a word of hope or encouragement in ${params.figureName}'s voice")
@@ -44,7 +49,7 @@ object DailyReflectionPrompt {
         appendLine("Each section must be exactly 2 short sentences, under 50 words in total.")
         appendLine("- Include a scripture reference and the full verse text")
         appendLine(sourcesInstruction(params))
-        appendLine(buildChallengeInstruction(params.tone))
+        appendLine(buildChallengeInstruction(params.timeOfDay))
         appendLine()
         appendLine(RESPONSE_FORMAT)
     }
@@ -132,11 +137,14 @@ object DailyReflectionPrompt {
 
     private const val NO_SOURCES_INSTRUCTION = "- Return an empty sources list"
 
-    private fun buildChallengeInstruction(tone: String): String {
-        val framing = if (tone.equals("evening", ignoreCase = true)) {
-            "retrospective, inviting the reader to look back on their day"
-        } else {
-            "anticipatory, inviting the reader to look ahead to their day"
+    private fun withArticle(timeOfDay: String) =
+        if (timeOfDay.lowercase().firstOrNull() in listOf('a', 'e', 'i', 'o', 'u')) "an $timeOfDay" else "a $timeOfDay"
+
+    private fun buildChallengeInstruction(timeOfDay: String): String {
+        val framing = when (timeOfDay.lowercase()) {
+            "evening" -> "retrospective, inviting the reader to look back on their day"
+            "afternoon" -> "anticipatory, inviting the reader to look ahead to the rest of their day"
+            else -> "anticipatory, inviting the reader to look ahead to their day"
         }
         return "- Include a reflection challenge: one open-ended question, exactly 1 sentence and " +
             "under 25 words, addressed to the reader in second person, drawn from the " +

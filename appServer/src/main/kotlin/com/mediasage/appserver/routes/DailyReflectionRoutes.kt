@@ -35,7 +35,9 @@ data class DailyReflectionRequest(
     val dayOfWeek: String = "",
     val previousScriptures: List<String> = emptyList(),
     val previousReflections: List<String> = emptyList(),
-    val theme: String? = null
+    val theme: String? = null,
+    // Sent by newer apps only: "afternoon" for a daytime briefing first opened after noon.
+    val timeOfDay: String? = null
 )
 
 internal fun DailyReflectionRequest.toServiceRequest() = DailyReflectionService.DailyReflectionRequest(
@@ -47,7 +49,8 @@ internal fun DailyReflectionRequest.toServiceRequest() = DailyReflectionService.
     previousScriptures = previousScriptures,
     previousReflections = previousReflections,
     theme = theme?.let { runCatching { ReflectionTheme.valueOf(it.uppercase()) }.getOrNull() },
-    writingsOnly = theme.equals(WRITINGS_LENS, ignoreCase = true)
+    writingsOnly = theme.equals(WRITINGS_LENS, ignoreCase = true),
+    timeOfDay = timeOfDay?.takeIf { it.isNotBlank() } ?: tone.ifBlank { "morning" }
 )
 
 @Serializable

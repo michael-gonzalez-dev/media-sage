@@ -100,7 +100,8 @@ class DailyReflectionRepositoryImpl(
             dayOfWeek = dayName(epochDay),
             previousScriptures = previousScriptures,
             previousReflections = previousReflections,
-            theme = theme.takeIf { it != "NEWS" }
+            theme = theme.takeIf { it != "NEWS" },
+            timeOfDay = briefingTimeOfDay(tone, localHour(currentTimeMillis()))
         )
     }
 

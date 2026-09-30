@@ -17,16 +17,18 @@ class DailyReflectionPromptTest {
         previousReflections: List<String> = emptyList(),
         theme: ReflectionTheme? = null,
         writingsOnly: Boolean = false,
+        timeOfDay: String = "morning",
     ) = DailyReflectionPrompt.Params(
         figureName = "A.W. Tozer",
         works = works,
         headlines = headlines,
-        tone = "morning",
+        tone = if (timeOfDay == "evening") "evening" else "morning",
         dayOfWeek = "Thursday",
         previousScriptures = previousScriptures,
         previousReflections = previousReflections,
         theme = theme,
-        writingsOnly = writingsOnly
+        writingsOnly = writingsOnly,
+        timeOfDay = timeOfDay
     )
 
     private val fromWorksLine = "Draw the insight, implication and inspiration from the source works above."
@@ -172,5 +174,33 @@ class DailyReflectionPromptTest {
         assertTrue(themed.contains("Focus the scripture selection and reflection on the theme of hope."))
         assertFalse(themed.contains(fromWorksLine))
         assertFalse(headlines.contains(fromWorksLine))
+    }
+
+    @Test
+    fun afternoonBriefingIsWordedForTheAfternoonAndNeverTheMorning() {
+        val message = DailyReflectionPrompt.buildUserMessage(params(timeOfDay = "afternoon"))
+
+        assertTrue(message.contains("Today is Thursday, afternoon."))
+        assertTrue(message.contains("Write an afternoon devotional reflection"))
+        assertTrue(message.contains("look ahead to the rest of their day"))
+        assertFalse(message.contains("morning", ignoreCase = true))
+    }
+
+    @Test
+    fun morningBriefingIsWordedForTheMorning() {
+        val message = DailyReflectionPrompt.buildUserMessage(params())
+
+        assertTrue(message.contains("Today is Thursday, morning."))
+        assertTrue(message.contains("Write a morning devotional reflection"))
+        assertTrue(message.contains("look ahead to their day"))
+    }
+
+    @Test
+    fun eveningBriefingLooksBackOnTheDay() {
+        val message = DailyReflectionPrompt.buildUserMessage(params(timeOfDay = "evening"))
+
+        assertTrue(message.contains("Today is Thursday, evening."))
+        assertTrue(message.contains("Write an evening devotional reflection"))
+        assertTrue(message.contains("look back on their day"))
     }
 }

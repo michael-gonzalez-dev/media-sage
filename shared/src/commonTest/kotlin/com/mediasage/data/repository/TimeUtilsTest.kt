@@ -30,4 +30,29 @@ class TimeUtilsTest {
 
         assertEquals(LocalDate(2026, 7, 26).toEpochDays().toLong(), epochDay)
     }
+
+    @Test
+    fun briefingTimeOfDay_daytimeBriefingBeforeNoon_isWordedForTheMorning() {
+        assertEquals("morning", briefingTimeOfDay("morning", localHour = 0))
+        assertEquals("morning", briefingTimeOfDay("morning", localHour = 11))
+    }
+
+    @Test
+    fun briefingTimeOfDay_daytimeBriefingFromNoon_isWordedForTheAfternoon() {
+        assertEquals("afternoon", briefingTimeOfDay("morning", localHour = 12))
+        assertEquals("afternoon", briefingTimeOfDay("morning", localHour = 16))
+    }
+
+    @Test
+    fun briefingTimeOfDay_eveningBriefing_staysEvening() {
+        assertEquals("evening", briefingTimeOfDay("evening", localHour = 17))
+        assertEquals("evening", briefingTimeOfDay("evening", localHour = 23))
+    }
+
+    @Test
+    fun localHour_usesTheLocalTimezone() {
+        val threeFiftyPmEdtOnSept30 = 1790797800000L // 2026-09-30T19:50:00Z == 2026-09-30T15:50:00-04:00
+
+        assertEquals(15, localHour(threeFiftyPmEdtOnSept30, TimeZone.of("America/New_York")))
+    }
 }

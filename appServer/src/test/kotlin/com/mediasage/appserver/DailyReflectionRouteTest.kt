@@ -72,4 +72,22 @@ class DailyReflectionRouteTest {
         assertFalse(request.writingsOnly)
         assertEquals(listOf("Floods"), request.headlines)
     }
+
+    @Test
+    fun keepsTheTimeOfDayANewerAppSendsWithoutChangingTheTone() {
+        val request = DailyReflectionRequest(figureId = 19, figureName = "A.W. Tozer", tone = "morning", timeOfDay = "afternoon")
+            .toServiceRequest()
+
+        assertEquals("morning", request.tone)
+        assertEquals("afternoon", request.timeOfDay)
+    }
+
+    @Test
+    fun anOlderAppWithNoTimeOfDayIsWordedByItsTone() {
+        val morning = DailyReflectionRequest(figureId = 19, figureName = "A.W. Tozer", tone = "morning").toServiceRequest()
+        val evening = DailyReflectionRequest(figureId = 19, figureName = "A.W. Tozer", tone = "evening").toServiceRequest()
+
+        assertEquals("morning", morning.timeOfDay)
+        assertEquals("evening", evening.timeOfDay)
+    }
 }

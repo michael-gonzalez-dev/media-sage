@@ -107,7 +107,8 @@ data class DailyReflectionRequestDto(
     val dayOfWeek: String = "",
     val previousScriptures: List<String> = emptyList(),
     val previousReflections: List<String> = emptyList(),
-    val theme: String? = null
+    val theme: String? = null,
+    val timeOfDay: String? = null
 )
 
 @Serializable
