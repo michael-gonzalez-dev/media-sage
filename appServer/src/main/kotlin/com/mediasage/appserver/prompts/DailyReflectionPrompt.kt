@@ -38,9 +38,10 @@ object DailyReflectionPrompt {
         appendLine("- Insight: what this truth reveals about God, the world, or ourselves")
         appendLine("- Implication: what it asks of us")
         appendLine("- Inspiration: a word of hope or encouragement in ${params.figureName}'s voice")
+        appendLine(SECTION_FLOW_INSTRUCTION)
         appendLine("Maintain ${params.figureName}'s voice throughout.")
         if (params.writingsOnly && params.works.isNotEmpty()) appendLine(writingsVoiceInstruction(params.figureName))
-        appendLine("Each section must be exactly 2 short sentences, under 40 words in total.")
+        appendLine("Each section must be exactly 2 short sentences, under 50 words in total.")
         appendLine("- Include a scripture reference and the full verse text")
         appendLine(sourcesInstruction(params))
         appendLine(buildChallengeInstruction(params.tone))
@@ -109,6 +110,11 @@ object DailyReflectionPrompt {
         }
     }
 
+    // Listed as separate bullets, the sections come back as unrelated statements with a new image in each.
+    private const val SECTION_FLOW_INSTRUCTION =
+        "Let each section grow out of the one before. The implication should follow from the insight, " +
+            "and the inspiration should answer the implication. Carry one idea or image through all three."
+
     private const val PREVIOUS_SCRIPTURES_INSTRUCTION =
         "These verses were used in recent briefings. Do NOT reuse any of them. Choose a different passage:"
 
@@ -146,9 +152,9 @@ object DailyReflectionPrompt {
         {
           "scriptureReference": "<e.g. Psalm 46:10>",
           "scriptureText": "<full verse text>",
-          "insight": "<2 short sentences, under 40 words>",
-          "implication": "<2 short sentences, under 40 words>",
-          "inspiration": "<2 short sentences, under 40 words>",
+          "insight": "<2 short sentences, under 50 words>",
+          "implication": "<2 short sentences, under 50 words>",
+          "inspiration": "<2 short sentences, under 50 words>",
           "sources": ["<source title>"],
           "challenge": "<one open-ended question, 1 sentence, under 25 words, second person>"
         }
