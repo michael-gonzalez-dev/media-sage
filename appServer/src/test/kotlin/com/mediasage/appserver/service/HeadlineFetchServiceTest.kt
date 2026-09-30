@@ -75,6 +75,18 @@ class HeadlineFetchServiceTest {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
     }
 
+    // Every category returns these (title, url) articles.
+    private fun createClientReturning(vararg articles: Pair<String, String>): HttpClient {
+        val json = articles.joinToString(prefix = """{"totalArticles":${articles.size},"articles":[""", postfix = "]}") { (title, url) ->
+            """{"title":"$title","url":"$url","source":{"name":"Source","url":"https://source.com"}}"""
+        }
+        return HttpClient(
+            MockEngine { respond(json, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json")) }
+        ) {
+            install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+        }
+    }
+
     @Test
     fun fetchAndStoreAll_onFullSuccess_fetchesAndStoresAllSevenCategories() = runTest {
         val headlineRepository = HeadlineRepository()
@@ -174,5 +186,35 @@ class HeadlineFetchServiceTest {
         service.fetchAndStoreAll(nowMillis = 1000L)
 
         assertEquals((HeadlineFetchService.CATEGORIES.size - 1) * 3_000L, testScheduler.currentTime)
+    }
+
+    @Test
+    fun fetchAndStoreAll_dropsNonNewsAndStoresTheRest() = runTest {
+        val headlineRepository = HeadlineRepository()
+        val client = createClientReturning(
+            "43 Things Men Go Through That Women Never Realize" to "https://www.buzzfeed.com/a/43-things",
+            "Indonesia ferry death toll hits 66" to "https://www.reuters.com/world/asia/ferry"
+        )
+        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService())
+
+        service.fetchAndStoreAll(nowMillis = 1000L)
+
+        val stored = headlineRepository.getStored(category = "world")
+        assertEquals(listOf("Indonesia ferry death toll hits 66"), stored.map { it.title })
+    }
+
+    @Test
+    fun fetchAndStoreAll_whenEveryHeadlineIsDropped_keepsThePreviousHeadlines() = runTest {
+        val headlineRepository = HeadlineRepository()
+        val realNews = createClientReturning("Indonesia ferry death toll hits 66" to "https://www.reuters.com/world/asia/ferry")
+        HeadlineFetchService(NewsApiClient(realNews, "test-key"), headlineRepository, ArticleScraperService())
+            .fetchAndStoreAll(nowMillis = 1000L)
+
+        val allJunk = createClientReturning("Horoscope for Wednesday" to "https://www.sfgate.com/horoscope/article/wednesday")
+        HeadlineFetchService(NewsApiClient(allJunk, "test-key"), headlineRepository, ArticleScraperService())
+            .fetchAndStoreAll(nowMillis = 2000L)
+
+        val stored = headlineRepository.getStored(category = "world")
+        assertEquals(listOf("Indonesia ferry death toll hits 66"), stored.map { it.title })
     }
 }
