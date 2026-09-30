@@ -35,9 +35,7 @@ class HeadlineFetchService(
         CATEGORIES.forEachIndexed { index, category ->
             if (index > 0) delay(categoryDelayMillis)
             try {
-                val articles = fetchCategory(category)
-                headlineRepository.replaceCategory(category, articles, nowMillis)
-                scraperService.preScrape(articles.map { it.url })
+                storeCategory(category, fetchCategory(category), nowMillis)
                 succeeded += category
             } catch (e: CancellationException) {
                 throw e
@@ -49,6 +47,22 @@ class HeadlineFetchService(
 
         log.info("Headline fetch run finished: succeeded={}, failed={}", succeeded, failed)
         return FetchSummary(succeeded = succeeded, failed = failed)
+    }
+
+    // Drops non-news (see HeadlineFilter), logging each drop. If every headline is dropped the category keeps
+    // its previous headlines, so the Headlines tab and briefings never get an empty category from filtering.
+    private suspend fun storeCategory(category: String, fetched: List<NewsArticle>, nowMillis: Long) {
+        val kept = fetched.filter { article ->
+            val reason = HeadlineFilter.dropReason(article) ?: return@filter true
+            log.info("Dropped headline in '{}' ({}): {} <{}>", category, reason, article.title, article.url)
+            false
+        }
+        if (kept.isEmpty() && fetched.isNotEmpty()) {
+            log.warn("All {} headlines in '{}' were dropped, keeping previous headlines", fetched.size, category)
+            return
+        }
+        headlineRepository.replaceCategory(category, kept, nowMillis)
+        scraperService.preScrape(kept.map { it.url })
     }
 
     private suspend fun fetchCategory(category: String): List<NewsArticle> = try {
