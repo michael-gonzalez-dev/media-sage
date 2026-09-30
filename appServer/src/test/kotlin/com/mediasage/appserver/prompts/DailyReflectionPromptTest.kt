@@ -95,10 +95,19 @@ class DailyReflectionPromptTest {
     fun givesOneSentenceCountAndWordLimitForEverySection() {
         val message = DailyReflectionPrompt.buildUserMessage(params())
 
-        assertTrue(message.contains("Each section must be exactly 2 short sentences, under 40 words in total."))
-        assertEquals(3, Regex(""""<2 short sentences, under 40 words>"""").findAll(message).count())
+        assertTrue(message.contains("Each section must be exactly 2 short sentences, under 50 words in total."))
+        assertEquals(3, Regex(""""<2 short sentences, under 50 words>"""").findAll(message).count())
         assertFalse(message.contains("1-3 sentences"), "no conflicting sentence count")
         assertFalse(message.contains("1-2 sentences"), "no conflicting sentence count")
+    }
+
+    @Test
+    fun asksEachSectionToGrowOutOfTheOneBefore() {
+        val message = DailyReflectionPrompt.buildUserMessage(params())
+
+        assertTrue(message.contains("Let each section grow out of the one before."))
+        assertTrue(message.contains("the inspiration should answer the implication"))
+        assertTrue(message.contains("Carry one idea or image through all three."))
     }
 
     @Test
