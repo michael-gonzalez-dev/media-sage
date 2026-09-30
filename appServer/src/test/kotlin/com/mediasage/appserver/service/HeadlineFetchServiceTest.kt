@@ -53,22 +53,23 @@ class HeadlineFetchServiceTest {
     }
     """.trimIndent()
 
-    private fun createClient(failingCategory: String): HttpClient = HttpClient(
+    private val requestsByCategory = mutableMapOf<String, Int>()
+
+    private fun createClient(failingCategory: String): HttpClient =
+        createClient { category, _ -> if (category == failingCategory) HttpStatusCode.InternalServerError else HttpStatusCode.OK }
+
+    // [statusFor] receives the category and which attempt this is for it (1 = first request).
+    private fun createClient(statusFor: (category: String, attempt: Int) -> HttpStatusCode): HttpClient = HttpClient(
         MockEngine { request ->
-            val category = request.url.parameters["category"]
-            if (category == failingCategory) {
-                respond(
-                    content = """{"message":"Internal error"}""",
-                    status = HttpStatusCode.InternalServerError,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json")
-                )
-            } else {
-                respond(
-                    content = sampleResponse,
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json")
-                )
-            }
+            val category = request.url.parameters["category"].orEmpty()
+            val attempt = (requestsByCategory[category] ?: 0) + 1
+            requestsByCategory[category] = attempt
+            val status = statusFor(category, attempt)
+            respond(
+                content = if (status == HttpStatusCode.OK) sampleResponse else """{"errors":["blocked"]}""",
+                status = status,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
         }
     ) {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
@@ -115,5 +116,63 @@ class HeadlineFetchServiceTest {
         service.fetchAndStoreAll(nowMillis = 2000L)
 
         assertEquals(1, headlineRepository.getStored(category = "world").size)
+    }
+
+    @Test
+    fun fetchAndStoreAll_categoryRateLimitedOnce_retriesAndStoresIt() = runTest {
+        val headlineRepository = HeadlineRepository()
+        val client = createClient { category, attempt ->
+            if (category == "technology" && attempt == 1) HttpStatusCode.TooManyRequests else HttpStatusCode.OK
+        }
+        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService())
+
+        val summary = service.fetchAndStoreAll(nowMillis = 1000L)
+
+        assertEquals(HeadlineFetchService.CATEGORIES.toSet(), summary.succeeded.toSet())
+        assertEquals(emptyList(), summary.failed)
+        assertEquals(2, requestsByCategory["technology"])
+        assertEquals(1, headlineRepository.getStored(category = "technology").size)
+    }
+
+    @Test
+    fun fetchAndStoreAll_categoryAlwaysRateLimited_retriesOnceThenReportsItFailed() = runTest {
+        val headlineRepository = HeadlineRepository()
+        val client = createClient { category, _ ->
+            if (category == "health") HttpStatusCode.TooManyRequests else HttpStatusCode.OK
+        }
+        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService())
+
+        val summary = service.fetchAndStoreAll(nowMillis = 1000L)
+
+        assertEquals(listOf("health"), summary.failed)
+        assertEquals(2, requestsByCategory["health"])
+        assertEquals(emptyList(), headlineRepository.getStored(category = "health"))
+    }
+
+    @Test
+    fun fetchAndStoreAll_nonRateLimitError_isNotRetried() = runTest {
+        val service = HeadlineFetchService(
+            NewsApiClient(createClient(failingCategory = "science"), "test-key"),
+            HeadlineRepository(),
+            ArticleScraperService()
+        )
+
+        service.fetchAndStoreAll(nowMillis = 1000L)
+
+        assertEquals(1, requestsByCategory["science"])
+    }
+
+    @Test
+    fun fetchAndStoreAll_waitsBetweenCategoriesButNotBeforeTheFirst() = runTest {
+        val service = HeadlineFetchService(
+            NewsApiClient(createClient(failingCategory = "none"), "test-key"),
+            HeadlineRepository(),
+            ArticleScraperService(),
+            categoryDelayMillis = 3_000L
+        )
+
+        service.fetchAndStoreAll(nowMillis = 1000L)
+
+        assertEquals((HeadlineFetchService.CATEGORIES.size - 1) * 3_000L, testScheduler.currentTime)
     }
 }
