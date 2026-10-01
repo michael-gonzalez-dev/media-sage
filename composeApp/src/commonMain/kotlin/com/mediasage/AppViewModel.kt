@@ -11,10 +11,12 @@ import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.QuoteRepository
 import com.mediasage.domain.repository.UserReflectionNoteRepository
+import com.mediasage.feature.onboarding.OnboardingGate
 import com.mediasage.theme.AppTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -28,6 +30,29 @@ sealed interface AuthUiState {
     data class Authenticated(val session: UserSession) : AuthUiState
 }
 
+/** What the app shows at the top level. Loading renders nothing, so the main tabs never flash before onboarding. */
+sealed interface AppGateState {
+    data object Loading : AppGateState
+    data object Unauthenticated : AppGateState
+    data object Onboarding : AppGateState
+    data object Main : AppGateState
+}
+
+internal data class OnboardingDecision(val userId: String, val showOnboarding: Boolean)
+
+// A decision only counts for the account it was made for, so a stale one from a previous
+// sign-in never routes a different reader. The debug bypass session (blank userId) skips onboarding.
+internal fun appGateState(auth: AuthUiState, decision: OnboardingDecision?): AppGateState = when (auth) {
+    is AuthUiState.Loading -> AppGateState.Loading
+    is AuthUiState.Unauthenticated -> AppGateState.Unauthenticated
+    is AuthUiState.Authenticated -> when {
+        auth.session.userId.isBlank() -> AppGateState.Main
+        decision == null || decision.userId != auth.session.userId -> AppGateState.Loading
+        decision.showOnboarding -> AppGateState.Onboarding
+        else -> AppGateState.Main
+    }
+}
+
 class AppViewModel(
     private val figureRepository: FigureRepository,
     private val dayAssignmentRepository: DayAssignmentRepository,
@@ -35,6 +60,7 @@ class AppViewModel(
     private val encouragementRepository: EncouragementRepository,
     private val quoteRepository: QuoteRepository,
     private val userReflectionNoteRepository: UserReflectionNoteRepository,
+    private val onboardingGate: OnboardingGate,
     themePreferencesRepository: ThemePreferencesRepository,
     authRepository: AuthRepository,
 ) : ViewModel() {
@@ -61,6 +87,18 @@ class AppViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, AuthUiState.Loading)
 
+    private val onboardingDecision = MutableStateFlow<OnboardingDecision?>(null)
+
+    val gateState: StateFlow<AppGateState> = combine(authState, onboardingDecision) { auth, decision -> appGateState(auth, decision) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AppGateState.Loading)
+
+    /** Finishing or skipping onboarding. The main tabs open at once; the record is written behind them. */
+    fun completeOnboarding() {
+        val decision = onboardingDecision.value?.takeIf { it.showOnboarding } ?: return
+        onboardingDecision.value = decision.copy(showOnboarding = false)
+        viewModelScope.launch { onboardingGate.complete(decision.userId) }
+    }
+
     fun bypassAuth() {
         _authBypass.value = true
     }
@@ -70,6 +108,17 @@ class AppViewModel(
     }
 
     init {
+        viewModelScope.launch {
+            authState
+                .map { state -> (state as? AuthUiState.Authenticated)?.session?.userId?.takeIf { it.isNotBlank() } }
+                .distinctUntilChanged()
+                .collectLatest { userId ->
+                    onboardingDecision.value = userId?.let {
+                        OnboardingDecision(it, onboardingGate.shouldShowOnboarding(it, viewModelScope))
+                    }
+                }
+        }
+
         val figuresSynced = viewModelScope.launch {
             try {
                 figureRepository.syncFigures()

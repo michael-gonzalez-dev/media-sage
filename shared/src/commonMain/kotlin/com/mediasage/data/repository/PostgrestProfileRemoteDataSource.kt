@@ -13,4 +13,13 @@ class PostgrestProfileRemoteDataSource(
     override suspend fun push(row: ProfileRow) {
         client.postgrest.from(TABLE_NAME).upsert(row)
     }
+
+    override suspend fun fetchOnboarding(userId: String): ProfileOnboardingRow? =
+        client.postgrest.from(TABLE_NAME).select {
+            filter { eq("user_id", userId) }
+        }.decodeSingleOrNull()
+
+    override suspend fun pushOnboarding(row: ProfileOnboardingRow) {
+        client.postgrest.from(TABLE_NAME).upsert(row)
+    }
 }
