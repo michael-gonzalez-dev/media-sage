@@ -34,7 +34,7 @@ class AppGateStateTest {
     fun accountNeedingOnboardingSeesOnboarding() {
         val decision = OnboardingDecision(userId = "user-1", showOnboarding = true)
 
-        assertEquals(AppGateState.Onboarding, appGateState(signedIn, decision))
+        assertEquals(AppGateState.Onboarding(userId = "user-1"), appGateState(signedIn, decision))
     }
 
     @Test

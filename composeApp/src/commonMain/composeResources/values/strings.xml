@@ -247,4 +247,29 @@
     <!-- Briefing evening-tone notification -->
     <string name="notification_evening_tone_title">Your evening reflection is ready</string>
     <string name="notification_evening_tone_text">Tonight's Briefing has a new reflection waiting for you.</string>
+
+    <!-- Onboarding (shown once per account after first sign-in) -->
+    <string name="onboarding_progress">Step %1$d of %2$d</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_finish">Start reading</string>
+    <string name="onboarding_briefing_title">Your daily briefing</string>
+    <string name="onboarding_briefing_mission">Your daily briefing pairs scripture with a reporter's hard-won wisdom. You choose the lens, from today's headlines to their own writings or a theme like hope.</string>
+    <string name="onboarding_briefing_ai">Each briefing is built from a verified library. The quotes are real and tied to their sources. The reflection is written by AI in the reporter's voice and grounded in their verified writings.</string>
+    <string name="onboarding_briefing_disclosure_pointer">The full disclosure is in Settings → About.</string>
+    <string name="onboarding_headlines_title">Headlines, with insight</string>
+    <string name="onboarding_headlines_body">Tap a headline to see the quote that best fits the story and how it connects. We match it from across all our reporters.</string>
+    <string name="onboarding_reader_title">Make it yours</string>
+    <string name="onboarding_reader_body">The Reader tab is where you set your weekly roster of reporters. You can also memorize quotes and revisit past briefings.</string>
+    <string name="onboarding_sample_scripture_news_reference">Isaiah 41:10</string>
+    <string name="onboarding_sample_scripture_news_text">Fear not, for I am with you.</string>
+    <string name="onboarding_sample_scripture_writings_reference">Psalm 119:105</string>
+    <string name="onboarding_sample_scripture_writings_text">Your word is a lamp to my feet and a light to my path.</string>
+    <string name="onboarding_sample_scripture_hope_reference">Romans 15:13</string>
+    <string name="onboarding_sample_scripture_hope_text">May the God of hope fill you with all joy and peace in believing.</string>
+    <string name="onboarding_sample_headline">Flood-hit towns face a long road to rebuild</string>
+    <string name="onboarding_sample_headline_category">Nation</string>
+    <!-- Corrie ten Boom; the verified quote library (seed_quotes.sql) cites Tramp for the Lord (1974). Exact page not yet confirmed. -->
+    <string name="onboarding_sample_quote">If God sends us on stony paths, he provides strong shoes.</string>
 </resources>

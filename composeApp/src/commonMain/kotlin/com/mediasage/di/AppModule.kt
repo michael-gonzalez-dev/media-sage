@@ -22,6 +22,7 @@ import com.mediasage.domain.usecase.GetReaderCalendarUseCase
 import com.mediasage.feature.bookmarks.BookmarksViewModel
 import com.mediasage.feature.login.LoginViewModel
 import com.mediasage.feature.onboarding.OnboardingGate
+import com.mediasage.feature.onboarding.OnboardingViewModel
 import com.mediasage.feature.settings.SettingsViewModel
 import com.mediasage.feature.figures.FigureDetailViewModel
 import com.mediasage.feature.figures.FiguresViewModel
@@ -99,6 +100,7 @@ val appModule = module {
             get<AnalyticsService>(),
         )
     }
+    viewModel { OnboardingViewModel(get<FigureRepository>()) }
     viewModel { SettingsViewModel(get<AuthRepository>(), get<ThemePreferencesRepository>(), get<AnalyticsService>()) }
     viewModel {
         ReaderViewModel(

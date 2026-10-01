@@ -10,6 +10,9 @@ import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.feature.login.LoginContract
 import com.mediasage.feature.login.LoginScreen
 import com.mediasage.feature.login.LoginViewModel
+import com.mediasage.feature.onboarding.OnboardingContract
+import com.mediasage.feature.onboarding.OnboardingScreen
+import com.mediasage.feature.onboarding.OnboardingViewModel
 import com.mediasage.navigation.MediaSageScaffold
 import com.mediasage.theme.AppTheme
 import com.mediasage.theme.MediaSageTheme
@@ -23,7 +26,7 @@ fun App(isDebugBuild: Boolean = false, appVersion: String = "", isIos: Boolean =
     val darkMode by appViewModel.darkMode.collectAsState()
     val appTheme by appViewModel.appTheme.collectAsState()
     val textScalePercent by appViewModel.textScalePercent.collectAsState()
-    val authState by appViewModel.authState.collectAsState()
+    val gateState by appViewModel.gateState.collectAsState()
     val analyticsService = koinInject<AnalyticsService>()
 
     CompositionLocalProvider(
@@ -33,9 +36,11 @@ fun App(isDebugBuild: Boolean = false, appVersion: String = "", isIos: Boolean =
         LocalAnalyticsService provides analyticsService,
     ) {
         MediaSageTheme(theme = appTheme, darkTheme = darkMode ?: false, textScalePercent = textScalePercent) {
-            when (authState) {
-                is AuthUiState.Loading -> Unit
-                is AuthUiState.Unauthenticated -> {
+            when (val gate = gateState) {
+                // Also covers a signed-in reader whose onboarding status is still resolving, so the
+                // main tabs never flash on screen before onboarding appears.
+                is AppGateState.Loading -> Unit
+                is AppGateState.Unauthenticated -> {
                     val loginVm = koinViewModel<LoginViewModel>()
                     val loginState by loginVm.state.collectAsState()
                     LaunchedEffect(loginVm) {
@@ -50,10 +55,32 @@ fun App(isDebugBuild: Boolean = false, appVersion: String = "", isIos: Boolean =
                     }
                     LoginScreen(state = loginState, onIntent = loginVm::onIntent)
                 }
-                is AuthUiState.Authenticated -> MediaSageScaffold(
+                is AppGateState.Onboarding -> OnboardingGateContent(
+                    userId = gate.userId,
+                    onFinished = appViewModel::completeOnboarding,
+                )
+                // The scaffold's start destination is today's briefing, so finishing or skipping
+                // onboarding lands the reader there.
+                is AppGateState.Main -> MediaSageScaffold(
                     onSignedOut = { appViewModel.resetBypass() }
                 )
             }
         }
     }
+}
+
+// Keyed to the account so each one starts onboarding from the first step, even when a second
+// account signs up in the same process (the ViewModel store outlives this screen).
+@Composable
+private fun OnboardingGateContent(userId: String, onFinished: () -> Unit) {
+    val onboardingVm = koinViewModel<OnboardingViewModel>(key = "onboarding-$userId")
+    val onboardingState by onboardingVm.state.collectAsState()
+    LaunchedEffect(onboardingVm) {
+        onboardingVm.sideEffects.collect { effect ->
+            when (effect) {
+                is OnboardingContract.SideEffect.Finished -> onFinished()
+            }
+        }
+    }
+    OnboardingScreen(state = onboardingState, onIntent = onboardingVm::onIntent)
 }

@@ -34,7 +34,8 @@ sealed interface AuthUiState {
 sealed interface AppGateState {
     data object Loading : AppGateState
     data object Unauthenticated : AppGateState
-    data object Onboarding : AppGateState
+    /** Carries the account so the onboarding screen's ViewModel can be keyed to it, starting fresh per account. */
+    data class Onboarding(val userId: String) : AppGateState
     data object Main : AppGateState
 }
 
@@ -48,7 +49,7 @@ internal fun appGateState(auth: AuthUiState, decision: OnboardingDecision?): App
     is AuthUiState.Authenticated -> when {
         auth.session.userId.isBlank() -> AppGateState.Main
         decision == null || decision.userId != auth.session.userId -> AppGateState.Loading
-        decision.showOnboarding -> AppGateState.Onboarding
+        decision.showOnboarding -> AppGateState.Onboarding(decision.userId)
         else -> AppGateState.Main
     }
 }
