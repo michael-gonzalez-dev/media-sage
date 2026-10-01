@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.repository.epochMillis
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.EncouragementRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
@@ -33,8 +35,8 @@ class FigureDetailViewModel(
     private val _state = MutableStateFlow<FigureDetailContract.UiState>(FigureDetailContract.UiState.Loading)
     val state: StateFlow<FigureDetailContract.UiState> = _state.asStateFlow()
 
-    /** The only user selection this screen owns: an in-flight reassignment awaiting confirmation. */
-    private val input = MutableStateFlow<FigureDetailContract.PendingReassignment?>(null)
+    /** The only user selection this screen owns: the open lens picker and any reassignment awaiting confirmation. */
+    private val input = MutableStateFlow(ScreenInput())
 
     init {
         load()
@@ -43,8 +45,10 @@ class FigureDetailViewModel(
     fun onIntent(intent: FigureDetailContract.Intent) {
         when (intent) {
             is FigureDetailContract.Intent.PinToHome -> handlePinToggle()
+            is FigureDetailContract.Intent.LensSelected -> handleLensSelected(intent.lens)
+            is FigureDetailContract.Intent.DismissLensPicker -> input.update { it.copy(isLensPickerOpen = false) }
             is FigureDetailContract.Intent.ConfirmReassignment -> handleConfirmReassignment()
-            is FigureDetailContract.Intent.CancelReassignment -> input.value = null
+            is FigureDetailContract.Intent.CancelReassignment -> input.update { it.copy(pendingReassignment = null) }
             is FigureDetailContract.Intent.PinQuote -> handlePinQuote(intent.quoteText)
         }
     }
@@ -56,42 +60,55 @@ class FigureDetailViewModel(
         }
     }
 
+    /** Unpins straight away; pinning first asks which lens the figure should brief through. */
     private fun handlePinToggle() {
         val current = _state.value as? FigureDetailContract.UiState.Success ?: return
-        val todayOrdinal = todayDayOfWeekOrdinal()
         if (current.isPinned) {
-            viewModelScope.launch { dayAssignmentRepository.clear(todayOrdinal) }
+            viewModelScope.launch { dayAssignmentRepository.clear(todayDayOfWeekOrdinal()) }
             return
         }
+        input.update { it.copy(isLensPickerOpen = true) }
+    }
+
+    /**
+     * Guards today's locked-in briefing the same way the Reader tab's schedule does: a different figure
+     * or lens than the one already briefed today needs confirmation, since it can only take effect next week.
+     */
+    private fun handleLensSelected(lens: LensFilter?) {
+        val current = _state.value as? FigureDetailContract.UiState.Success ?: return
+        input.update { it.copy(isLensPickerOpen = false) }
+        val todayOrdinal = todayDayOfWeekOrdinal()
         viewModelScope.launch {
             val epochDay = todayEpochDay()
             val lockedFigureId = dailyReflectionRepository.getLockedFigureId(epochDay)
-            if (lockedFigureId != null && lockedFigureId != figureId) {
-                val lockedFigureName = figureRepository.getFigureById(lockedFigureId)?.name ?: return@launch
-                input.value = FigureDetailContract.PendingReassignment(
-                    todayOrdinal = todayOrdinal,
-                    currentFigureName = lockedFigureName,
-                    newFigureName = current.figureName,
-                    nextWeekdayLabel = weekdayLabel(todayOrdinal),
-                )
-            } else {
-                // Re-pinning today's locked-in reporter keeps today's lens — assigning with no lens
-                // would silently switch today's briefing to Headlines and generate a second one.
-                val lens = if (lockedFigureId == figureId) dailyReflectionRepository.getLockedTheme(epochDay) else null
-                dayAssignmentRepository.assign(todayOrdinal, figureId, lens)
-                analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
+            val lockedLens = lockedFigureId?.let { dailyReflectionRepository.getLockedTheme(epochDay) }
+            if (lockedFigureId == null || (lockedFigureId == figureId && lockedLens == lens)) {
+                assignToday(todayOrdinal, lens)
+                return@launch
             }
+            val lockedFigureName = figureRepository.getFigureById(lockedFigureId)?.name ?: return@launch
+            val pending = FigureDetailContract.PendingReassignment(
+                todayOrdinal = todayOrdinal,
+                lens = lens,
+                isReporterChange = lockedFigureId != figureId,
+                currentFigureName = lockedFigureName,
+                newFigureName = current.figureName,
+                nextWeekdayLabel = weekdayLabel(todayOrdinal),
+            )
+            input.update { it.copy(pendingReassignment = pending) }
         }
     }
 
     /** Clears the dialog immediately — the device write and its sync run in the background. */
     private fun handleConfirmReassignment() {
-        val pending = input.value ?: return
-        input.value = null
-        viewModelScope.launch {
-            dayAssignmentRepository.assign(pending.todayOrdinal, figureId)
-            analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
-        }
+        val pending = input.value.pendingReassignment ?: return
+        input.update { it.copy(pendingReassignment = null) }
+        viewModelScope.launch { assignToday(pending.todayOrdinal, pending.lens) }
+    }
+
+    private suspend fun assignToday(todayOrdinal: Int, lens: LensFilter?) {
+        dayAssignmentRepository.assign(todayOrdinal, figureId, lens)
+        analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
     }
 
     private fun load() {
@@ -102,7 +119,7 @@ class FigureDetailViewModel(
                 dayAssignmentRepository.observeAssignments(),
                 input,
                 quoteRepository.observeMemorizedQuote(),
-            ) { encouragements, assignments, pendingReassignment, memorizedQuote ->
+            ) { encouragements, assignments, screenInput, memorizedQuote ->
                 val todayOrdinal = todayDayOfWeekOrdinal()
                 FigureDetailContract.UiState.Success(
                     figureName = figure.name,
@@ -117,7 +134,8 @@ class FigureDetailViewModel(
                         )
                     },
                     isPinned = assignments[todayOrdinal]?.figureId == figureId,
-                    pendingReassignment = pendingReassignment,
+                    isLensPickerOpen = screenInput.isLensPickerOpen,
+                    pendingReassignment = screenInput.pendingReassignment,
                 )
             }.collect { _state.value = it }
         }
@@ -133,4 +151,9 @@ class FigureDetailViewModel(
     private fun todayDayOfWeekOrdinal(): Int =
         Instant.fromEpochMilliseconds(epochMillis())
             .toLocalDateTime(TimeZone.currentSystemDefault()).date.dayOfWeek.ordinal
+
+    private data class ScreenInput(
+        val isLensPickerOpen: Boolean = false,
+        val pendingReassignment: FigureDetailContract.PendingReassignment? = null,
+    )
 }

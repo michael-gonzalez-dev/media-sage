@@ -7,8 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,15 +22,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,22 +67,16 @@ import com.mediasage.domain.model.LensFilter
 import com.mediasage.theme.AppTheme
 import com.mediasage.theme.BrandAmber
 import com.mediasage.theme.ComicCream
-import com.mediasage.theme.LensFaith
-import com.mediasage.theme.LensGrace
-import com.mediasage.theme.LensGrief
-import com.mediasage.theme.LensHope
-import com.mediasage.theme.LensJustice
-import com.mediasage.theme.LensLove
-import com.mediasage.theme.LensPerseverance
-import com.mediasage.theme.LensRepentance
-import com.mediasage.theme.LensWritings
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.theme.rememberComicSurfaceColors
 import com.mediasage.ui.FigurePlaceholder
+import com.mediasage.ui.LensPicker
 import com.mediasage.ui.MediaSageEmptyState
 import com.mediasage.ui.MediaSageSurface
 import com.mediasage.ui.ReassignConfirmationDialog
 import com.mediasage.ui.ScreenHeader
+import com.mediasage.ui.color
+import com.mediasage.ui.labelRes
 import kotlinx.datetime.DayOfWeek
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.reader_briefings_empty_subtitle
@@ -97,19 +86,7 @@ import mediasage.composeapp.generated.resources.reader_quote_empty_title
 import mediasage.composeapp.generated.resources.reassign_dialog_lens_label
 import mediasage.composeapp.generated.resources.saved_insights_banner
 import mediasage.composeapp.generated.resources.you_carousel_assign_hint
-import mediasage.composeapp.generated.resources.you_lens_faith
-import mediasage.composeapp.generated.resources.you_lens_grace
-import mediasage.composeapp.generated.resources.you_lens_grief
-import mediasage.composeapp.generated.resources.you_lens_hope
-import mediasage.composeapp.generated.resources.you_lens_justice
-import mediasage.composeapp.generated.resources.you_lens_love
-import mediasage.composeapp.generated.resources.you_lens_perseverance
-import mediasage.composeapp.generated.resources.you_lens_repentance
-import mediasage.composeapp.generated.resources.you_lens_today
-import mediasage.composeapp.generated.resources.you_lens_writings
 import mediasage.composeapp.generated.resources.you_nav_saved
-import mediasage.composeapp.generated.resources.you_picker_back_description
-import mediasage.composeapp.generated.resources.you_picker_choose_theme
 import mediasage.composeapp.generated.resources.you_picker_clear_day
 import mediasage.composeapp.generated.resources.you_picker_empty
 import mediasage.composeapp.generated.resources.you_picker_search_clear
@@ -491,33 +468,6 @@ internal fun LensBadge(lens: LensFilter, modifier: Modifier = Modifier) {
     )
 }
 
-internal fun LensFilter.labelRes() = when (this) {
-    LensFilter.NEWS -> Res.string.you_lens_today
-    LensFilter.WRITINGS -> Res.string.you_lens_writings
-    LensFilter.LOVE -> Res.string.you_lens_love
-    LensFilter.GRACE -> Res.string.you_lens_grace
-    LensFilter.FAITH -> Res.string.you_lens_faith
-    LensFilter.GRIEF -> Res.string.you_lens_grief
-    LensFilter.REPENTANCE -> Res.string.you_lens_repentance
-    LensFilter.HOPE -> Res.string.you_lens_hope
-    LensFilter.JUSTICE -> Res.string.you_lens_justice
-    LensFilter.PERSEVERANCE -> Res.string.you_lens_perseverance
-}
-
-@Composable
-internal fun LensFilter.color(): Color = when (this) {
-    LensFilter.NEWS -> MaterialTheme.colorScheme.primary
-    LensFilter.WRITINGS -> LensWritings
-    LensFilter.LOVE -> LensLove
-    LensFilter.GRACE -> LensGrace
-    LensFilter.FAITH -> LensFaith
-    LensFilter.GRIEF -> LensGrief
-    LensFilter.REPENTANCE -> LensRepentance
-    LensFilter.HOPE -> LensHope
-    LensFilter.JUSTICE -> LensJustice
-    LensFilter.PERSEVERANCE -> LensPerseverance
-}
-
 @Composable
 private fun SavedQuoteCard(
     quote: ReaderContract.QuoteCard,
@@ -617,7 +567,6 @@ private fun SavedQuoteCard(
 
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FigurePickerSheet(
     figures: List<Figure>,
@@ -634,9 +583,11 @@ private fun FigurePickerSheet(
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (selectedFigure != null) {
-            LensPickerSection(
-                figure = selectedFigure!!,
+            LensPicker(
+                figureName = selectedFigure!!.name,
+                portraitUrl = selectedFigure!!.portraitUrl,
                 onLensSelected = { lens -> onFigureAndLensSelected(selectedFigure!!, lens) },
+                modifier = Modifier.fillMaxSize(),
                 onBack = { selectedFigure = null },
             )
         } else {
@@ -757,79 +708,6 @@ private fun FigurePickerSheet(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun LensPickerSection(
-    figure: Figure,
-    onLensSelected: (LensFilter?) -> Unit,
-    onBack: () -> Unit,
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onBack)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.you_picker_back_description),
-            )
-            if (figure.portraitUrl != null) {
-                AsyncImage(
-                    model = figure.portraitUrl,
-                    contentDescription = figure.name,
-                    modifier = Modifier.size(32.dp).clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    alignment = Alignment.TopCenter,
-                    error = rememberVectorPainter(Icons.Filled.Person),
-                    fallback = rememberVectorPainter(Icons.Filled.Person),
-                )
-            } else {
-                FigurePlaceholder(name = figure.name, size = 32.dp)
-            }
-            Text(text = figure.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-        }
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-        SectionLabel(
-            text = stringResource(Res.string.you_picker_choose_theme),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        )
-        FlowRow(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            LensFilter.entries.forEach { lens ->
-                val lensColor = lens.color()
-                FilterChip(
-                    selected = false,
-                    onClick = { onLensSelected(if (lens == LensFilter.NEWS) null else lens) },
-                    label = {
-                        Text(
-                            text = stringResource(lens.labelRes()),
-                            style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                        )
-                    },
-                    shape = CircleShape,
-                    colors = FilterChipDefaults.filterChipColors(
-                        labelColor = lensColor,
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = false,
-                        borderColor = lensColor.copy(alpha = 0.5f),
-                        borderWidth = 1.5.dp,
-                    ),
-                )
             }
         }
     }

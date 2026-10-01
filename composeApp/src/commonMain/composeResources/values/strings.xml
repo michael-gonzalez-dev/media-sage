@@ -202,6 +202,7 @@
     <string name="reassign_dialog_title">Today’s briefing already exists</string>
     <string name="reassign_dialog_message">You already have a briefing from %1$s today. %2$s will start next %3$s.</string>
     <string name="reassign_dialog_lens_label">The %1$s lens</string>
+    <string name="reassign_dialog_reporter_lens_label">%1$s with the %2$s lens</string>
     <string name="reassign_dialog_hint">To change other days, use the weekly schedule on the Reader screen.</string>
     <string name="reassign_dialog_confirm">Confirm</string>
     <string name="reassign_dialog_cancel">Cancel</string>
