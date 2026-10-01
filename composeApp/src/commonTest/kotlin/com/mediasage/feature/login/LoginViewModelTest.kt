@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import com.mediasage.data.AuthPreferencesRepository
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.domain.model.OnboardingStatus
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.ProfileRepository
@@ -215,6 +216,8 @@ private class FakeLoginAuthRepository(
 
 private class FakeLoginProfileRepository : ProfileRepository {
     override suspend fun createProfile(userId: String, displayName: String) = Unit
+    override suspend fun fetchOnboardingStatus(userId: String) = OnboardingStatus.UNKNOWN
+    override suspend fun completeOnboarding(userId: String, displayName: String) = Unit
 }
 
 private class FakePreferencesDataStore : DataStore<Preferences> {

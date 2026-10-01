@@ -21,6 +21,8 @@ import com.mediasage.domain.usecase.GetHeadlinesFeedUseCase
 import com.mediasage.domain.usecase.GetReaderCalendarUseCase
 import com.mediasage.feature.bookmarks.BookmarksViewModel
 import com.mediasage.feature.login.LoginViewModel
+import com.mediasage.feature.onboarding.OnboardingGate
+import com.mediasage.feature.onboarding.OnboardingViewModel
 import com.mediasage.feature.settings.SettingsViewModel
 import com.mediasage.feature.figures.FigureDetailViewModel
 import com.mediasage.feature.figures.FiguresViewModel
@@ -36,6 +38,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
+    single { OnboardingGate(get<ProfileRepository>(), get<AuthRepository>(), get<AuthPreferencesRepository>()) }
     viewModel {
         AppViewModel(
             get<FigureRepository>(),
@@ -44,6 +47,7 @@ val appModule = module {
             get<EncouragementRepository>(),
             get<QuoteRepository>(),
             get<UserReflectionNoteRepository>(),
+            get<OnboardingGate>(),
             get<ThemePreferencesRepository>(),
             get<AuthRepository>(),
         )
@@ -96,6 +100,7 @@ val appModule = module {
             get<AnalyticsService>(),
         )
     }
+    viewModel { OnboardingViewModel(get<FigureRepository>()) }
     viewModel { SettingsViewModel(get<AuthRepository>(), get<ThemePreferencesRepository>(), get<AnalyticsService>()) }
     viewModel {
         ReaderViewModel(
