@@ -6,24 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,17 +24,14 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.mediasage.domain.model.HeadlineCategoryFilter
-import com.mediasage.theme.ComicGradientOrientation
 import com.mediasage.theme.MediaSageTheme
-import com.mediasage.theme.rememberComicSurfaceColors
 import com.mediasage.ui.ErrorType
 import com.mediasage.ui.MediaSageEmptyState
 import com.mediasage.ui.MediaSageErrorDialog
+import com.mediasage.ui.MediaSageFilterChip
 import com.mediasage.ui.MediaSageHeadlineCard
 import com.mediasage.ui.ScreenHeader
 import mediasage.composeapp.generated.resources.Res
@@ -213,69 +201,13 @@ private fun CategoryChipRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(HeadlineCategoryFilter.entries) { category ->
-            CategoryChip(
+            MediaSageFilterChip(
                 label = stringResource(category.labelRes()),
                 selected = category.value == selectedCategory,
                 onClick = { onCategorySelected(category.value) }
             )
         }
     }
-}
-
-@Composable
-private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    // FilterChip for its selected semantics and checkmark animation; the comic gradient can't be
-    // expressed through SelectableChipColors (flat Colors only), so the selected container is
-    // transparent and rememberComicSurfaceColors' background paints on a sibling Box behind it.
-    // The chip's 32dp pill renders centered inside its 48dp minimum touch target, so the gradient
-    // is inset to those visual bounds instead of filling the full (invisible) interactive layout.
-    val comicColors = rememberComicSurfaceColors(ComicGradientOrientation.Horizontal)
-    Box {
-        if (selected) {
-            SelectedChipBackground(background = comicColors.background)
-        }
-        FilterChip(
-            selected = selected,
-            onClick = onClick,
-            label = { Text(text = label, style = MaterialTheme.typography.labelMedium) },
-            leadingIcon = if (selected) ({ SelectedCheckIcon() }) else null,
-            shape = CircleShape,
-            colors = FilterChipDefaults.filterChipColors(
-                labelColor = comicColors.content.copy(alpha = 0.75f),
-                selectedContainerColor = Color.Transparent,
-                selectedLabelColor = comicColors.content,
-                selectedLeadingIconColor = comicColors.content
-            ),
-            border = FilterChipDefaults.filterChipBorder(
-                enabled = true,
-                selected = selected,
-                borderColor = comicColors.border.copy(alpha = 0.5f),
-                selectedBorderColor = comicColors.border,
-                selectedBorderWidth = 1.dp
-            )
-        )
-    }
-}
-
-@Composable
-private fun BoxScope.SelectedChipBackground(background: Modifier) {
-    val touchTargetInset = (LocalMinimumInteractiveComponentSize.current - FilterChipDefaults.Height) / 2
-    Box(
-        modifier = Modifier
-            .matchParentSize()
-            .padding(vertical = touchTargetInset.coerceAtLeast(0.dp))
-            .clip(CircleShape)
-            .then(background)
-    )
-}
-
-@Composable
-private fun SelectedCheckIcon() {
-    Icon(
-        imageVector = Icons.Filled.Check,
-        contentDescription = null,
-        modifier = Modifier.size(FilterChipDefaults.IconSize)
-    )
 }
 
 private fun HeadlineCategoryFilter.labelRes() = when (this) {

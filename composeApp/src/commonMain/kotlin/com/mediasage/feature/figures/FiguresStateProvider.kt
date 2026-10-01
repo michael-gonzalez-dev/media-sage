@@ -1,16 +1,19 @@
 package com.mediasage.feature.figures
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.mediasage.domain.model.FigureEra
 
 internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.UiState> {
     override val values = sequenceOf(
         FiguresContract.UiState.Loading,
         FiguresContract.UiState.Success(figures = emptyList()),
+        FiguresContract.UiState.Success(figures = emptyList(), searchQuery = "zz", selectedEra = FigureEra.MIDDLE_AGES),
         FiguresContract.UiState.Success(
             figures = listOf(
                 VoiceFigureItem(
                     id = 1L,
                     name = "C.S. Lewis",
+                    era = FigureEra.MODERN,
                     role = "Author & Apologist",
                     lifespan = "1898–1963",
                     themes = listOf("Faith", "Reason"),
@@ -21,6 +24,7 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                 VoiceFigureItem(
                     id = 2L,
                     name = "Dietrich Bonhoeffer",
+                    era = FigureEra.MODERN,
                     role = "Theologian & Martyr",
                     lifespan = "1898–1963",
                     themes = listOf("Justice", "Discipleship", "Grace"),
@@ -30,6 +34,7 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                 VoiceFigureItem(
                     id = 3L,
                     name = "Martin Luther King Jr.",
+                    era = FigureEra.MODERN,
                     role = "Pastor & Civil Rights Leader",
                     lifespan = "1898–1963",
                     themes = listOf("Justice", "Hope"),
@@ -39,6 +44,7 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                 VoiceFigureItem(
                     id = 4L,
                     name = "Julian of Norwich",
+                    era = FigureEra.MIDDLE_AGES,
                     role = "Mystic & Theologian",
                     lifespan = "1347–1380",
                     themes = listOf("Love", "Contemplation"),

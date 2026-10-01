@@ -39,6 +39,14 @@
     <string name="voices_retry">Retry</string>
     <string name="voices_empty_state">Guides will appear as you read</string>
     <string name="search_voices_hint">Search reporters…</string>
+    <string name="voices_filtered_empty_title">No reporters found</string>
+    <string name="voices_filtered_empty_subtitle">Try another era or a different search.</string>
+    <string name="era_all">All</string>
+    <string name="era_early_church">Early Church</string>
+    <string name="era_middle_ages">Middle Ages</string>
+    <string name="era_1500s_1600s">1500s &amp; 1600s</string>
+    <string name="era_1700s_1800s">1700s &amp; 1800s</string>
+    <string name="era_modern">Modern</string>
 
     <!-- You screen -->
     <string name="you_screen_title">Reader</string>
