@@ -25,7 +25,9 @@ class OnboardingGateTest {
     private val preferences = AuthPreferencesRepository(FakeOnboardingPreferencesDataStore())
     private val gate = OnboardingGate(profileRepository, FakeOnboardingAuthRepository(), preferences)
 
-    private suspend fun TestScope.shouldShow(): Boolean = gate.shouldShowOnboarding(USER_ID, backgroundScope)
+    // The test's own scope, not backgroundScope: advanceUntilIdle() ignores background work, so the
+    // gate's background re-check would never run.
+    private suspend fun TestScope.shouldShow(): Boolean = gate.shouldShowOnboarding(USER_ID, this)
 
     @Test
     fun newAccountSeesOnboarding() = runTest {

@@ -82,38 +82,48 @@ internal fun rememberLoopingIndex(count: Int, periodMillis: Long): Int {
     return index
 }
 
-/** Grows from small with a bouncy overshoot. */
+// The entrance wrappers below keep [content]'s space reserved while hidden, so nothing around it
+// jumps when it appears. That's why they draw through graphicsLayer rather than AnimatedVisibility,
+// which removes hidden content from the layout.
+
+/** Grows [content] from small with a bouncy overshoot. */
 @Composable
-internal fun Modifier.popIn(visible: Boolean): Modifier {
+internal fun PopIn(visible: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val scale by animateFloatAsState(if (visible) 1f else POP_START_SCALE, BouncySpring, label = "popScale")
     val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(FADE_MILLIS), label = "popAlpha")
-    return graphicsLayer {
-        scaleX = scale
-        scaleY = scale
-        this.alpha = alpha
-    }
+    Box(
+        modifier = modifier.graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+            this.alpha = alpha
+        },
+    ) { content() }
 }
 
-/** Falls into place from above and bounces as it lands. */
+/** Drops [content] into place from above, bouncing as it lands. */
 @Composable
-internal fun Modifier.dropIn(visible: Boolean): Modifier {
+internal fun DropIn(visible: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val lift by animateFloatAsState(if (visible) 0f else 1f, BouncySpring, label = "dropLift")
     val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(FADE_MILLIS), label = "dropAlpha")
-    return graphicsLayer {
-        translationY = -lift * DropDistance.toPx()
-        this.alpha = alpha
-    }
+    Box(
+        modifier = modifier.graphicsLayer {
+            translationY = -lift * DropDistance.toPx()
+            this.alpha = alpha
+        },
+    ) { content() }
 }
 
-/** Rises a little into place, keeping its space reserved so nothing below jumps. */
+/** Raises [content] a little into place. */
 @Composable
-internal fun Modifier.riseIn(visible: Boolean): Modifier {
+internal fun RiseIn(visible: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val lift by animateFloatAsState(if (visible) 0f else 1f, BouncySpring, label = "riseLift")
     val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(FADE_MILLIS), label = "riseAlpha")
-    return graphicsLayer {
-        translationY = lift * RiseDistance.toPx()
-        this.alpha = alpha
-    }
+    Box(
+        modifier = modifier.graphicsLayer {
+            translationY = lift * RiseDistance.toPx()
+            this.alpha = alpha
+        },
+    ) { content() }
 }
 
 /** The reporter's real portrait once figures have synced; their initials until then. */

@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -95,36 +96,35 @@ internal fun BriefingStepAnimation(featured: OnboardingContract.SampleFigure) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SamplePortrait(
-            figure = featured,
-            size = 140.dp,
-            shape = MaterialTheme.shapes.small,
-            sepia = true,
-            modifier = Modifier.popIn(phase >= 1),
-        )
-        Row(modifier = Modifier.riseIn(phase >= 1), verticalAlignment = Alignment.CenterVertically) {
-            Text(text = featured.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.width(8.dp))
+        PopIn(visible = phase >= 1) {
+            SamplePortrait(figure = featured, size = 140.dp, shape = MaterialTheme.shapes.small, sepia = true)
+        }
+        RiseIn(visible = phase >= 1) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = featured.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.width(8.dp))
+                AnimatedContent(
+                    targetState = lens,
+                    transitionSpec = {
+                        (slideInVertically { it } + fadeIn()).togetherWith(slideOutVertically { -it } + fadeOut())
+                    },
+                    label = "lensChip",
+                ) { ThemeChip(theme = it.name) }
+            }
+        }
+        RiseIn(visible = phase >= 2) {
             AnimatedContent(
                 targetState = lens,
                 transitionSpec = {
-                    (slideInVertically { it } + fadeIn()).togetherWith(slideOutVertically { -it } + fadeOut())
+                    (slideInHorizontally { it / 4 } + fadeIn()).togetherWith(slideOutHorizontally { -it / 4 } + fadeOut())
                 },
-                label = "lensChip",
-            ) { ThemeChip(theme = it.name) }
+                label = "lensScripture",
+            ) { shown ->
+                val (reference, text) = shown.sampleScripture()
+                MediaSageScriptureBlock(scriptureReference = reference, scriptureText = text)
+            }
         }
-        AnimatedContent(
-            targetState = lens,
-            transitionSpec = {
-                (slideInHorizontally { it / 4 } + fadeIn()).togetherWith(slideOutHorizontally { -it / 4 } + fadeOut())
-            },
-            modifier = Modifier.riseIn(phase >= 2),
-            label = "lensScripture",
-        ) { shown ->
-            val (reference, text) = shown.sampleScripture()
-            MediaSageScriptureBlock(scriptureReference = reference, scriptureText = text)
-        }
-        ReflectionLines(key = lens, modifier = Modifier.riseIn(phase >= 2))
+        RiseIn(visible = phase >= 2) { ReflectionLines(key = lens) }
     }
 }
 
@@ -144,22 +144,22 @@ private enum class HeadlinePhase { CARD, TAPPED, DETAIL }
 @Composable
 private fun rememberHeadlinePhase(): Pair<HeadlinePhase, Int> {
     val isPreview = LocalInspectionMode.current
-    var phase by remember { mutableIntStateOf(if (isPreview) HeadlinePhase.DETAIL.ordinal else 0) }
+    var phase by remember { mutableStateOf(if (isPreview) HeadlinePhase.DETAIL else HeadlinePhase.CARD) }
     var taps by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
         if (isPreview) return@LaunchedEffect
         delay(TAP_DELAY_MILLIS)
         while (true) {
-            phase = HeadlinePhase.TAPPED.ordinal
+            phase = HeadlinePhase.TAPPED
             taps++
             delay(PRESS_MILLIS)
-            phase = HeadlinePhase.DETAIL.ordinal
+            phase = HeadlinePhase.DETAIL
             delay(DETAIL_HOLD_MILLIS)
-            phase = HeadlinePhase.CARD.ordinal
+            phase = HeadlinePhase.CARD
             delay(CARD_HOLD_MILLIS)
         }
     }
-    return HeadlinePhase.entries[phase] to taps
+    return phase to taps
 }
 
 @Composable
@@ -171,21 +171,20 @@ internal fun HeadlinesStepAnimation(featured: OnboardingContract.SampleFigure) {
         animationSpec = BouncySpring,
         label = "headlinePress",
     )
-    Box(
-        modifier = Modifier.fillMaxWidth().clearAndSetSemantics {}.popIn(appeared),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            shadowElevation = 2.dp,
-            modifier = Modifier.fillMaxWidth().graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            },
-        ) {
-            HeadlineToDetail(showDetail = phase == HeadlinePhase.DETAIL, featured = featured)
+    PopIn(visible = appeared, modifier = Modifier.fillMaxWidth().clearAndSetSemantics {}) {
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                shadowElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth().graphicsLayer {
+                    scaleX = pressScale
+                    scaleY = pressScale
+                },
+            ) {
+                HeadlineToDetail(showDetail = phase == HeadlinePhase.DETAIL, featured = featured)
+            }
+            TapRipple(tapCount = taps)
         }
-        TapRipple(tapCount = taps)
     }
 }
 
@@ -263,14 +262,15 @@ internal fun ReaderStepAnimation(
                 )
             }
         }
-        QuoteCard(
-            quoteText = stringResource(Res.string.onboarding_sample_quote),
-            isPinned = phase > roster.size,
-            onPinQuote = {},
-            footerText = quoteFigure.name,
-            // Room for the pin badge, which straddles the card's top-right corner.
-            modifier = Modifier.padding(top = 18.dp, end = 18.dp).riseIn(phase >= 1),
-        )
+        // Room for the pin badge, which straddles the card's top-right corner.
+        RiseIn(visible = phase >= 1, modifier = Modifier.padding(top = 18.dp, end = 18.dp)) {
+            QuoteCard(
+                quoteText = stringResource(Res.string.onboarding_sample_quote),
+                isPinned = phase > roster.size,
+                onPinQuote = {},
+                footerText = quoteFigure.name,
+            )
+        }
     }
 }
 
@@ -285,15 +285,16 @@ private fun RosterDay(day: DayOfWeek, figure: OnboardingContract.SampleFigure, l
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Box(modifier = Modifier.dropIn(visible), contentAlignment = Alignment.BottomEnd) {
-            SamplePortrait(figure = figure, size = 64.dp)
-            LensBadge(
-                lens = lens,
-                modifier = Modifier
-                    .size(18.dp)
-                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
-                    .popIn(visible),
-            )
+        DropIn(visible = visible) {
+            Box(contentAlignment = Alignment.BottomEnd) {
+                SamplePortrait(figure = figure, size = 64.dp)
+                PopIn(visible = visible) {
+                    LensBadge(
+                        lens = lens,
+                        modifier = Modifier.size(18.dp).border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                    )
+                }
+            }
         }
     }
 }
