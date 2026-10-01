@@ -52,12 +52,16 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.theme.ReaderAmber
+import com.mediasage.ui.EraChipRow
 import com.mediasage.ui.FigurePlaceholder
+import com.mediasage.ui.MediaSageEmptyState
 import com.mediasage.ui.ScreenHeader
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.search_voices_hint
 import mediasage.composeapp.generated.resources.title_voices
 import mediasage.composeapp.generated.resources.voices_empty_state
+import mediasage.composeapp.generated.resources.voices_filtered_empty_subtitle
+import mediasage.composeapp.generated.resources.voices_filtered_empty_title
 import mediasage.composeapp.generated.resources.voices_subtitle
 import org.jetbrains.compose.resources.stringResource
 
@@ -72,13 +76,8 @@ fun FiguresScreen(
     when (state) {
         is FiguresContract.UiState.Loading -> LoadingState()
         is FiguresContract.UiState.Success -> VoicesGrid(
-            figures = state.figures,
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onIntent(FiguresContract.Intent.Refresh) },
-            searchQuery = state.searchQuery,
-            onSearchQueryChanged = { query ->
-                onIntent(FiguresContract.Intent.SearchQueryChanged(query))
-            },
+            state = state,
+            onIntent = onIntent,
             onFigureClick = { id ->
                 onIntent(FiguresContract.Intent.FigureClicked(id))
                 onNavigateToFigureDetail(id)
@@ -111,11 +110,8 @@ private fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
 
 @Composable
 private fun VoicesGrid(
-    figures: List<VoiceFigureItem>,
-    isRefreshing: Boolean,
-    onRefresh: () -> Unit,
-    searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit,
+    state: FiguresContract.UiState.Success,
+    onIntent: (FiguresContract.Intent) -> Unit,
     onFigureClick: (Long) -> Unit
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
@@ -150,19 +146,27 @@ private fun VoicesGrid(
                 },
                 stickyContent = {
                     SearchBar(
-                        query = searchQuery,
-                        onQueryChanged = onSearchQueryChanged
+                        query = state.searchQuery,
+                        onQueryChanged = { onIntent(FiguresContract.Intent.SearchQueryChanged(it)) }
                     )
                 }
+            )
+            // Outside ScreenHeader's 16dp inset so the chips scroll edge-to-edge; the row's own
+            // contentPadding lines resting chips up with the search field above.
+            EraChipRow(
+                selectedEra = state.selectedEra,
+                onEraSelected = { onIntent(FiguresContract.Intent.EraSelected(it)) },
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 4.dp)
             )
 
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .pullToRefresh(
-                        isRefreshing = isRefreshing,
+                        isRefreshing = state.isRefreshing,
                         state = pullToRefreshState,
-                        onRefresh = onRefresh
+                        onRefresh = { onIntent(FiguresContract.Intent.Refresh) }
                     )
             ) {
                 LazyVerticalGrid(
@@ -173,12 +177,12 @@ private fun VoicesGrid(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (figures.isEmpty()) {
+                    if (state.figures.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            EmptyState()
+                            if (state.isFiltered) FilteredEmptyState() else EmptyState()
                         }
                     } else {
-                        items(figures, key = { it.id }) { figure ->
+                        items(state.figures, key = { it.id }) { figure ->
                             PortraitCard(figure = figure, onClick = { onFigureClick(figure.id) })
                         }
                     }
@@ -186,7 +190,7 @@ private fun VoicesGrid(
 
                 PullToRefreshDefaults.Indicator(
                     state = pullToRefreshState,
-                    isRefreshing = isRefreshing,
+                    isRefreshing = state.isRefreshing,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }
@@ -337,6 +341,18 @@ private fun EmptyState() {
         )
     }
 }
+
+@Composable
+private fun FilteredEmptyState() {
+    MediaSageEmptyState(
+        title = stringResource(Res.string.voices_filtered_empty_title),
+        subtitle = stringResource(Res.string.voices_filtered_empty_subtitle),
+        modifier = Modifier.padding(vertical = 48.dp)
+    )
+}
+
+private val FiguresContract.UiState.Success.isFiltered: Boolean
+    get() = selectedEra != null || searchQuery.isNotBlank()
 
 @Composable
 private fun LoadingState() {

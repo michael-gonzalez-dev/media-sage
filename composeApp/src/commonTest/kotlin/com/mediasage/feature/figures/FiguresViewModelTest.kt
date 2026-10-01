@@ -8,6 +8,7 @@ import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
+import com.mediasage.domain.model.FigureEra
 import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.EncouragementRepository
@@ -26,6 +27,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 class FiguresViewModelTest {
 
@@ -251,6 +253,122 @@ class FiguresViewModelTest {
         assertEquals("Calvin", state.figures[1].name)
         assertEquals("Zwingli", state.figures[2].name)
     }
+
+    @Test
+    fun allErasSelectedByDefaultAndEveryReporterShown() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertNull(state.selectedEra)
+        assertEquals(4, state.figures.size)
+    }
+
+    @Test
+    fun selectingEraShowsOnlyReportersFromThatEra() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS, state.selectedEra)
+        assertEquals(listOf("Calvin", "Luther"), state.figures.map { it.name })
+    }
+
+    @Test
+    fun selectingAnotherEraReplacesThePreviousOne() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS))
+
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.EARLY_CHURCH))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FigureEra.EARLY_CHURCH, state.selectedEra)
+        assertEquals(listOf("Augustine"), state.figures.map { it.name })
+    }
+
+    @Test
+    fun selectingAllShowsEveryoneAgain() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.MODERN))
+
+        vm.onIntent(FiguresContract.Intent.EraSelected(null))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertNull(state.selectedEra)
+        assertEquals(4, state.figures.size)
+    }
+
+    @Test
+    fun searchNarrowsWithinSelectedEra() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS))
+
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("luth"))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(listOf("Luther"), state.figures.map { it.name })
+        assertEquals(FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS, state.selectedEra)
+    }
+
+    @Test
+    fun searchDoesNotReachOutsideSelectedEra() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.MODERN))
+
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("o"))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(listOf("Bonhoeffer"), state.figures.map { it.name })
+    }
+
+    @Test
+    fun eraAndSearchMatchingNoOneYieldsEmptyListWithBothFiltersKept() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.EARLY_CHURCH))
+
+        vm.onIntent(FiguresContract.Intent.SearchQueryChanged("luther"))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(emptyList(), state.figures)
+        assertEquals(FigureEra.EARLY_CHURCH, state.selectedEra)
+        assertEquals("luther", state.searchQuery)
+    }
+
+    @Test
+    fun pinnedReporterSortsFirstWithinSelectedEra() = runTest(testDispatcher) {
+        // Luther (id=3) assigned to every day so the test is day-of-week agnostic
+        val vm = eraViewModel(pinnedId = 3L)
+
+        vm.onIntent(FiguresContract.Intent.EraSelected(FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(listOf("Luther", "Calvin"), state.figures.map { it.name })
+    }
+
+    @Test
+    fun reporterCarriesEraDerivedFromCentury() = runTest(testDispatcher) {
+        val vm = eraViewModel()
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FigureEra.EARLY_CHURCH, state.figures.first { it.name == "Augustine" }.era)
+        assertEquals(FigureEra.MODERN, state.figures.first { it.name == "Bonhoeffer" }.era)
+    }
+
+    private fun eraViewModel(pinnedId: Long? = null): FiguresViewModel {
+        val figures = listOf(
+            buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo", century = "4th"),
+            buildFigure(id = 2L, name = "Calvin", role = "Reformer", century = "16th"),
+            buildFigure(id = 3L, name = "Luther", role = "Reformer", century = "16th"),
+            buildFigure(id = 4L, name = "Bonhoeffer", role = "Theologian & Martyr", century = "20th")
+        )
+        val assignments = pinnedId?.let { id -> (0..6).associate { it to DayAssignment(figureId = id, lens = null) } }
+        return FiguresViewModel(
+            FakeFigureRepository(MutableStateFlow(figures)),
+            FakeEncouragementRepository(MutableStateFlow(emptyMap())),
+            FakeDayAssignmentRepository(assignments = assignments ?: emptyMap()),
+            FakeAnalyticsServiceForFiguresScreen()
+        )
+    }
 }
 
 private fun buildFigure(name: String, role: String) = Figure(
@@ -261,11 +379,11 @@ private fun buildFigure(name: String, role: String) = Figure(
     role = role
 )
 
-private fun buildFigure(id: Long, name: String, role: String) = Figure(
+private fun buildFigure(id: Long, name: String, role: String, century: String = "4th") = Figure(
     id = id,
     name = name,
     category = FigureCategory.THEOLOGIAN,
-    century = "4th",
+    century = century,
     role = role
 )
 

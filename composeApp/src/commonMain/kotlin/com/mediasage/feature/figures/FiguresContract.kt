@@ -1,5 +1,7 @@
 package com.mediasage.feature.figures
 
+import com.mediasage.domain.model.FigureEra
+
 object FiguresContract {
 
     sealed interface UiState {
@@ -7,6 +9,8 @@ object FiguresContract {
         data class Success(
             val figures: List<VoiceFigureItem>,
             val searchQuery: String = "",
+            /** Null means All. */
+            val selectedEra: FigureEra? = null,
             val isRefreshing: Boolean = false
         ) : UiState
     }
@@ -16,6 +20,7 @@ object FiguresContract {
         data object Refresh : Intent
         data class FigureClicked(val figureId: Long) : Intent
         data class SearchQueryChanged(val query: String) : Intent
+        data class EraSelected(val era: FigureEra?) : Intent
     }
 
     sealed interface SideEffect {
@@ -28,6 +33,7 @@ data class VoiceFigureItem(
     val name: String,
     val role: String,
     val lifespan: String,
+    val era: FigureEra? = null,
     val themes: List<String> = emptyList(),
     val imageUrl: String?,
     val quoteCount: Int = 0,
