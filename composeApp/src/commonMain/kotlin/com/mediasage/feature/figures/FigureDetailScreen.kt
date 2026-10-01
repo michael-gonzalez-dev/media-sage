@@ -20,12 +20,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,12 +43,16 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.ui.FigurePlaceholder
+import com.mediasage.ui.LensPicker
 import com.mediasage.ui.MediaSageBackRow
+import com.mediasage.ui.MediaSageBottomSheet
 import com.mediasage.ui.MediaSageTabRow
 import com.mediasage.ui.QuoteCard
 import com.mediasage.ui.ReassignConfirmationDialog
+import com.mediasage.ui.labelRes
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.figure_detail_biography
 import mediasage.composeapp.generated.resources.figure_detail_no_biography
@@ -55,6 +61,8 @@ import mediasage.composeapp.generated.resources.figure_detail_pin_to_home
 import mediasage.composeapp.generated.resources.figure_detail_pinned_to_home
 import mediasage.composeapp.generated.resources.figure_detail_quotes_sheet_title
 import mediasage.composeapp.generated.resources.figure_detail_tab_quotes
+import mediasage.composeapp.generated.resources.reassign_dialog_lens_label
+import mediasage.composeapp.generated.resources.reassign_dialog_reporter_lens_label
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -88,19 +96,55 @@ fun FigureDetailScreen(
                         onPinQuote = { onIntent(FigureDetailContract.Intent.PinQuote(it)) },
                     )
 
+                    if (state.isLensPickerOpen) {
+                        PinLensPickerSheet(state = state, onIntent = onIntent)
+                    }
                     state.pendingReassignment?.let { pending ->
-                        ReassignConfirmationDialog(
-                            currentFigureName = pending.currentFigureName,
-                            newAssignmentLabel = pending.newFigureName,
-                            nextWeekdayLabel = pending.nextWeekdayLabel,
-                            onConfirm = { onIntent(FigureDetailContract.Intent.ConfirmReassignment) },
-                            onDismiss = { onIntent(FigureDetailContract.Intent.CancelReassignment) },
-                        )
+                        PinReassignDialog(pending = pending, onIntent = onIntent)
                     }
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PinLensPickerSheet(
+    state: FigureDetailContract.UiState.Success,
+    onIntent: (FigureDetailContract.Intent) -> Unit,
+) {
+    MediaSageBottomSheet(
+        onDismissRequest = { onIntent(FigureDetailContract.Intent.DismissLensPicker) },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        LensPicker(
+            figureName = state.figureName,
+            portraitUrl = state.figureImageUrl,
+            onLensSelected = { onIntent(FigureDetailContract.Intent.LensSelected(it)) },
+            modifier = Modifier.padding(bottom = 32.dp),
+        )
+    }
+}
+
+@Composable
+private fun PinReassignDialog(
+    pending: FigureDetailContract.PendingReassignment,
+    onIntent: (FigureDetailContract.Intent) -> Unit,
+) {
+    val lensLabel = stringResource((pending.lens ?: LensFilter.NEWS).labelRes())
+    val changeLabel = if (pending.isReporterChange) {
+        stringResource(Res.string.reassign_dialog_reporter_lens_label, pending.newFigureName, lensLabel)
+    } else {
+        stringResource(Res.string.reassign_dialog_lens_label, lensLabel)
+    }
+    ReassignConfirmationDialog(
+        currentFigureName = pending.currentFigureName,
+        newAssignmentLabel = changeLabel,
+        nextWeekdayLabel = pending.nextWeekdayLabel,
+        onConfirm = { onIntent(FigureDetailContract.Intent.ConfirmReassignment) },
+        onDismiss = { onIntent(FigureDetailContract.Intent.CancelReassignment) },
+    )
 }
 
 @Composable

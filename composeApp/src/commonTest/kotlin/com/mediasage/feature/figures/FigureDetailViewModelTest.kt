@@ -36,6 +36,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -61,14 +62,29 @@ class FigureDetailViewModelTest {
     }
 
     @Test
-    fun pinToHome_assignsImmediatelyWhenTodayHasNoBriefingYet() = runTest(testDispatcher) {
+    fun pinToHome_opensTheLensPickerWithoutAssigningAnything() = runTest(testDispatcher) {
         val (viewModel, dayAssignmentRepo, analyticsService) =
             figureDetailViewModel(figureId = 2L, figures = listOf(augustine, lewis))
 
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
 
-        assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertTrue(state.isLensPickerOpen)
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+        assertTrue(analyticsService.loggedEvents.isEmpty())
+    }
+
+    @Test
+    fun lensSelected_assignsTodayWithTheChosenLensWhenTodayHasNoBriefingYet() = runTest(testDispatcher) {
+        val (viewModel, dayAssignmentRepo, analyticsService) =
+            figureDetailViewModel(figureId = 2L, figures = listOf(augustine, lewis))
+        viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(LensFilter.HOPE))
+
+        assertEquals(listOf(Triple(todayOrdinal, 2L, LensFilter.HOPE as LensFilter?)), dayAssignmentRepo.assignCalls)
+        val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertFalse(state.isLensPickerOpen)
         assertNull(state.pendingReassignment)
         assertEquals(
             listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
@@ -77,36 +93,53 @@ class FigureDetailViewModelTest {
     }
 
     @Test
-    fun pinToHome_promptsConfirmationWhenTodayAlreadyBriefedForADifferentFigure() = runTest(testDispatcher) {
+    fun dismissLensPicker_closesThePickerAndChangesNothing() = runTest(testDispatcher) {
+        val (viewModel, dayAssignmentRepo, _) = figureDetailViewModel(figureId = 2L, figures = listOf(augustine, lewis))
+        viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        viewModel.onIntent(FigureDetailContract.Intent.DismissLensPicker)
+
+        val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertFalse(state.isLensPickerOpen)
+        assertNull(state.pendingReassignment)
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+    }
+
+    @Test
+    fun lensSelected_promptsConfirmationNamingTheLensWhenTodayAlreadyBriefedForADifferentFigure() = runTest(testDispatcher) {
         val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
         )
-
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(LensFilter.HOPE))
 
         assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
-        val pending = state.pendingReassignment
-        assertNotNull(pending)
+        assertFalse(state.isLensPickerOpen)
+        val pending = assertNotNull(state.pendingReassignment)
         assertEquals("Augustine of Hippo", pending.currentFigureName)
         assertEquals("C.S. Lewis", pending.newFigureName)
+        assertEquals(LensFilter.HOPE, pending.lens)
+        assertTrue(pending.isReporterChange)
         assertTrue(analyticsService.loggedEvents.isEmpty())
     }
 
     @Test
-    fun confirmReassignment_appliesTheAssignmentAndClearsTheDialog() = runTest(testDispatcher) {
+    fun confirmReassignment_appliesTheChosenFigureAndLensAndClearsTheDialog() = runTest(testDispatcher) {
         val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
         )
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(LensFilter.HOPE))
 
         viewModel.onIntent(FigureDetailContract.Intent.ConfirmReassignment)
 
-        assertEquals(listOf(Triple(todayOrdinal, 2L, null as LensFilter?)), dayAssignmentRepo.assignCalls)
+        assertEquals(listOf(Triple(todayOrdinal, 2L, LensFilter.HOPE as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
         assertEquals(
@@ -123,6 +156,7 @@ class FigureDetailViewModelTest {
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
         )
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(LensFilter.HOPE))
 
         viewModel.onIntent(FigureDetailContract.Intent.CancelReassignment)
 
@@ -132,7 +166,7 @@ class FigureDetailViewModelTest {
     }
 
     @Test
-    fun pinToHome_unpinningAlreadyPinnedFigureClearsWithNoDialog() = runTest(testDispatcher) {
+    fun pinToHome_unpinningAlreadyPinnedFigureClearsWithNoPickerOrDialog() = runTest(testDispatcher) {
         val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 1L,
             figures = listOf(augustine, lewis),
@@ -144,16 +178,15 @@ class FigureDetailViewModelTest {
 
         assertEquals(listOf(todayOrdinal), dayAssignmentRepo.clearCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertFalse(state.isLensPickerOpen)
         assertNull(state.pendingReassignment)
         assertTrue(analyticsService.loggedEvents.isEmpty())
     }
 
     @Test
-    fun pinToHome_repinningTodaysLockedFigureKeepsTodaysLockedLens() = runTest(testDispatcher) {
-        // Regression test: Reporter Detail has no lens picker. If the figure being pinned is already
-        // the day's locked-in reporter (isPinned is false only because the weekday assignment row
-        // currently points elsewhere), assigning with no lens would silently switch today's lens to
-        // Headlines and generate a second briefing — it must restore the slot with the locked lens.
+    fun lensSelected_repinningTodaysLockedFigureWithTodaysLensRestoresItWithNoDialog() = runTest(testDispatcher) {
+        // The figure is already today's locked-in reporter; the weekday slot only points elsewhere.
+        // Choosing today's lens must restore the slot as-is rather than prompt or start a second briefing.
         val (viewModel, dayAssignmentRepo, analyticsService) = figureDetailViewModel(
             figureId = 1L,
             figures = listOf(augustine, lewis),
@@ -161,13 +194,34 @@ class FigureDetailViewModelTest {
             lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
             lockedThemesByEpochDay = mapOf(todayEpochDay to LensFilter.HOPE),
         )
-
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(LensFilter.HOPE))
 
         assertEquals(listOf(Triple(todayOrdinal, 1L, LensFilter.HOPE as LensFilter?)), dayAssignmentRepo.assignCalls)
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
         assertEquals(listOf(AnalyticsEvents.FIGURE_PINNED), analyticsService.loggedEvents.map { it.first })
+    }
+
+    @Test
+    fun lensSelected_repinningTodaysLockedFigureWithADifferentLensPromptsALensOnlyChange() = runTest(testDispatcher) {
+        val (viewModel, dayAssignmentRepo, _) = figureDetailViewModel(
+            figureId = 1L,
+            figures = listOf(augustine, lewis),
+            assignments = mapOf(todayOrdinal to DayAssignment(figureId = 2L, lens = null)),
+            lockedFigureIdsByEpochDay = mapOf(todayEpochDay to 1L),
+            lockedThemesByEpochDay = mapOf(todayEpochDay to LensFilter.HOPE),
+        )
+        viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(LensFilter.GRACE))
+
+        assertTrue(dayAssignmentRepo.assignCalls.isEmpty())
+        val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        val pending = assertNotNull(state.pendingReassignment)
+        assertFalse(pending.isReporterChange)
+        assertEquals(LensFilter.GRACE, pending.lens)
     }
 
     @Test
@@ -180,6 +234,7 @@ class FigureDetailViewModelTest {
             holdWrites = gate,
         )
         viewModel.onIntent(FigureDetailContract.Intent.PinToHome)
+        viewModel.onIntent(FigureDetailContract.Intent.LensSelected(null))
 
         viewModel.onIntent(FigureDetailContract.Intent.ConfirmReassignment)
 
