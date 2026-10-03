@@ -26,7 +26,7 @@ Each DAO has insert (single + batch), query (by ID, by relationship, all with Fl
 - **Epoch millis for dates**: Stored `publishedAt`, `fetchedAt`, `createdAt` as `Long` (epoch millis) instead of using a date type. Avoids type converters for dates and works across all KMP targets without platform-specific date handling.
 - **Comma-separated strings for themes**: Stored theme lists as comma-separated strings instead of a separate junction table. Simpler schema for now — themes are for display and AI matching, not for complex querying. Can migrate to a proper many-to-many relationship later if needed.
 - **Single category for figures**: Each figure gets one category (theologian/mystic/modern/biblical) even though some span multiple. This is for UI grouping, not theological accuracy. Claude's matching engine works on quote content and themes, not categories.
-- **ForeignKey with CASCADE delete**: Deleting a figure cascades to its quotes, deleting a headline cascades to its matches. Prevents orphaned records.
+- **ForeignKey with CASCADE delete**: Deleting a figure cascades to its quotes, deleting a headline cascades to its matches. Prevents orphaned records. It also means any write that deletes a parent row deletes its children, including `OnConflictStrategy.REPLACE`. Use `@Upsert` on parent tables (see [MS-807](MS-807-figures-sync-removals-and-upsert.md)).
 - **Flow return types on DAOs**: Query methods return `Flow<List<T>>` for reactive UI updates. Single-item lookups return suspend functions.
 
 ## Concepts learned

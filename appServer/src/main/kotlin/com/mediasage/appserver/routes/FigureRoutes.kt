@@ -15,6 +15,7 @@ fun Route.figureRoutes() {
         val since = call.request.queryParameters["since"]?.toLongOrNull()
         val syncedAt = System.currentTimeMillis()
         val figures = figureRepository.getAllEnabled(since)
-        call.respond(HttpStatusCode.OK, FiguresResponse(syncedAt = syncedAt, figures = figures))
+        val disabledIds = since?.let { figureRepository.getDisabledIdsSince(it) }.orEmpty()
+        call.respond(HttpStatusCode.OK, FiguresResponse(syncedAt = syncedAt, figures = figures, disabledIds = disabledIds))
     }
 }

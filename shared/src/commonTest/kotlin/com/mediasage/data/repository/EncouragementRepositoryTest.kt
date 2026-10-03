@@ -654,7 +654,7 @@ private class FakeFigureDao(figures: List<FigureEntity> = emptyList()) : FigureD
         return figure.id
     }
 
-    override suspend fun insertAll(figures: List<FigureEntity>) {
+    override suspend fun upsertAll(figures: List<FigureEntity>) {
         figures.forEach { store[it.name] = it }
     }
 
@@ -674,6 +674,8 @@ private class FakeFigureDao(figures: List<FigureEntity> = emptyList()) : FigureD
         store.values.find { it.name.lowercase() == name.lowercase() }
 
     override suspend fun deleteById(id: Long) { store.entries.removeAll { it.value.id == id } }
+
+    override suspend fun deleteByIds(ids: List<Long>) { store.entries.removeAll { it.value.id in ids } }
 
     override suspend fun deleteAll() { store.clear() }
 }

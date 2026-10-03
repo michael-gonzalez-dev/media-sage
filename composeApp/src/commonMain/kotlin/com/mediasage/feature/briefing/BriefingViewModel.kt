@@ -153,7 +153,10 @@ class BriefingViewModel(
                         return@collectLatest
                     }
                     val todayOrdinal = todayDayOfWeekOrdinal()
+                    // A reporter disabled on the server is gone from figures but can still be
+                    // today's assignment or locked reporter, so it falls back like no assignment.
                     val figureId = dayAssignmentRepository.resolveReporter(todayEpochDay(), todayOrdinal)
+                        ?.takeIf { id -> inputs.figures.any { it.id == id } }
                         ?: inputs.figures.firstOrNull()?.id
                     if (figureId == null) {
                         updateCard(BriefingContract.CardState.Hidden)

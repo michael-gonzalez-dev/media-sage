@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import com.mediasage.data.local.entity.FigureEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -12,8 +13,10 @@ interface FigureDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(figure: FigureEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(figures: List<FigureEntity>)
+    // Upsert, not REPLACE: REPLACE deletes the old row first, and the CASCADE foreign keys on
+    // quotes and discovered_quotes would delete that figure's saved quotes with it.
+    @Upsert
+    suspend fun upsertAll(figures: List<FigureEntity>)
 
     @Query("SELECT * FROM figures ORDER BY name ASC")
     fun observeAll(): Flow<List<FigureEntity>>
@@ -35,6 +38,9 @@ interface FigureDao {
 
     @Query("DELETE FROM figures WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM figures WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 
     @Query("DELETE FROM figures")
     suspend fun deleteAll()

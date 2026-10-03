@@ -103,6 +103,20 @@ class BriefingViewModelTest {
     }
 
     @Test
+    fun loadCard_fallsBackToFirstFigureWhenTodaysReporterWasDisabled() = runTest(testDispatcher) {
+        // Judson (id 1) is today's reporter but was disabled on the server, so he's gone from figures.
+        val viewModel = briefingViewModel(
+            figures = listOf(lincoln),
+            assignments = mapOf(todayOrdinal to DayAssignment(figureId = 1L, lens = null)),
+            resolveReporterResult = 1L,
+        )
+
+        val state = viewModel.state.value as BriefingContract.UiState.Success
+        val card = state.card as BriefingContract.CardState.Ready
+        assertEquals(2L, card.figureId)
+    }
+
+    @Test
     fun loadCard_rapidAssignmentChangesDuringSyncNeverSurfaceCancellationAsError() = runTest(testDispatcher) {
         // Regression test: on a fresh install, day-assignment sync can upsert several rows in
         // quick succession, re-triggering collectLatest and cancelling the in-flight getOrFetch

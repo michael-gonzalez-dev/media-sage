@@ -1,5 +1,9 @@
 # MS-141: Fix Delta Sync — Use Server ID as Room Primary Key
 
+> **Correction (MS-807):** `INSERT OR REPLACE` does not update the existing row. It deletes it and inserts a new
+> one, and that delete cascades into `quotes` and `discovered_quotes`. `FigureDao` now uses `@Upsert`. See
+> [MS-807](MS-807-figures-sync-removals-and-upsert.md).
+
 ## Problem
 
 Portrait URL changes in Supabase only appeared after a fresh install. Delta sync (the weekly incremental path) never updated existing Room rows.

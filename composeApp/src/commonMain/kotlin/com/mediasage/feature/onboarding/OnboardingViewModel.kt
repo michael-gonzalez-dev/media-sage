@@ -107,10 +107,11 @@ class OnboardingViewModel(
         }
     }
 
-    // Matches the briefing: an unassigned day falls back to the first figure, and no lens means News.
+    // Matches the briefing: an unassigned day, or one assigned to a reporter since disabled, falls back to the first
+    // figure, and no lens means News.
     private fun scheduledSelection(assignments: Map<Int, DayAssignment>, figures: List<Figure>): OnboardingContract.PickSelection? {
         val today = assignments[todayDayOfWeek()]
-        val reporterId = today?.figureId ?: figures.firstOrNull()?.id ?: return null
+        val reporterId = today?.figureId?.takeIf { id -> figures.any { it.id == id } } ?: figures.firstOrNull()?.id ?: return null
         return OnboardingContract.PickSelection(reporterId, today?.lens ?: LensFilter.NEWS)
     }
 }

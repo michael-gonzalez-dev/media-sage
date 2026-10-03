@@ -5,13 +5,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @Serializable
 data class FiguresResponse(
     val syncedAt: Long,
-    val figures: List<FigureDto>
+    val figures: List<FigureDto>,
+    // Only filled on a "changed since" request. figures stays enabled-only so older app builds,
+    // which ignore this field, never show a disabled reporter.
+    val disabledIds: List<Long> = emptyList()
 )
 
 @Serializable
@@ -41,6 +45,14 @@ class FigureRepository(private val baseUrl: String) {
                 .where { FigureTable.name eq figureName }
                 .singleOrNull()?.get(FigureTable.portraitUrl)
             resolveUrl(rawUrl)
+        }
+    }
+
+    suspend fun getDisabledIdsSince(since: Long): List<Long> = withContext(Dispatchers.IO) {
+        transaction {
+            FigureTable.select(FigureTable.id)
+                .where { (FigureTable.isEnabled eq false) and (FigureTable.updatedAt greater since) }
+                .map { it[FigureTable.id] }
         }
     }
 

@@ -10,6 +10,7 @@ import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
 import com.mediasage.domain.repository.FigureRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class FigureRepositoryImpl(
@@ -36,12 +37,17 @@ class FigureRepositoryImpl(
         val lastSyncAt = syncMetaDao.get()?.lastFigureSyncAt
         val isFullSync = lastSyncAt == null || currentTimeMillis() - lastSyncAt > FULL_SYNC_INTERVAL_MS
         val response = api.getFigures(since = if (isFullSync) null else lastSyncAt)
-        if (isFullSync) {
-            figureDao.deleteAll()
-            figureDao.insertAll(response.figures.map { it.toEntity() })
-        } else if (response.figures.isNotEmpty()) {
-            figureDao.insertAll(response.figures.map { it.toEntity() })
+        val figures = response.figures.map { it.toEntity() }
+        // Never delete a figure that's still enabled: deleting cascades to its saved quotes.
+        // Removing a disabled figure is meant to drop them, including a memorized quote.
+        val removedIds = if (isFullSync) {
+            val enabledIds = figures.map { it.id }.toSet()
+            figureDao.observeAll().first().map { it.id }.filterNot { it in enabledIds }
+        } else {
+            response.disabledIds
         }
+        if (removedIds.isNotEmpty()) figureDao.deleteByIds(removedIds)
+        if (figures.isNotEmpty()) figureDao.upsertAll(figures)
         syncMetaDao.upsert(SyncMetaEntity(lastFigureSyncAt = response.syncedAt))
     }
 
