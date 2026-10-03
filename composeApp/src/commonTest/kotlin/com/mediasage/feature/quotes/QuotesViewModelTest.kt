@@ -57,6 +57,22 @@ class QuotesViewModelTest {
     }
 
     @Test
+    fun eachQuoteCarriesItsSource() = runTest(testDispatcher) {
+        val quote = Quote(
+            id = 1L,
+            figureId = 2L,
+            text = "All shall be well.",
+            source = "Revelations of Divine Love (c. 1395)",
+            themes = emptyList(),
+        )
+        val viewModel = quotesViewModel(quotes = listOf(quote), figures = listOf(julian))
+
+        val state = viewModel.state.value as QuotesContract.UiState.Success
+
+        assertEquals("Revelations of Divine Love (c. 1395)", state.sections.single().quotes.single().source)
+    }
+
+    @Test
     fun memorizedQuoteIsMarkedWithinItsFigureSection() = runTest(testDispatcher) {
         val memorized = Quote(
             id = 1L,
@@ -134,6 +150,7 @@ private class FakeQuoteRepositoryForQuotesScreen(
     override suspend fun getQuoteById(id: Long): Quote? = quotes.firstOrNull { it.id == id }
     override suspend fun getLatestQuoteForFigure(figureId: Long): Quote? = quotes.lastOrNull { it.figureId == figureId }
     override suspend fun saveQuote(text: String, source: String, themes: List<String>, figureId: Long) = Unit
+    override suspend fun syncLibrary() = Unit
     override fun observeMemorizedQuote(): Flow<Quote?> = MutableStateFlow(null)
     override suspend fun memorizeQuote(figureId: Long, text: String) {
         memorizeCalls.add(figureId to text)

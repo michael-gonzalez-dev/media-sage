@@ -15,6 +15,7 @@ import com.mediasage.data.remote.MatchRequestDto
 import com.mediasage.data.remote.MatchResultDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.data.remote.NewsArticleDto
+import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
 import kotlinx.coroutines.flow.Flow
@@ -151,6 +152,7 @@ private class FakeMediaSageApiForFigureSync(private val response: FiguresRespons
         requestedSince = since
         return response
     }
+    override suspend fun getQuotes(): QuotesResponse = QuotesResponse(quotes = emptyList())
 
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
     override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> = error("not used in this test")

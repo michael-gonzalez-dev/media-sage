@@ -8,7 +8,6 @@ import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
-import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.QuoteRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +24,6 @@ import kotlin.time.Instant
 class FigureDetailViewModel(
     private val figureId: Long,
     private val figureRepository: FigureRepository,
-    private val encouragementRepository: EncouragementRepository,
     private val dayAssignmentRepository: DayAssignmentRepository,
     private val dailyReflectionRepository: DailyReflectionRepository,
     private val quoteRepository: QuoteRepository,
@@ -115,22 +113,22 @@ class FigureDetailViewModel(
         viewModelScope.launch {
             val figure = figureRepository.getFigureById(figureId) ?: return@launch
             combine(
-                encouragementRepository.observeByFigureId(figure.id),
+                quoteRepository.observeQuotesByFigure(figure.id),
                 dayAssignmentRepository.observeAssignments(),
                 input,
                 quoteRepository.observeMemorizedQuote(),
-            ) { encouragements, assignments, screenInput, memorizedQuote ->
+            ) { quotes, assignments, screenInput, memorizedQuote ->
                 val todayOrdinal = todayDayOfWeekOrdinal()
                 FigureDetailContract.UiState.Success(
                     figureName = figure.name,
                     figureRole = figure.role,
                     figureImageUrl = figure.portraitUrl,
                     bio = figure.bio,
-                    quotes = encouragements.map {
+                    quotes = quotes.map {
                         FigureQuoteItem(
-                            quoteText = it.quoteText,
-                            headlineTitle = it.headlineTitle,
-                            isPinned = memorizedQuote?.figureId == figure.id && memorizedQuote.text == it.quoteText,
+                            quoteText = it.text,
+                            source = it.source,
+                            isPinned = memorizedQuote?.figureId == figure.id && memorizedQuote.text == it.text,
                         )
                     },
                     isPinned = assignments[todayOrdinal]?.figureId == figureId,

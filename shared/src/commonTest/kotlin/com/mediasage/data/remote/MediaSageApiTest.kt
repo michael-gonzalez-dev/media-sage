@@ -51,6 +51,28 @@ class MediaSageApiTest {
     }
 
     @Test
+    fun getQuotesReturnsTheLibraryWithSources() = runTest {
+        val response = """
+        {
+            "quotes": [
+                {
+                    "figureId": 1,
+                    "text": "Our heart is restless until it rests in you.",
+                    "source": "Confessions, I.1 (397)",
+                    "themes": "rest,longing"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val api = MediaSageApiImpl(createMockClient(response), "http://localhost:8080")
+        val quote = api.getQuotes().quotes.single()
+
+        assertEquals(1L, quote.figureId)
+        assertEquals("Confessions, I.1 (397)", quote.source)
+    }
+
+    @Test
     fun matchQuoteReturnsResult() = runTest {
         val response = """
         {

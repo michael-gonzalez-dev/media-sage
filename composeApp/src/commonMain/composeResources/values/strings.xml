@@ -63,7 +63,7 @@
     <string name="you_quote_card_header">MEMORY QUOTE</string>
     <string name="you_saved_see_all">Select a quote to memorize →</string>
     <string name="reader_quote_empty_title">Nothing clipped</string>
-    <string name="reader_quote_empty_subtitle">Quotes you discover reading the day's headlines can be clipped here.</string>
+    <string name="reader_quote_empty_subtitle">Pick a quote from any reporter to keep it here.</string>
     <string name="reader_briefings_empty_title">No back editions</string>
     <string name="reader_briefings_empty_subtitle">Each day's briefing joins the archive as the days go by.</string>
     <string name="you_recent_briefings_section_title">PAST BRIEFINGS</string>
@@ -182,7 +182,7 @@
     <!-- Figure detail screen -->
     <string name="figure_detail_biography">Biography</string>
     <string name="figure_detail_tab_quotes">Quotes</string>
-    <string name="figure_detail_quotes_sheet_title">Collected Quotes</string>
+    <string name="figure_detail_quotes_sheet_title">In their words</string>
     <string name="figure_detail_no_biography">No biography available.</string>
     <string name="figure_detail_no_quotes">No quotes yet.</string>
 
@@ -207,8 +207,8 @@
 
     <!-- Quotes screen -->
     <string name="quotes_screen_title">Your Quotes</string>
-    <string name="quotes_empty_title">Nothing discovered yet</string>
-    <string name="quotes_empty_subtitle">Quotes you discover reading the day's headlines will appear here.</string>
+    <string name="quotes_empty_title">No quotes yet</string>
+    <string name="quotes_empty_subtitle">The quote library loads the next time you're online.</string>
 
     <!-- Reassignment confirmation dialog (Reader carousel + Reporter Detail pin) -->
     <string name="reassign_dialog_title">Today’s briefing already exists</string>

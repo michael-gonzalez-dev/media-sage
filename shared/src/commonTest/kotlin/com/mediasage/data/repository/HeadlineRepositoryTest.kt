@@ -13,6 +13,7 @@ import com.mediasage.data.remote.MatchRequestDto
 import com.mediasage.data.remote.MatchResultDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.data.remote.NewsArticleDto
+import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.domain.model.UserSession
@@ -155,6 +156,7 @@ private class FakeAuthRepositoryForHeadlineSync(initialUserId: String?) : AuthRe
 
 private class FakeMediaSageApiForHeadlineSync(private val headlines: List<NewsArticleDto> = emptyList()) : MediaSageApi {
     override suspend fun getFigures(since: Long?): FiguresResponse = error("not used in this test")
+    override suspend fun getQuotes(): QuotesResponse = error("not used in this test")
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = headlines
     override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
     override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto = error("not used in this test")

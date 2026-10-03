@@ -15,10 +15,12 @@ internal class QuotesStateProvider : PreviewParameterProvider<QuotesContract.UiS
                     quotes = listOf(
                         QuotesContract.QuoteItem(
                             quoteText = "You are never too old to set another goal or to dream a new dream.",
+                            source = "Letters to Children (1956)",
                             isMemorized = true,
                         ),
                         QuotesContract.QuoteItem(
                             quoteText = "Hardships often prepare ordinary people for an extraordinary destiny.",
+                            source = "The Problem of Pain (1940)",
                         ),
                     ),
                 ),
@@ -29,6 +31,7 @@ internal class QuotesStateProvider : PreviewParameterProvider<QuotesContract.UiS
                     quotes = listOf(
                         QuotesContract.QuoteItem(
                             quoteText = "All shall be well, and all shall be well, and all manner of thing shall be well.",
+                            source = "Revelations of Divine Love, ch. 27 (c. 1395)",
                         ),
                     ),
                 ),

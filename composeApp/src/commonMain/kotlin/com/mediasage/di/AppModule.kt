@@ -78,7 +78,6 @@ val appModule = module {
     viewModel {
         FiguresViewModel(
             get<FigureRepository>(),
-            get<EncouragementRepository>(),
             get<DayAssignmentRepository>(),
             get<AnalyticsService>(),
         )
@@ -87,7 +86,6 @@ val appModule = module {
         FigureDetailViewModel(
             figureId,
             get<FigureRepository>(),
-            get<EncouragementRepository>(),
             get<DayAssignmentRepository>(),
             get<DailyReflectionRepository>(),
             get<QuoteRepository>(),

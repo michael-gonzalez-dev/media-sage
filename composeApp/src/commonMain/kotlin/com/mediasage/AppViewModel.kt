@@ -128,6 +128,13 @@ class AppViewModel(
             } catch (e: Exception) {
                 // Sync failure is non-fatal — app works offline with cached figures
             }
+            // After figures, since every quote belongs to one. Before the memorized-quote pull below,
+            // so a pulled quote that left the library isn't restored.
+            try {
+                quoteRepository.syncLibrary()
+            } catch (e: Exception) {
+                // Non-fatal — the saved library stays readable offline
+            }
         }
 
         // A single sequential collector — never run the local-only seed and the

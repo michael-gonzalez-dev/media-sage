@@ -4,6 +4,7 @@ import com.mediasage.appserver.repository.ClaudeCallLimitRepository
 import com.mediasage.appserver.repository.EncouragementCacheRepository
 import com.mediasage.appserver.repository.FigureRepository
 import com.mediasage.appserver.repository.HeadlineRepository
+import com.mediasage.appserver.repository.QuoteRepository
 import com.mediasage.appserver.repository.WorkRepository
 import com.mediasage.appserver.service.ArticleScraperService
 import com.mediasage.appserver.service.ClaudeApiClient
@@ -27,27 +28,14 @@ fun serverModule(
     baseUrl: String,
     dailyClaudeCallLimit: Int
 ) = module {
-    single {
-        HttpClient(OkHttp) {
-            install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = false
-                    ignoreUnknownKeys = true
-                })
-            }
-            install(HttpTimeout) {
-                requestTimeoutMillis = 60_000
-                connectTimeoutMillis = 10_000
-                socketTimeoutMillis = 60_000
-            }
-        }
-    }
+    single { createHttpClient() }
 
     single { ClaudeApiClient(get(), claudeApiKey) }
     single { NewsApiClient(get(), newsApiKey) }
     single { ScriptureApiClient(get(), scriptureApiKey) }
     single { ArticleScraperService() }
     single { FigureRepository(baseUrl) }
+    single { QuoteRepository() }
     single { WorkRepository() }
     single { HeadlineRepository() }
     single { EncouragementCacheRepository() }
@@ -55,4 +43,18 @@ fun serverModule(
     single<Int>(named("dailyClaudeCallLimit")) { dailyClaudeCallLimit }
     single { DailyReflectionService(get(), get()) }
     single { HeadlineFetchService(get(), get(), get()) }
+}
+
+private fun createHttpClient() = HttpClient(OkHttp) {
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = false
+            ignoreUnknownKeys = true
+        })
+    }
+    install(HttpTimeout) {
+        requestTimeoutMillis = 60_000
+        connectTimeoutMillis = 10_000
+        socketTimeoutMillis = 60_000
+    }
 }

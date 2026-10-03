@@ -8,7 +8,6 @@ import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureEra
 import com.mediasage.domain.repository.DayAssignmentRepository
-import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +23,6 @@ import kotlin.time.Instant
 
 class FiguresViewModel(
     private val figureRepository: FigureRepository,
-    private val encouragementRepository: EncouragementRepository,
     private val dayAssignmentRepository: DayAssignmentRepository,
     private val analyticsService: AnalyticsService,
 ) : ViewModel() {
@@ -41,12 +39,11 @@ class FiguresViewModel(
         viewModelScope.launch {
             combine(
                 figureRepository.observeAllFigures(),
-                encouragementRepository.observeCountByFigureName(),
                 dayAssignmentRepository.observeAssignments(),
                 _filter
-            ) { figures, counts, assignments, filter ->
+            ) { figures, assignments, filter ->
                 val todayFigureId = assignments[todayDayOfWeekOrdinal()]?.figureId
-                val items = figures.map { it.toVoiceFigureItem(counts, todayFigureId) }
+                val items = figures.map { it.toVoiceFigureItem(todayFigureId) }
                 FiguresContract.UiState.Success(
                     figures = items.filter { it.matches(filter) }.sortedWith(PINNED_FIRST_THEN_NAME),
                     searchQuery = filter.query,
@@ -97,7 +94,7 @@ private data class FiguresFilter(val query: String = "", val era: FigureEra? = n
 private val PINNED_FIRST_THEN_NAME =
     compareByDescending<VoiceFigureItem> { it.isPinned }.thenBy { it.name }
 
-private fun Figure.toVoiceFigureItem(counts: Map<String, Int>, todayFigureId: Long?) = VoiceFigureItem(
+private fun Figure.toVoiceFigureItem(todayFigureId: Long?) = VoiceFigureItem(
     id = id,
     name = name,
     role = role,
@@ -105,7 +102,6 @@ private fun Figure.toVoiceFigureItem(counts: Map<String, Int>, todayFigureId: Lo
     era = FigureEra.fromCentury(century),
     themes = themes,
     imageUrl = portraitUrl,
-    quoteCount = counts[name] ?: 0,
     isPinned = id == todayFigureId
 )
 

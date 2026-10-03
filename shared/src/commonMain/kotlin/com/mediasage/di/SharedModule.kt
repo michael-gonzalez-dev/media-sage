@@ -97,7 +97,7 @@ fun sharedModule(
 
     // Repositories — interface bound to implementation
     single<FigureRepository> { FigureRepositoryImpl(get(), get(), get()) }
-    single<QuoteRepository> { QuoteRepositoryImpl(get(), get(), getOrNull(), get(), get()) }
+    single<QuoteRepository> { QuoteRepositoryImpl(get(), get(), getOrNull(), get(), get(), get()) }
     single<HeadlineRepository> { HeadlineRepositoryImpl(get(), get(), get()) }
     single<EncouragementRepository> {
         EncouragementRepositoryImpl(get(), get(), get(), getOrNull(), get(), get(), get(), getOrNull())

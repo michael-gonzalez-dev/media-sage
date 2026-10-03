@@ -36,6 +36,5 @@ data class VoiceFigureItem(
     val era: FigureEra? = null,
     val themes: List<String> = emptyList(),
     val imageUrl: String?,
-    val quoteCount: Int = 0,
     val isPinned: Boolean = false
 )

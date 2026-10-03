@@ -70,6 +70,7 @@ class QuotesViewModel(
             quotes = figureQuotes.map { quote ->
                 QuotesContract.QuoteItem(
                     quoteText = quote.text,
+                    source = quote.source,
                     isMemorized = quote.memorized,
                 )
             },
