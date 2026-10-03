@@ -24,6 +24,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,7 +63,9 @@ import mediasage.composeapp.generated.resources.onboarding_sample_reflection_new
 import mediasage.composeapp.generated.resources.onboarding_sample_reflection_writings
 import mediasage.composeapp.generated.resources.onboarding_sample_headline_date
 import mediasage.composeapp.generated.resources.onboarding_sample_headline_snippet
+import mediasage.composeapp.generated.resources.onboarding_sample_note
 import mediasage.composeapp.generated.resources.onboarding_sample_quote
+import mediasage.composeapp.generated.resources.reflect_sheet_title
 import mediasage.composeapp.generated.resources.onboarding_sample_scripture_hope_reference
 import mediasage.composeapp.generated.resources.onboarding_sample_scripture_hope_text
 import mediasage.composeapp.generated.resources.onboarding_sample_scripture_news_reference
@@ -73,7 +78,7 @@ import org.jetbrains.compose.resources.stringResource
 // the step's title and body carry the meaning — so they are hidden from screen readers rather
 // than read out as sample headlines and quotes.
 
-// Long enough to type the sample reflection and read it before the lens changes.
+// Long enough to read the sample reflection before the lens changes.
 private const val LENS_CYCLE_MILLIS = 6_500L
 private const val TAP_DELAY_MILLIS = 1_500L
 private const val PRESS_MILLIS = 800L
@@ -122,7 +127,7 @@ internal fun BriefingStepAnimation(featured: OnboardingContract.SampleFigure) {
                 MediaSageScriptureBlock(scriptureReference = reference, scriptureText = text)
             }
         }
-        RiseIn(visible = phase >= 2) { TypedReflection(text = lens.sampleReflection()) }
+        RiseIn(visible = phase >= 2) { RevealedReflection(text = lens.sampleReflection()) }
     }
 }
 
@@ -243,7 +248,7 @@ private fun HeadlineDetailMock(featured: OnboardingContract.SampleFigure) {
             scriptureReference = stringResource(Res.string.onboarding_sample_scripture_news_reference),
             scriptureText = stringResource(Res.string.onboarding_sample_scripture_news_text),
         )
-        TypedReflection(text = stringResource(Res.string.onboarding_sample_reflection_news))
+        RevealedReflection(text = stringResource(Res.string.onboarding_sample_reflection_news))
     }
 }
 
@@ -307,6 +312,33 @@ private fun RosterDay(day: DayOfWeek, figure: OnboardingContract.SampleFigure, l
     }
 }
 
+/** A reader's own note rises in under a lock, the way it sits in the Reflect sheet. */
+@Composable
+internal fun ReflectStepAnimation() {
+    val appeared = rememberEntrancePhase(lastPhase = 1) >= 1
+    RiseIn(visible = appeared, modifier = Modifier.fillMaxWidth().clearAndSetSemantics {}) {
+        Surface(shape = MaterialTheme.shapes.medium, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.Lock,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(Res.string.reflect_sheet_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Text(text = stringResource(Res.string.onboarding_sample_note), style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
 // region Previews
 
 private val PreviewState = OnboardingContract.UiState()
@@ -327,6 +359,12 @@ private fun HeadlinesStepAnimationPreview() {
 @Composable
 private fun ReaderStepAnimationPreview() {
     MediaSageTheme { ReaderStepAnimation(figures = PreviewState.rosterFigures, quoteFigure = PreviewState.headlineFigure) }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReflectStepAnimationPreview() {
+    MediaSageTheme { ReflectStepAnimation() }
 }
 
 // endregion

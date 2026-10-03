@@ -37,10 +37,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -63,11 +61,11 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val STRIP_LEAD_ITEMS = 2
 private val MinCardHeight = 300.dp
-private val StepVerticalPadding = 16.dp
+private val StepVerticalPadding = 4.dp
 private val StripPortraitSize = 44.dp
 
 /**
- * The last onboarding step: one big reporter card at a time, era chips to narrow the deck, and a portrait strip to
+ * The step after the briefing: one big reporter card at a time, era chips to narrow the deck, and a portrait strip to
  * jump anywhere in it. Tapping a lens on a card's back picks that reporter and lens for today. The step scrolls as a
  * whole, so at the largest text size nothing is cut off.
  */
@@ -142,13 +140,7 @@ private fun FillDeckLayout(
 
 @Composable
 private fun PickHeader() {
-    Text(
-        text = stringResource(Res.string.onboarding_pick_title),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.semantics { heading() },
-    )
+    StepTitle(stringResource(Res.string.onboarding_pick_title))
     Text(
         text = stringResource(Res.string.onboarding_pick_body),
         style = MaterialTheme.typography.bodyMedium,
@@ -167,10 +159,10 @@ private fun ReporterDeck(
 ) {
     HorizontalPager(
         state = pagerState,
-        contentPadding = PaddingValues(horizontal = 24.dp),
-        pageSpacing = 12.dp,
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        pageSpacing = 8.dp,
         key = { page -> deck.value[page].card.id },
-        modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxSize().padding(vertical = 4.dp),
     ) { page ->
         val card = deck.value[page].card
         val isSelected = card.id == selection?.reporterId
@@ -256,6 +248,6 @@ private fun SelectionLine(reporter: OnboardingContract.PickReporter?, selection:
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandAmber))
-        Text(text = text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+        Text(text = text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
     }
 }

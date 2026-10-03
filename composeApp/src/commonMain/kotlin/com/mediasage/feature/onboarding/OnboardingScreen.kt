@@ -12,7 +12,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -68,6 +67,8 @@ import mediasage.composeapp.generated.resources.onboarding_headlines_title
 import mediasage.composeapp.generated.resources.onboarding_progress
 import mediasage.composeapp.generated.resources.onboarding_reader_body
 import mediasage.composeapp.generated.resources.onboarding_reader_title
+import mediasage.composeapp.generated.resources.onboarding_reflect_body
+import mediasage.composeapp.generated.resources.onboarding_reflect_title
 import mediasage.composeapp.generated.resources.onboarding_skip
 import com.mediasage.ui.paperSurface
 import mediasage.composeapp.generated.resources.login_background_comic
@@ -96,12 +97,12 @@ fun OnboardingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 12.dp, vertical = 12.dp)
+                .padding(horizontal = 12.dp, vertical = 4.dp)
                 .onboardingPage()
                 // The paper image has a thin see-through border (about 10 to 15dp on a full page), so this padding is
                 // measured from the image's bounds, not the paper's visible edge. The extra space keeps the button
                 // clear of the paper's bottom edge.
-                .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 28.dp),
+                .padding(start = 24.dp, top = 8.dp, end = 24.dp, bottom = 20.dp),
         ) {
             OnboardingTopBar(state = state, onIntent = onIntent)
             OnboardingStepPager(state = state, onIntent = onIntent, modifier = Modifier.weight(1f).fillMaxWidth())
@@ -131,7 +132,7 @@ private fun Modifier.onboardingPage(): Modifier = if (MediaSageTheme.isDark) {
 /**
  * The steps as swipeable pages. The view model owns the current step: Continue, Back and Skip move the pager, and a
  * reader's swipe that settles on a page tells the view model. Swiping stops on the pick step, whose cards swipe sideways
- * themselves; Back is the way out of it.
+ * themselves; Back and Continue are the ways out of it.
  */
 @Composable
 private fun OnboardingStepPager(
@@ -184,10 +185,8 @@ private fun OnboardingTopBar(
         }
         StepProgressIndicator(currentIndex = state.currentIndex, stepCount = state.steps.size)
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-            if (state.currentStep.skippable) {
-                TextButton(onClick = { onIntent(OnboardingContract.Intent.Skip) }, colors = inkTextButtonColors()) {
-                    Text(stringResource(Res.string.onboarding_skip))
-                }
+            TextButton(onClick = { onIntent(OnboardingContract.Intent.Skip) }, colors = inkTextButtonColors()) {
+                Text(stringResource(Res.string.onboarding_skip))
             }
         }
     }
@@ -196,7 +195,7 @@ private fun OnboardingTopBar(
 @Composable
 private fun inkTextButtonColors() = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
 
-/** One segment per step; the current one stretches wider. Screen readers hear "Step N of 4", re-announced as the step changes. */
+/** One segment per step; the current one stretches wider. Screen readers hear "Step N of M", re-announced as the step changes. */
 @Composable
 private fun StepProgressIndicator(currentIndex: Int, stepCount: Int) {
     val description = stringResource(Res.string.onboarding_progress, currentIndex + 1, stepCount)
@@ -234,24 +233,21 @@ private fun OnboardingStepContent(
         ReporterPickStep(state = state, onIntent = onIntent)
         return
     }
-    // Centred in the space between the top bar and the button, so a short step doesn't leave a gap at the bottom.
-    // Content taller than that space starts at the top and scrolls.
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .fillMaxWidth()
-                .heightIn(min = maxHeight)
-                .padding(vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        ) {
-            when (step) {
-                OnboardingContract.Step.BRIEFING -> BriefingStep(featured = state.briefingFigure)
-                OnboardingContract.Step.HEADLINES -> HeadlinesStep(featured = state.headlineFigure)
-                OnboardingContract.Step.READER -> ReaderStep(figures = state.rosterFigures, quoteFigure = state.headlineFigure)
-                OnboardingContract.Step.PICK -> Unit
-            }
+    // Starts at the top, so every step opens the same way and the title sits where the reader expects it.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        when (step) {
+            OnboardingContract.Step.BRIEFING -> BriefingStep(featured = state.briefingFigure)
+            OnboardingContract.Step.HEADLINES -> HeadlinesStep(featured = state.headlineFigure)
+            OnboardingContract.Step.READER -> ReaderStep(figures = state.rosterFigures, quoteFigure = state.headlineFigure)
+            OnboardingContract.Step.REFLECT -> ReflectStep()
+            OnboardingContract.Step.PICK -> Unit
         }
     }
 }
@@ -291,11 +287,20 @@ private fun ReaderStep(figures: List<OnboardingContract.SampleFigure>, quoteFigu
 }
 
 @Composable
-private fun StepTitle(text: String) {
+private fun ReflectStep() {
+    StepTitle(stringResource(Res.string.onboarding_reflect_title))
+    ReflectStepAnimation()
+    StepBody(stringResource(Res.string.onboarding_reflect_body))
+}
+
+/** Every step's heading, the pick step's too. The colour is set so it follows dark mode rather than defaulting to black. */
+@Composable
+internal fun StepTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
         textAlign = TextAlign.Center,
         modifier = Modifier.semantics { heading() },
     )
