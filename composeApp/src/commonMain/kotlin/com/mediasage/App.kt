@@ -1,10 +1,14 @@
 package com.mediasage
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.feature.login.LoginContract
@@ -16,13 +20,15 @@ import com.mediasage.feature.onboarding.OnboardingViewModel
 import com.mediasage.navigation.MediaSageScaffold
 import com.mediasage.theme.AppTheme
 import com.mediasage.theme.MediaSageTheme
+import com.mediasage.ui.MediaSageLoadingState
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 @Preview
 fun App(isDebugBuild: Boolean = false, appVersion: String = "", isIos: Boolean = false) {
-    val appViewModel = koinViewModel<AppViewModel>()
+    val appViewModel = koinViewModel<AppViewModel> { parametersOf(isDebugBuild) }
     val darkMode by appViewModel.darkMode.collectAsState()
     val appTheme by appViewModel.appTheme.collectAsState()
     val textScalePercent by appViewModel.textScalePercent.collectAsState()
@@ -38,8 +44,11 @@ fun App(isDebugBuild: Boolean = false, appVersion: String = "", isIos: Boolean =
         MediaSageTheme(theme = appTheme, darkTheme = darkMode ?: false, textScalePercent = textScalePercent) {
             when (val gate = gateState) {
                 // Also covers a signed-in reader whose onboarding status is still resolving, so the
-                // main tabs never flash on screen before onboarding appears.
-                is AppGateState.Loading -> Unit
+                // main tabs never flash on screen before onboarding appears. Drawn on the app's page
+                // colour with a spinner, so a slow status check never looks like a blank screen.
+                is AppGateState.Loading -> Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+                    MediaSageLoadingState()
+                }
                 is AppGateState.Unauthenticated -> {
                     val loginVm = koinViewModel<LoginViewModel>()
                     val loginState by loginVm.state.collectAsState()

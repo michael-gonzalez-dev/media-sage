@@ -4,12 +4,17 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import com.mediasage.data.AuthPreferencesRepository
+import com.mediasage.domain.model.BriefingDay
+import com.mediasage.domain.model.DailyReflection
+import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.model.OnboardingStatus
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
+import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -23,7 +28,9 @@ class OnboardingGateTest {
 
     private val profileRepository = FakeOnboardingProfileRepository()
     private val preferences = AuthPreferencesRepository(FakeOnboardingPreferencesDataStore())
-    private val gate = OnboardingGate(profileRepository, FakeOnboardingAuthRepository(), preferences)
+    private val reflections = FakeOnboardingDailyReflectionRepository()
+    private val gate =
+        OnboardingGate(profileRepository, FakeOnboardingAuthRepository(), preferences, reflections, todayEpochDay = { TODAY })
 
     // The test's own scope, not backgroundScope: advanceUntilIdle() ignores background work, so the
     // gate's background re-check would never run.
@@ -110,7 +117,34 @@ class OnboardingGateTest {
         assertFalse(shouldShow())
     }
 
+    @Test
+    fun newAccountWithTodaysBriefingAlreadyWrittenWaitsForALaterDay() = runTest {
+        profileRepository.status = OnboardingStatus.NOT_COMPLETED
+        reflections.lockedDays += TODAY
+
+        assertFalse(shouldShow())
+        // Nothing recorded, so the flow still appears on a later day's launch.
+        assertFalse(USER_ID in preferences.onboardingCompletedUserIds.first())
+    }
+
+    @Test
+    fun debugBuildsShowOnboardingEvenWhenTodayAlreadyHasABriefing() = runTest {
+        profileRepository.status = OnboardingStatus.NOT_COMPLETED
+        reflections.lockedDays += TODAY
+
+        assertTrue(gate.shouldShowOnboarding(USER_ID, this, checkTodaysBriefing = false))
+    }
+
+    @Test
+    fun aBriefingOnAnEarlierDayDoesNotHoldOnboardingBack() = runTest {
+        profileRepository.status = OnboardingStatus.NOT_COMPLETED
+        reflections.lockedDays += TODAY - 1
+
+        assertTrue(shouldShow())
+    }
+
     private companion object {
+        const val TODAY = 20_000L
         const val USER_ID = "user-1"
         const val DISPLAY_NAME = "Ada Lovelace"
     }
@@ -148,4 +182,22 @@ private class FakeOnboardingPreferencesDataStore : DataStore<Preferences> {
         state.value = transform(state.value)
         return state.value
     }
+}
+
+private class FakeOnboardingDailyReflectionRepository : DailyReflectionRepository {
+    val lockedDays = mutableSetOf<Long>()
+    override suspend fun getOrFetch(
+        figureId: Long,
+        figureName: String,
+        headlines: List<String>,
+        tone: String,
+        theme: String?,
+    ): DailyReflection = throw UnsupportedOperationException()
+    override fun observeByEpochDayRange(startEpochDay: Long, endEpochDay: Long): Flow<List<BriefingDay>> = MutableStateFlow(emptyList())
+    override suspend fun getForDay(epochDay: Long, tone: String): DailyReflection? = null
+    override suspend fun getEarliestBriefingEpochDay(): Long? = lockedDays.minOrNull()
+    override suspend fun getLockedFigureId(epochDay: Long): Long? = if (epochDay in lockedDays) 1L else null
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = null
+    override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
+    override suspend fun resolve(userId: String?) = Unit
 }

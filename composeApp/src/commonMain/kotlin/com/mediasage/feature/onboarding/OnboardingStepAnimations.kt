@@ -11,9 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -49,14 +47,19 @@ import com.mediasage.domain.model.LensFilter
 import com.mediasage.feature.you.LensBadge
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.ui.MediaSageHeadlineCard
+import com.mediasage.ui.MediaSageBriefingHeader
 import com.mediasage.ui.MediaSageScriptureBlock
 import com.mediasage.ui.QuoteCard
-import com.mediasage.ui.ThemeChip
 import kotlinx.coroutines.delay
 import kotlinx.datetime.DayOfWeek
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.onboarding_sample_headline
 import mediasage.composeapp.generated.resources.onboarding_sample_headline_category
+import mediasage.composeapp.generated.resources.onboarding_sample_reflection_hope
+import mediasage.composeapp.generated.resources.onboarding_sample_reflection_news
+import mediasage.composeapp.generated.resources.onboarding_sample_reflection_writings
+import mediasage.composeapp.generated.resources.onboarding_sample_headline_date
+import mediasage.composeapp.generated.resources.onboarding_sample_headline_snippet
 import mediasage.composeapp.generated.resources.onboarding_sample_quote
 import mediasage.composeapp.generated.resources.onboarding_sample_scripture_hope_reference
 import mediasage.composeapp.generated.resources.onboarding_sample_scripture_hope_text
@@ -70,13 +73,16 @@ import org.jetbrains.compose.resources.stringResource
 // the step's title and body carry the meaning — so they are hidden from screen readers rather
 // than read out as sample headlines and quotes.
 
-private const val LENS_CYCLE_MILLIS = 2_200L
+// Long enough to type the sample reflection and read it before the lens changes.
+private const val LENS_CYCLE_MILLIS = 6_500L
 private const val TAP_DELAY_MILLIS = 1_500L
 private const val PRESS_MILLIS = 800L
 private const val DETAIL_HOLD_MILLIS = 5_500L
 private const val CARD_HOLD_MILLIS = 2_500L
 private const val PRESSED_SCALE = 0.95f
 private const val SWAP_FADE_MILLIS = 600
+// Shorter than the Briefing tab's portrait, so the AI note below still fits on the first screen.
+private val BriefingPortraitHeight = 220.dp
 private val BriefingLenses = listOf(LensFilter.NEWS, LensFilter.WRITINGS, LensFilter.HOPE)
 private val RosterLenses = listOf(LensFilter.NEWS, LensFilter.GRACE, LensFilter.HOPE)
 private val RosterDays = listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY)
@@ -86,7 +92,7 @@ private val RosterDays = listOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.W
 // public domain (Wikimedia Commons: File:US_Navy_110412-N-SD120-002_Sailors_rebuild_a_home_damaged_by_Hurricane_Katrina.jpg).
 private const val SAMPLE_HEADLINE_IMAGE = "drawable/onboarding_headline_rebuild.jpg"
 
-/** The portrait pops in, then the lens chip cycles and the scripture and reflection change with it. */
+/** The briefing's own portrait header pops in, then the lens cycles and the scripture and reflection change with it. */
 @Composable
 internal fun BriefingStepAnimation(featured: OnboardingContract.SampleFigure) {
     val phase = rememberEntrancePhase(lastPhase = 2)
@@ -97,20 +103,12 @@ internal fun BriefingStepAnimation(featured: OnboardingContract.SampleFigure) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PopIn(visible = phase >= 1) {
-            SamplePortrait(figure = featured, size = 140.dp, shape = MaterialTheme.shapes.small, sepia = true)
-        }
-        RiseIn(visible = phase >= 1) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = featured.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.width(8.dp))
-                AnimatedContent(
-                    targetState = lens,
-                    transitionSpec = {
-                        (slideInVertically { it } + fadeIn()).togetherWith(slideOutVertically { -it } + fadeOut())
-                    },
-                    label = "lensChip",
-                ) { ThemeChip(theme = it.name) }
-            }
+            MediaSageBriefingHeader(
+                figureName = featured.name,
+                figureImageUrl = featured.portraitUrl,
+                theme = lens.name,
+                imageHeight = BriefingPortraitHeight,
+            )
         }
         RiseIn(visible = phase >= 2) {
             AnimatedContent(
@@ -124,7 +122,7 @@ internal fun BriefingStepAnimation(featured: OnboardingContract.SampleFigure) {
                 MediaSageScriptureBlock(scriptureReference = reference, scriptureText = text)
             }
         }
-        RiseIn(visible = phase >= 2) { ReflectionLines(key = lens) }
+        RiseIn(visible = phase >= 2) { TypedReflection(text = lens.sampleReflection()) }
     }
 }
 
@@ -136,6 +134,13 @@ private fun LensFilter.sampleScripture(): Pair<String, String> = when (this) {
         stringResource(Res.string.onboarding_sample_scripture_writings_text)
     else -> stringResource(Res.string.onboarding_sample_scripture_hope_reference) to
         stringResource(Res.string.onboarding_sample_scripture_hope_text)
+}
+
+@Composable
+private fun LensFilter.sampleReflection(): String = when (this) {
+    LensFilter.NEWS -> stringResource(Res.string.onboarding_sample_reflection_news)
+    LensFilter.WRITINGS -> stringResource(Res.string.onboarding_sample_reflection_writings)
+    else -> stringResource(Res.string.onboarding_sample_reflection_hope)
 }
 
 private enum class HeadlinePhase { CARD, TAPPED, DETAIL }
@@ -209,6 +214,9 @@ private fun HeadlineToDetail(showDetail: Boolean, featured: OnboardingContract.S
                 grayscaleImage = false,
                 onClick = {},
                 category = stringResource(Res.string.onboarding_sample_headline_category),
+                // A date and snippet like the Headlines tab shows. No source: the story is made up for this demo.
+                publishedAtLabel = stringResource(Res.string.onboarding_sample_headline_date),
+                snippet = stringResource(Res.string.onboarding_sample_headline_snippet),
             )
         }
     }
@@ -235,7 +243,7 @@ private fun HeadlineDetailMock(featured: OnboardingContract.SampleFigure) {
             scriptureReference = stringResource(Res.string.onboarding_sample_scripture_news_reference),
             scriptureText = stringResource(Res.string.onboarding_sample_scripture_news_text),
         )
-        ReflectionLines(key = Unit)
+        TypedReflection(text = stringResource(Res.string.onboarding_sample_reflection_news))
     }
 }
 

@@ -64,6 +64,8 @@ class AppViewModel(
     private val onboardingGate: OnboardingGate,
     themePreferencesRepository: ThemePreferencesRepository,
     authRepository: AuthRepository,
+    // Debug builds show a reset account's onboarding even on a day that already has a briefing, so it can be retested.
+    private val isDebugBuild: Boolean = false,
 ) : ViewModel() {
 
     val darkMode: StateFlow<Boolean?> = themePreferencesRepository.darkMode
@@ -115,7 +117,7 @@ class AppViewModel(
                 .distinctUntilChanged()
                 .collectLatest { userId ->
                     onboardingDecision.value = userId?.let {
-                        OnboardingDecision(it, onboardingGate.shouldShowOnboarding(it, viewModelScope))
+                        OnboardingDecision(it, onboardingGate.shouldShowOnboarding(it, viewModelScope, checkTodaysBriefing = !isDebugBuild))
                     }
                 }
         }

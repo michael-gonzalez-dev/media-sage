@@ -12,13 +12,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.mediasage.theme.AppTheme
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val appViewModel = koinViewModel<AppViewModel>()
+            // Same instance App() reads, so it carries the same debug flag App() passes.
+            val appViewModel = koinViewModel<AppViewModel> { parametersOf(BuildConfig.DEBUG) }
             val darkMode by appViewModel.darkMode.collectAsState()
             val appTheme by appViewModel.appTheme.collectAsState()
 

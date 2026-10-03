@@ -6,15 +6,14 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,6 +39,9 @@ import kotlinx.coroutines.delay
 // plain fades, so the flow feels light and a little playful.
 
 internal const val PHASE_MILLIS = 550L
+private const val TYPE_MILLIS_PER_CHAR = 28L
+private const val TYPING_CARET = "▍"
+private const val REFLECTION_LINES = 3
 private const val FADE_MILLIS = 200
 private const val TAP_RIPPLE_MILLIS = 900
 private const val POP_START_SCALE = 0.4f
@@ -149,27 +151,31 @@ internal fun SamplePortrait(
     }
 }
 
-/** Placeholder reflection text that types itself out again each time [key] changes. */
+/**
+ * A sample reflection that types itself out, so the step shows a reflection being written in the reporter's voice.
+ * It always takes the same height, so the layout never grows while
+ * it types. It starts over whenever [text] changes.
+ */
 @Composable
-internal fun ReflectionLines(key: Any, modifier: Modifier = Modifier) {
+internal fun TypedReflection(text: String, modifier: Modifier = Modifier) {
     val isPreview = LocalInspectionMode.current
-    val lineColor = MediaSageTheme.colors.ruleLine
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(1f, 0.9f, 0.6f).forEachIndexed { index, fraction ->
-            val progress = remember(key) { Animatable(if (isPreview) 1f else 0f) }
-            LaunchedEffect(key) {
-                delay(index * PHASE_MILLIS / 3)
-                progress.animateTo(1f, tween(durationMillis = 500))
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction * progress.value)
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(lineColor),
-            )
+    var typed by remember(text) { mutableIntStateOf(if (isPreview) text.length else 0) }
+    LaunchedEffect(text) {
+        while (typed < text.length) {
+            delay(TYPE_MILLIS_PER_CHAR)
+            typed++
         }
     }
+    val caret = if (typed < text.length) TYPING_CARET else ""
+    Text(
+        text = text.take(typed) + caret,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        minLines = REFLECTION_LINES,
+        maxLines = REFLECTION_LINES,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 /** An expanding, fading ring that marks a simulated tap, replayed each time [tapCount] changes. */

@@ -27,11 +27,11 @@ import com.mediasage.theme.MediaSageTheme
  * brown border via [MediaSageSurface], distinguishing it from the plain white card it sits on.
  * Content stays left-aligned and content-sized by default; pass [centered] when [modifier]
  * widens the chip (e.g. `Modifier.fillMaxWidth()`) so the icon/label center within it instead of
- * hugging the left edge.
+ * hugging the left edge. A null [icon] makes it text-only, as for a flow's Continue button.
  */
 @Composable
 fun MediaSageComicChip(
-    icon: ImageVector,
+    icon: ImageVector?,
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -43,6 +43,8 @@ fun MediaSageComicChip(
         shape = MaterialTheme.shapes.medium,
         orientation = ComicGradientOrientation.Vertical,
         bordered = true,
+        // A caller's minimum height (a 48dp button) reaches the row, so the label is centred vertically in it.
+        fillMinSize = true,
     ) { contentColor ->
         Row(
             modifier = Modifier.then(if (centered) Modifier.fillMaxWidth() else Modifier)
@@ -50,8 +52,10 @@ fun MediaSageComicChip(
             horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(8.dp))
+            if (icon != null) {
+                Icon(imageVector = icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+            }
             Text(text = label, style = MaterialTheme.typography.labelLarge, color = contentColor)
         }
     }
