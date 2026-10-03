@@ -480,6 +480,45 @@ class BriefingViewModelTest {
     }
 
     @Test
+    fun reflectTapped_afterSaveWhileWriteStillInProgress_showsTheSavedNote() = runTest(testDispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val noteRepo = FakeUserReflectionNoteRepository(holdWrites = gate)
+        val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(emptyMap()), resolveReporterResult = 1L)
+        val reflectionRepo = FakeDailyReflectionRepository(challenge = "What is one way to show love today?")
+        val figureRepo = FakeFigureRepository(listOf(judson))
+        val viewModel = BriefingViewModel(
+            getBriefingLoadInputs = GetBriefingLoadInputsUseCase(dayAssignmentRepo, reflectionRepo, figureRepo),
+            dayAssignmentRepository = dayAssignmentRepo,
+            dailyReflectionRepository = reflectionRepo,
+            figureRepository = figureRepo,
+            headlineRepository = FakeHeadlineRepository(),
+            userReflectionNoteRepository = noteRepo,
+            analyticsService = FakeAnalyticsServiceForBriefingScreen(),
+            toneScheduler = FakeBriefingToneScheduler(),
+        )
+        backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onIntent(BriefingContract.Intent.ReflectTapped)
+        advanceUntilIdle()
+        viewModel.onIntent(BriefingContract.Intent.ReflectNoteChanged("Called my neighbor."))
+        viewModel.onIntent(BriefingContract.Intent.ReflectNoteSaved)
+        viewModel.onIntent(BriefingContract.Intent.ReflectDismissed)
+        viewModel.onIntent(BriefingContract.Intent.ReflectTapped)
+        advanceUntilIdle()
+
+        val loadingSheet = requireNotNull((viewModel.state.value as BriefingContract.UiState.Success).reflectSheet)
+        assertEquals(null, loadingSheet.noteText)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        val sheet = requireNotNull((viewModel.state.value as BriefingContract.UiState.Success).reflectSheet)
+        assertEquals("Called my neighbor.", sheet.noteText)
+        assertEquals("Called my neighbor.", sheet.savedNoteText)
+    }
+
+    @Test
     fun reflectNoteChanged_capsAtMaxLength() = runTest(testDispatcher) {
         val dayAssignmentRepo = FakeDayAssignmentRepository(MutableStateFlow(emptyMap()), resolveReporterResult = 1L)
         val reflectionRepo = FakeDailyReflectionRepository(challenge = "What is one way to show love today?")
