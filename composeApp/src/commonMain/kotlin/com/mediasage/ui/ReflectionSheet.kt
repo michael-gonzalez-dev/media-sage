@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -40,12 +41,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
@@ -57,7 +61,9 @@ import com.mediasage.theme.Ink
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.theme.Navy
 import com.mediasage.theme.SlateOnPaper
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.comic_paper
 import mediasage.composeapp.generated.resources.reflect_close_action
@@ -88,6 +94,11 @@ import org.jetbrains.compose.resources.stringResource
  * ever fires, so vetoing there is the only way to keep the sheet visually open underneath the
  * discard dialog. `onDismissRequest` (scrim tap, back press) never changes `sheetState` itself,
  * so it can safely decide to show the dialog without the sheet having moved.
+ *
+ * Saving closes the sheet: it calls [onSave], waits for the keyboard to close, animates the sheet
+ * down, then calls [onDismiss]. Removing the sheet from composition without hiding it first skips
+ * the exit animation. [isClosingAfterSave] lifts the discard veto for that hide, since
+ * `hasUnsavedChanges` may not have recomposed to false yet when the animation starts.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,17 +113,18 @@ fun ReflectionSheet(
     modifier: Modifier = Modifier,
 ) {
     var showDiscardDialog by remember { mutableStateOf(false) }
+    var isClosingAfterSave by remember { mutableStateOf(false) }
     val hasUnsavedChangesState = rememberUpdatedState(hasUnsavedChanges)
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false,
         confirmValueChange = { target ->
-            val shouldVeto = target == SheetValue.Hidden && hasUnsavedChangesState.value
+            val shouldVeto = target == SheetValue.Hidden && hasUnsavedChangesState.value && !isClosingAfterSave
             if (shouldVeto) showDiscardDialog = true
             !shouldVeto
         },
     )
     val scope = rememberCoroutineScope()
-    val requestDismiss = { if (hasUnsavedChanges) showDiscardDialog = true else onDismiss() }
+    val requestDismiss = { if (hasUnsavedChanges && !isClosingAfterSave) showDiscardDialog = true else onDismiss() }
 
     ModalBottomSheet(
         onDismissRequest = requestDismiss,
@@ -122,13 +134,31 @@ fun ReflectionSheet(
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         dragHandle = null,
     ) {
+        // Read inside the sheet's content: ModalBottomSheet hosts it in its own window on Android,
+        // so focus and keyboard insets read outside it belong to the screen behind the sheet.
+        val focusManager = LocalFocusManager.current
+        val imeInsets = WindowInsets.ime
+        val density = LocalDensity.current
+        val saveAndClose: () -> Unit = {
+            onSave()
+            isClosingAfterSave = true
+            focusManager.clearFocus()
+            scope.launch {
+                // Hiding while the keyboard is still closing resizes the sheet mid-animation and
+                // stalls it half-open, so let the keyboard finish first.
+                withTimeoutOrNull(KEYBOARD_HIDE_TIMEOUT_MS) {
+                    snapshotFlow { imeInsets.getBottom(density) }.first { it == 0 }
+                }
+                sheetState.hide()
+            }.invokeOnCompletion { if (!sheetState.isVisible) onDismiss() }
+        }
         ReflectionSheetContent(
             challenge = challenge,
             noteText = noteText,
             editable = editable,
             hasUnsavedChanges = hasUnsavedChanges,
             onNoteChange = onNoteChange,
-            onSave = onSave,
+            onSave = saveAndClose,
             onCloseClick = requestDismiss,
             onFieldFocused = { scope.launch { sheetState.expand() } },
         )
@@ -356,3 +386,6 @@ private fun ReflectionAnswerText(noteText: String, bodyColor: Color, dividerColo
         )
     }
 }
+
+/** Upper bound on waiting for the keyboard to close before the sheet slides down after a save. */
+private const val KEYBOARD_HIDE_TIMEOUT_MS = 500L

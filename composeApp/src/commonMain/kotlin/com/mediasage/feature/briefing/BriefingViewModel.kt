@@ -91,6 +91,9 @@ class BriefingViewModel(
         // (MS-740) never delays the sheet itself from opening.
         updateReflectSheet(BriefingContract.ReflectSheetState(challenge, noteText = null, savedNoteText = null))
         viewModelScope.launch {
+            // Saving closes the sheet, so a quick reopen can land while that write is still in
+            // flight. Wait for it, or getNote would read back the previous note.
+            saveNoteJob?.join()
             val saved = userReflectionNoteRepository.getNote(reflectionId(ready.tone, ready.theme)).orEmpty()
             // Only apply the fetch if the sheet is still open and still on its initial loading
             // state — otherwise the user dismissed it while this was in flight, and applying a
