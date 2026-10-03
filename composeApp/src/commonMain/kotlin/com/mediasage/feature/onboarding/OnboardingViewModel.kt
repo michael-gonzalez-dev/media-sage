@@ -77,8 +77,7 @@ class OnboardingViewModel(
             // Going back from the first step stays put — it must never drop the reader into the main tabs.
             is OnboardingContract.Intent.Back ->
                 if (!current.isFirstStep) moveTo(current.currentIndex - 1)
-            is OnboardingContract.Intent.Skip ->
-                if (current.currentStep.skippable) moveTo(current.steps.indexOf(OnboardingContract.Step.PICK))
+            is OnboardingContract.Intent.Skip -> finish()
             is OnboardingContract.Intent.GoToStep -> moveTo(intent.index.coerceIn(current.steps.indices))
             is OnboardingContract.Intent.SelectEra -> input.update { it.copy(selectedEra = intent.era) }
             is OnboardingContract.Intent.SelectReporter ->
@@ -95,11 +94,12 @@ class OnboardingViewModel(
 
     /**
      * Saves the reader's pick as today's weekday, then opens the app. The save finishes first, so today's briefing is
-     * written by the picked reporter. Nothing is saved when the reader kept the default, so a default shown from an
-     * earlier schedule can never overwrite the real one.
+     * written by the picked reporter. Nothing is saved when the reader kept the default or skipped before picking, so a
+     * default shown from an earlier schedule can never overwrite the real one. A pick is only taken once the schedule
+     * has settled, so finishing never waits for it.
      */
     private fun finish() {
-        if (finishJob != null || !dayAssignmentRepository.isResolved.value) return
+        if (finishJob != null) return
         val pick = input.value.pick
         finishJob = viewModelScope.launch {
             pick?.let { dayAssignmentRepository.assign(todayDayOfWeek(), it.reporterId, it.lens) }

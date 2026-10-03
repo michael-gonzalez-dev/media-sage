@@ -1,13 +1,21 @@
 package com.mediasage.feature.onboarding
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -39,8 +47,12 @@ import kotlinx.coroutines.delay
 // plain fades, so the flow feels light and a little playful.
 
 internal const val PHASE_MILLIS = 550L
-private const val TYPE_MILLIS_PER_CHAR = 28L
-private const val TYPING_CARET = "▍"
+private const val REVEAL_DELAY_MILLIS = 1_200L
+private const val REVEAL_FADE_MILLIS = 400
+private const val PLACEHOLDER_ALPHA_LOW = 0.08f
+private const val PLACEHOLDER_ALPHA_HIGH = 0.22f
+private const val PLACEHOLDER_PULSE_MILLIS = 600
+private const val PLACEHOLDER_LAST_LINE_FRACTION = 0.6f
 private const val REFLECTION_LINES = 3
 private const val FADE_MILLIS = 200
 private const val TAP_RIPPLE_MILLIS = 900
@@ -152,30 +164,52 @@ internal fun SamplePortrait(
 }
 
 /**
- * A sample reflection that types itself out, so the step shows a reflection being written in the reporter's voice.
- * It always takes the same height, so the layout never grows while
- * it types. It starts over whenever [text] changes.
+ * A sample reflection that arrives whole: a brief placeholder, then the full text fades in. It never types itself out,
+ * which would read as a machine writing live. It always takes the same height, so nothing around it moves. It plays
+ * again whenever [text] changes. The placeholder holds until [started], so a reflection that rises into view later
+ * still shows its loading bars rather than arriving already revealed.
  */
 @Composable
-internal fun TypedReflection(text: String, modifier: Modifier = Modifier) {
+internal fun RevealedReflection(text: String, modifier: Modifier = Modifier, started: Boolean = true) {
     val isPreview = LocalInspectionMode.current
-    var typed by remember(text) { mutableIntStateOf(if (isPreview) text.length else 0) }
-    LaunchedEffect(text) {
-        while (typed < text.length) {
-            delay(TYPE_MILLIS_PER_CHAR)
-            typed++
+    val reveal = remember { Animatable(if (isPreview) 1f else 0f) }
+    LaunchedEffect(text, started) {
+        if (isPreview) return@LaunchedEffect
+        reveal.snapTo(0f)
+        if (!started) return@LaunchedEffect
+        delay(REVEAL_DELAY_MILLIS)
+        reveal.animateTo(1f, tween(REVEAL_FADE_MILLIS))
+    }
+    Box(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            minLines = REFLECTION_LINES,
+            maxLines = REFLECTION_LINES,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth().graphicsLayer { alpha = reveal.value },
+        )
+        ReflectionPlaceholder(modifier = Modifier.matchParentSize().graphicsLayer { alpha = 1f - reveal.value })
+    }
+}
+
+/** Soft bars in place of the reflection's lines, the last one shorter, gently pulsing like a paragraph still loading. */
+@Composable
+private fun ReflectionPlaceholder(modifier: Modifier) {
+    val pulse by rememberInfiniteTransition(label = "placeholderPulse").animateFloat(
+        initialValue = PLACEHOLDER_ALPHA_LOW,
+        targetValue = PLACEHOLDER_ALPHA_HIGH,
+        animationSpec = infiniteRepeatable(tween(PLACEHOLDER_PULSE_MILLIS), RepeatMode.Reverse),
+        label = "placeholderAlpha",
+    )
+    val barColor = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(modifier = modifier.graphicsLayer { alpha = pulse }, verticalArrangement = Arrangement.SpaceEvenly) {
+        repeat(REFLECTION_LINES) { line ->
+            val width = if (line == REFLECTION_LINES - 1) PLACEHOLDER_LAST_LINE_FRACTION else 1f
+            Box(modifier = Modifier.fillMaxWidth(width).height(10.dp).clip(CircleShape).background(barColor))
         }
     }
-    val caret = if (typed < text.length) TYPING_CARET else ""
-    Text(
-        text = text.take(typed) + caret,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        minLines = REFLECTION_LINES,
-        maxLines = REFLECTION_LINES,
-        overflow = TextOverflow.Ellipsis,
-        modifier = modifier.fillMaxWidth(),
-    )
 }
 
 /** An expanding, fading ring that marks a simulated tap, replayed each time [tapCount] changes. */

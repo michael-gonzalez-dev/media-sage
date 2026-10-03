@@ -29,7 +29,7 @@ class OnboardingGate(
      * cached completion the server answers; if it can't be reached, the reader gets the main tabs
      * and nothing is recorded, so a new account still sees onboarding on a later launch.
      *
-     * The flow ends with picking today's reporter, which can't take effect once today's briefing exists. So
+     * The flow includes picking today's reporter, which can't take effect once today's briefing exists. So
      * onboarding also waits for a day with no briefing yet on this device. Nothing is recorded, so it appears on a
      * later day's launch. Only an account reset by hand can already have a briefing, so the check never waits on a
      * sync: a briefing written on another device that day is not seen here. [checkTodaysBriefing] is off in debug

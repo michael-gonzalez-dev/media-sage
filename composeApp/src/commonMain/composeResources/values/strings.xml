@@ -260,14 +260,14 @@
     <string name="onboarding_finish">Start reading</string>
     <string name="onboarding_briefing_title">Welcome to The Courage Post</string>
     <string name="onboarding_briefing_intro">Each day one of history's voices of faith writes your briefing.</string>
-    <string name="onboarding_briefing_mission">You choose the lens.</string>
-    <string name="onboarding_briefing_ai">AI writes each reflection in the reporter's voice from their own published writings.</string>
+    <string name="onboarding_briefing_mission">You choose the lens and reflect in your own words. Your reflections are encrypted and private to your account.</string>
+    <string name="onboarding_briefing_ai">AI writes each briefing in the reporter's voice from their own published writings.</string>
     <string name="onboarding_headlines_title">Headlines, with insight</string>
     <string name="onboarding_headlines_body">Tap a headline to see the quote that best fits the story and how it connects. Every quote is real and tied to its source.</string>
     <string name="onboarding_reader_title">Make it yours</string>
     <string name="onboarding_reader_body">The Reader tab is where you set your weekly roster of reporters. You can also memorize quotes and revisit past briefings.</string>
     <string name="onboarding_pick_title">Choose today's reporter</string>
-    <string name="onboarding_pick_body">Your reporter writes both of today's briefings, morning and evening. Once you choose, they stay with you until tomorrow. Tap a card to flip it, then tap a lens.</string>
+    <string name="onboarding_pick_body">Tap a card to flip it, then tap a lens.</string>
     <string name="onboarding_pick_tag">Today's pick</string>
     <string name="onboarding_pick_selection">Today: %1$s through %2$s</string>
     <string name="onboarding_pick_loading">Loading today's schedule…</string>
@@ -283,7 +283,7 @@
     <string name="onboarding_sample_headline_date">Today</string>
     <string name="onboarding_sample_reflection_news">Fear tells us we face the flood alone. The promise says otherwise, and the neighbours with shovels are its first evidence.</string>
     <string name="onboarding_sample_reflection_writings">A lamp does not light the whole road. It lights the next step, and the next step is all that obedience asks of us.</string>
-    <string name="onboarding_sample_reflection_hope">Hope is not a mood we work up. It is a longing for another country, and the God of hope means to fill it.</string>
+    <string name="onboarding_sample_reflection_hope">Hope does not rest on how things look. It rests on the God who is always what he has promised to be.</string>
     <string name="onboarding_sample_headline_snippet">Volunteers and local churches are helping families rebuild homes lost to the floods.</string>
     <!-- Corrie ten Boom; the verified quote library (seed_quotes.sql) cites Tramp for the Lord (1974). Exact page not yet confirmed. -->
     <string name="onboarding_sample_quote">If God sends us on stony paths, he provides strong shoes.</string>

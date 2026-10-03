@@ -73,7 +73,7 @@ import org.jetbrains.compose.resources.stringResource
 // the step's title and body carry the meaning — so they are hidden from screen readers rather
 // than read out as sample headlines and quotes.
 
-// Long enough to type the sample reflection and read it before the lens changes.
+// Long enough to read the sample reflection before the lens changes.
 private const val LENS_CYCLE_MILLIS = 6_500L
 private const val TAP_DELAY_MILLIS = 1_500L
 private const val PRESS_MILLIS = 800L
@@ -122,7 +122,7 @@ internal fun BriefingStepAnimation(featured: OnboardingContract.SampleFigure) {
                 MediaSageScriptureBlock(scriptureReference = reference, scriptureText = text)
             }
         }
-        RiseIn(visible = phase >= 2) { TypedReflection(text = lens.sampleReflection()) }
+        RiseIn(visible = phase >= 2) { RevealedReflection(text = lens.sampleReflection(), started = phase >= 2) }
     }
 }
 
@@ -243,7 +243,7 @@ private fun HeadlineDetailMock(featured: OnboardingContract.SampleFigure) {
             scriptureReference = stringResource(Res.string.onboarding_sample_scripture_news_reference),
             scriptureText = stringResource(Res.string.onboarding_sample_scripture_news_text),
         )
-        TypedReflection(text = stringResource(Res.string.onboarding_sample_reflection_news))
+        RevealedReflection(text = stringResource(Res.string.onboarding_sample_reflection_news))
     }
 }
 

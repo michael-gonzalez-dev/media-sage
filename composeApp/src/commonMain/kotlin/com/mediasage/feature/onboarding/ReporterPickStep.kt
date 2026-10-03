@@ -37,10 +37,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -62,12 +60,14 @@ import mediasage.composeapp.generated.resources.onboarding_pick_title
 import org.jetbrains.compose.resources.stringResource
 
 private const val STRIP_LEAD_ITEMS = 2
+private const val CARD_ASPECT_RATIO = 5f / 7f // a 2.5 x 3.5 inch trading card
 private val MinCardHeight = 300.dp
-private val StepVerticalPadding = 16.dp
+private val MinCardPeek = 32.dp
+private val StepVerticalPadding = 4.dp
 private val StripPortraitSize = 44.dp
 
 /**
- * The last onboarding step: one big reporter card at a time, era chips to narrow the deck, and a portrait strip to
+ * The step after the briefing: one big reporter card at a time, era chips to narrow the deck, and a portrait strip to
  * jump anywhere in it. Tapping a lens on a card's back picks that reporter and lens for today. The step scrolls as a
  * whole, so at the largest text size nothing is cut off.
  */
@@ -95,7 +95,7 @@ internal fun ReporterPickStep(state: OnboardingContract.UiState, onIntent: (Onbo
                     EraChipRow(
                         selectedEra = state.selectedEra,
                         onEraSelected = { onIntent(OnboardingContract.Intent.SelectEra(it)) },
-                        contentPadding = PaddingValues(vertical = 8.dp),
+                        contentPadding = PaddingValues(horizontal = PageSidePadding, vertical = 8.dp),
                     )
                 },
                 deck = { ReporterDeck(deckState, state.selection, pagerState, onIntent) },
@@ -142,20 +142,16 @@ private fun FillDeckLayout(
 
 @Composable
 private fun PickHeader() {
-    Text(
-        text = stringResource(Res.string.onboarding_pick_title),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.semantics { heading() },
-    )
-    Text(
-        text = stringResource(Res.string.onboarding_pick_body),
-        style = MaterialTheme.typography.bodyMedium,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 6.dp),
-    )
+    Column(modifier = Modifier.padding(horizontal = PageSidePadding), horizontalAlignment = Alignment.CenterHorizontally) {
+        StepTitle(stringResource(Res.string.onboarding_pick_title))
+        Text(
+            text = stringResource(Res.string.onboarding_pick_body),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 }
 
 @Composable
@@ -164,13 +160,15 @@ private fun ReporterDeck(
     selection: OnboardingContract.PickSelection?,
     pagerState: PagerState,
     onIntent: (OnboardingContract.Intent) -> Unit,
-) {
+) = BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(vertical = 4.dp)) {
+    // Shaped like a real trading card: as wide as its height allows, never wider than the screen with a peek either side.
+    val cardWidth = minOf(maxHeight * CARD_ASPECT_RATIO, maxWidth - MinCardPeek * 2)
     HorizontalPager(
         state = pagerState,
-        contentPadding = PaddingValues(horizontal = 24.dp),
-        pageSpacing = 12.dp,
+        contentPadding = PaddingValues(horizontal = (maxWidth - cardWidth) / 2),
+        pageSpacing = 8.dp,
         key = { page -> deck.value[page].card.id },
-        modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxSize(),
     ) { page ->
         val card = deck.value[page].card
         val isSelected = card.id == selection?.reporterId
@@ -200,6 +198,7 @@ private fun PortraitStrip(deck: List<OnboardingContract.PickReporter>, pagerStat
     LazyRow(
         state = stripState,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = PageSidePadding),
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
     ) {
         itemsIndexed(deck, key = { _, reporter -> reporter.card.id }) { index, reporter ->
@@ -256,6 +255,6 @@ private fun SelectionLine(reporter: OnboardingContract.PickReporter?, selection:
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(BrandAmber))
-        Text(text = text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+        Text(text = text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
     }
 }

@@ -43,13 +43,13 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun stepsRunBriefingThenHeadlinesThenReader() {
+    fun stepsRunBriefingThenPickThenHeadlinesThenReader() {
         assertEquals(
             listOf(
                 OnboardingContract.Step.BRIEFING,
+                OnboardingContract.Step.PICK,
                 OnboardingContract.Step.HEADLINES,
                 OnboardingContract.Step.READER,
-                OnboardingContract.Step.PICK,
             ),
             viewModel().state.value.steps,
         )
@@ -62,7 +62,7 @@ class OnboardingViewModelTest {
 
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
-        assertEquals(OnboardingContract.Step.HEADLINES, viewModel.state.value.currentStep)
+        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
     }
 
     @Test
@@ -90,53 +90,69 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun skipIsIgnoredOnTheBriefingStep() = runTest(testDispatcher) {
+    fun skipOnTheFirstStepFinishesOnTodaysDefaultWithoutSaving() = runTest(testDispatcher) {
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(TEN_BOOM.id, LensFilter.HOPE))
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
-        val effects = mutableListOf<OnboardingContract.SideEffect>()
-        backgroundScope.launch { viewModel.sideEffects.collect { effects.add(it) } }
+        val effects = collectEffects(viewModel)
 
         viewModel.onIntent(OnboardingContract.Intent.Skip)
 
-        assertEquals(OnboardingContract.Step.BRIEFING, viewModel.state.value.currentStep)
-        assertEquals(emptyList(), effects)
+        assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects)
+        assertEquals(emptyList<Triple<Int, Long, LensFilter?>>(), dayAssignmentRepository.assignCalls)
     }
 
     @Test
-    fun skipOnTheHeadlinesStepOpensThePickStep() = runTest(testDispatcher) {
+    fun skipFinishesFromEveryStep() = runTest(testDispatcher) {
+        OnboardingContract.Step.entries.indices.forEach { index ->
+            val viewModel = viewModel()
+            backgroundScope.launch { viewModel.state.collect {} }
+            val effects = collectEffects(viewModel)
+            viewModel.onIntent(OnboardingContract.Intent.GoToStep(index))
+
+            viewModel.onIntent(OnboardingContract.Intent.Skip)
+
+            assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects, "step $index")
+        }
+    }
+
+    @Test
+    fun skipBeforeTheScheduleSettlesStillFinishes() = runTest(testDispatcher) {
+        dayAssignmentRepository.resolved.value = false
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
+        val effects = collectEffects(viewModel)
+
+        viewModel.onIntent(OnboardingContract.Intent.Skip)
+
+        assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects)
+    }
+
+    @Test
+    fun skipAfterPickingKeepsThePick() = runTest(testDispatcher) {
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, null))
+        val viewModel = onPickStep()
+        viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
         viewModel.onIntent(OnboardingContract.Intent.Skip)
 
-        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
+        assertEquals(listOf(Triple(TODAY, TEN_BOOM.id, LensFilter.HOPE as LensFilter?)), dayAssignmentRepository.assignCalls)
     }
 
     @Test
-    fun skipOnTheReaderStepOpensThePickStepWithoutFinishing() = runTest(testDispatcher) {
-        val viewModel = viewModel()
-        backgroundScope.launch { viewModel.state.collect {} }
-        val effects = collectEffects(viewModel)
-        repeat(2) { viewModel.onIntent(OnboardingContract.Intent.Continue) }
-
-        viewModel.onIntent(OnboardingContract.Intent.Skip)
-
-        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
-        assertEquals(emptyList(), effects)
-    }
-
-    @Test
-    fun skipIsIgnoredOnThePickStepAndBackReturnsToTheReaderStep() = runTest(testDispatcher) {
+    fun continueOnThePickStepMovesOnAndBackReturnsToTheBriefing() = runTest(testDispatcher) {
         val viewModel = onPickStep()
         val effects = collectEffects(viewModel)
 
-        viewModel.onIntent(OnboardingContract.Intent.Skip)
-        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
+        viewModel.onIntent(OnboardingContract.Intent.Continue)
+        assertEquals(OnboardingContract.Step.HEADLINES, viewModel.state.value.currentStep)
         assertEquals(emptyList(), effects)
 
-        viewModel.onIntent(OnboardingContract.Intent.Back)
-        assertEquals(OnboardingContract.Step.READER, viewModel.state.value.currentStep)
+        repeat(2) { viewModel.onIntent(OnboardingContract.Intent.Back) }
+        assertEquals(OnboardingContract.Step.BRIEFING, viewModel.state.value.currentStep)
     }
 
     @Test
@@ -145,7 +161,7 @@ class OnboardingViewModelTest {
         backgroundScope.launch { viewModel.state.collect {} }
         val effects = collectEffects(viewModel)
 
-        viewModel.onIntent(OnboardingContract.Intent.GoToStep(2))
+        viewModel.onIntent(OnboardingContract.Intent.GoToStep(3))
         assertEquals(OnboardingContract.Step.READER, viewModel.state.value.currentStep)
 
         viewModel.onIntent(OnboardingContract.Intent.GoToStep(0))
@@ -154,8 +170,8 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun continueOnThePickStepFinishesWithoutSavingWhenTheReaderKeptTheDefault() = runTest(testDispatcher) {
-        val viewModel = onPickStep()
+    fun continueOnTheLastStepFinishesWithoutSavingWhenTheReaderKeptTheDefault() = runTest(testDispatcher) {
+        val viewModel = onLastStep()
 
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
@@ -218,17 +234,17 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun aPickBeforeTheScheduleSettlesIsIgnoredAndFinishingWaits() = runTest(testDispatcher) {
+    fun aPickBeforeTheScheduleSettlesIsIgnoredSoFinishingSavesNothing() = runTest(testDispatcher) {
         dayAssignmentRepository.resolved.value = false
         figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
         val viewModel = onPickStep()
         val effects = collectEffects(viewModel)
 
         viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
-        viewModel.onIntent(OnboardingContract.Intent.Continue)
+        viewModel.onIntent(OnboardingContract.Intent.Skip)
 
         assertNull(viewModel.state.value.selection)
-        assertEquals(emptyList(), effects)
+        assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects)
         assertEquals(emptyList<Triple<Int, Long, LensFilter?>>(), dayAssignmentRepository.assignCalls)
     }
 
@@ -240,7 +256,7 @@ class OnboardingViewModelTest {
         val effects = collectEffects(viewModel)
 
         viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
-        viewModel.onIntent(OnboardingContract.Intent.Continue)
+        repeat(OnboardingContract.Step.entries.size - 1) { viewModel.onIntent(OnboardingContract.Intent.Continue) }
 
         assertEquals(listOf(Triple(TODAY, TEN_BOOM.id, LensFilter.HOPE as LensFilter?)), dayAssignmentRepository.assignCalls)
         assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects)
@@ -262,7 +278,14 @@ class OnboardingViewModelTest {
     private fun TestScope.onPickStep(): OnboardingViewModel {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
-        repeat(3) { viewModel.onIntent(OnboardingContract.Intent.Continue) }
+        viewModel.onIntent(OnboardingContract.Intent.Continue)
+        return viewModel
+    }
+
+    private fun TestScope.onLastStep(): OnboardingViewModel {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.state.collect {} }
+        viewModel.onIntent(OnboardingContract.Intent.GoToStep(OnboardingContract.Step.entries.lastIndex))
         return viewModel
     }
 

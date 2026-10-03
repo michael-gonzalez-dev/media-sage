@@ -5,14 +5,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -69,69 +64,43 @@ import mediasage.composeapp.generated.resources.onboarding_progress
 import mediasage.composeapp.generated.resources.onboarding_reader_body
 import mediasage.composeapp.generated.resources.onboarding_reader_title
 import mediasage.composeapp.generated.resources.onboarding_skip
-import com.mediasage.ui.paperSurface
-import mediasage.composeapp.generated.resources.login_background_comic
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.unit.Dp
 import org.jetbrains.compose.resources.stringResource
 
-// Matches the login screen's overlay, which keeps the illustration from competing with the page.
-private const val BACKDROP_SCRIM_ALPHA = 0.3f
+/** The space between the screen's edge and each step's content. */
+internal val PageSidePadding: Dp = 16.dp
 
 @Composable
 fun OnboardingScreen(
     state: OnboardingContract.UiState,
     onIntent: (OnboardingContract.Intent) -> Unit,
 ) {
-    // Continues the login screen's look, the comic illustration under a dark overlay with the page on top, so sign-in
-    // and first run read as one opening.
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(Res.drawable.login_background_comic),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
+    // A plain full-screen surface rather than a framed page, so every step, and the pick step's card most of all, gets
+    // the whole screen. Each piece pads its own sides, so rows that scroll sideways (the pick step's cards, chips and
+    // portraits) run to the screen's edge instead of being cut off short of it.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(top = 4.dp, bottom = 12.dp),
+    ) {
+        OnboardingTopBar(state = state, onIntent = onIntent)
+        OnboardingStepPager(state = state, onIntent = onIntent, modifier = Modifier.weight(1f).fillMaxWidth())
+        MediaSageComicChip(
+            icon = null,
+            label = stringResource(if (state.isLastStep) Res.string.onboarding_finish else Res.string.onboarding_continue),
+            onClick = { onIntent(OnboardingContract.Intent.Continue) },
+            modifier = Modifier.padding(horizontal = PageSidePadding).fillMaxWidth().heightIn(min = 48.dp),
+            centered = true,
         )
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = BACKDROP_SCRIM_ALPHA)))
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 12.dp, vertical = 12.dp)
-                .onboardingPage()
-                // The paper image has a thin see-through border (about 10 to 15dp on a full page), so this padding is
-                // measured from the image's bounds, not the paper's visible edge. The extra space keeps the button
-                // clear of the paper's bottom edge.
-                .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 28.dp),
-        ) {
-            OnboardingTopBar(state = state, onIntent = onIntent)
-            OnboardingStepPager(state = state, onIntent = onIntent, modifier = Modifier.weight(1f).fillMaxWidth())
-            MediaSageComicChip(
-                icon = null,
-                label = stringResource(if (state.isLastStep) Res.string.onboarding_finish else Res.string.onboarding_continue),
-                onClick = { onIntent(OnboardingContract.Intent.Continue) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                centered = true,
-            )
-        }
     }
-}
-
-/**
- * The page the steps sit on. Light mode uses the login screen's white newspaper paper. Dark mode uses the theme's own
- * dark surface instead, since the paper is always light and the steps' colours follow dark mode.
- */
-@Composable
-private fun Modifier.onboardingPage(): Modifier = if (MediaSageTheme.isDark) {
-    shadow(elevation = 8.dp, shape = MaterialTheme.shapes.large)
-        .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.large)
-} else {
-    paperSurface()
 }
 
 /**
  * The steps as swipeable pages. The view model owns the current step: Continue, Back and Skip move the pager, and a
  * reader's swipe that settles on a page tells the view model. Swiping stops on the pick step, whose cards swipe sideways
- * themselves; Back is the way out of it.
+ * themselves; Back and Continue are the ways out of it.
  */
 @Composable
 private fun OnboardingStepPager(
@@ -172,7 +141,7 @@ private fun OnboardingTopBar(
     onIntent: (OnboardingContract.Intent) -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = PageSidePadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
@@ -184,10 +153,8 @@ private fun OnboardingTopBar(
         }
         StepProgressIndicator(currentIndex = state.currentIndex, stepCount = state.steps.size)
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-            if (state.currentStep.skippable) {
-                TextButton(onClick = { onIntent(OnboardingContract.Intent.Skip) }, colors = inkTextButtonColors()) {
-                    Text(stringResource(Res.string.onboarding_skip))
-                }
+            TextButton(onClick = { onIntent(OnboardingContract.Intent.Skip) }, colors = inkTextButtonColors()) {
+                Text(stringResource(Res.string.onboarding_skip))
             }
         }
     }
@@ -196,7 +163,7 @@ private fun OnboardingTopBar(
 @Composable
 private fun inkTextButtonColors() = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
 
-/** One segment per step; the current one stretches wider. Screen readers hear "Step N of 4", re-announced as the step changes. */
+/** One segment per step; the current one stretches wider. Screen readers hear "Step N of M", re-announced as the step changes. */
 @Composable
 private fun StepProgressIndicator(currentIndex: Int, stepCount: Int) {
     val description = stringResource(Res.string.onboarding_progress, currentIndex + 1, stepCount)
@@ -234,24 +201,20 @@ private fun OnboardingStepContent(
         ReporterPickStep(state = state, onIntent = onIntent)
         return
     }
-    // Centred in the space between the top bar and the button, so a short step doesn't leave a gap at the bottom.
-    // Content taller than that space starts at the top and scrolls.
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .fillMaxWidth()
-                .heightIn(min = maxHeight)
-                .padding(vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        ) {
-            when (step) {
-                OnboardingContract.Step.BRIEFING -> BriefingStep(featured = state.briefingFigure)
-                OnboardingContract.Step.HEADLINES -> HeadlinesStep(featured = state.headlineFigure)
-                OnboardingContract.Step.READER -> ReaderStep(figures = state.rosterFigures, quoteFigure = state.headlineFigure)
-                OnboardingContract.Step.PICK -> Unit
-            }
+    // Starts at the top, so every step opens the same way and the title sits where the reader expects it.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = PageSidePadding, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        when (step) {
+            OnboardingContract.Step.BRIEFING -> BriefingStep(featured = state.briefingFigure)
+            OnboardingContract.Step.HEADLINES -> HeadlinesStep(featured = state.headlineFigure)
+            OnboardingContract.Step.READER -> ReaderStep(figures = state.rosterFigures, quoteFigure = state.headlineFigure)
+            OnboardingContract.Step.PICK -> Unit
         }
     }
 }
@@ -290,12 +253,14 @@ private fun ReaderStep(figures: List<OnboardingContract.SampleFigure>, quoteFigu
     StepBody(stringResource(Res.string.onboarding_reader_body))
 }
 
+/** Every step's heading, the pick step's too. The colour is set so it follows dark mode rather than defaulting to black. */
 @Composable
-private fun StepTitle(text: String) {
+internal fun StepTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
         textAlign = TextAlign.Center,
         modifier = Modifier.semantics { heading() },
     )
