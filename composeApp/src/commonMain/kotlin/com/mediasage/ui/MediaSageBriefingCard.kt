@@ -1,5 +1,6 @@
 package com.mediasage.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -43,6 +44,7 @@ import mediasage.composeapp.generated.resources.you_lens_today
 import org.jetbrains.compose.resources.stringResource
 
 private val CardImageHeight = 300.dp
+private const val LENS_TINT_ALPHA = 0.18f
 private val FigurePlaceholderSize = 80.dp
 
 /**
@@ -255,11 +257,14 @@ fun ThemeChip(theme: String) {
     } else {
         theme.lowercase().replaceFirstChar { it.uppercase() }
     }
+    // Most lens colours are too light to read as small text on a light page (Hope is 1.8:1 on white), so the label is
+    // in the page's ink and the lens colour marks the chip through its outline and a light tint.
     Text(
         text = label,
         style = MaterialTheme.typography.labelSmall,
-        color = color,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
+            .background(color.copy(alpha = LENS_TINT_ALPHA), RoundedCornerShape(50))
             .border(width = 1.dp, color = color, shape = RoundedCornerShape(50))
             .padding(horizontal = 8.dp, vertical = 2.dp),
     )
