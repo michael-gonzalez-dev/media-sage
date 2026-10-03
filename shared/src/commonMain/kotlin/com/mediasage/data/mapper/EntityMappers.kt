@@ -24,6 +24,7 @@ fun FigureEntity.toDomain() = Figure(
     role = role,
     lifespan = lifespan,
     themes = if (themes.isEmpty()) emptyList() else themes.split(",").map { it.trim() },
+    knownFor = knownFor,
     portraitUrl = portraitUrl,
     serverId = serverId
 )
@@ -37,6 +38,7 @@ fun Figure.toEntity() = FigureEntity(
     role = role,
     lifespan = lifespan,
     themes = themes.joinToString(","),
+    knownFor = knownFor,
     portraitUrl = portraitUrl,
     serverId = serverId
 )
@@ -50,6 +52,7 @@ fun FigureDto.toEntity() = FigureEntity(
     role = role,
     lifespan = lifespan,
     themes = themes,
+    knownFor = knownFor,
     portraitUrl = portraitUrl,
     serverId = id
 )

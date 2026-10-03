@@ -9,6 +9,8 @@ data class Figure(
     val role: String = "",
     val lifespan: String = "",
     val themes: List<String> = emptyList(),
+    /** One sentence on what the reporter is remembered for, shown on the back of their card. */
+    val knownFor: String = "",
     val portraitUrl: String? = null,
     val serverId: Long = 0
 )

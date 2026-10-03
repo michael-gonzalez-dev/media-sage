@@ -11,6 +11,7 @@ object FigureTable : Table("figures") {
     val lifespan = varchar("lifespan", 64).default("")
     val bio = text("bio").default("")
     val themes = text("themes").default("")
+    val knownFor = text("known_for").default("")
     val portraitUrl = varchar("portrait_url", 512).nullable()
     val isEnabled = bool("is_enabled").default(true)
     val updatedAt = long("updated_at").default(0L)

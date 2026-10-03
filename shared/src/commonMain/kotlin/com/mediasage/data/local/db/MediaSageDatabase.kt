@@ -41,7 +41,7 @@ import com.mediasage.data.local.entity.UserReflectionNoteEntity
         ReadHeadlineEntity::class,
         LocalAccountKeyEntity::class,
     ],
-    version = 38,
+    version = 39,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
