@@ -1,13 +1,19 @@
 package com.mediasage.feature.onboarding
 
+import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
+import com.mediasage.domain.model.FigureEra
+import com.mediasage.domain.model.LensFilter
+import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.FigureRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -22,6 +28,9 @@ class OnboardingViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private val figureRepository = FakeOnboardingFigureRepository()
+    private val dayAssignmentRepository = FakeOnboardingDayAssignmentRepository()
+
+    private fun viewModel() = OnboardingViewModel(figureRepository, dayAssignmentRepository, todayDayOfWeek = { TODAY })
 
     @BeforeTest
     fun setUp() {
@@ -36,14 +45,19 @@ class OnboardingViewModelTest {
     @Test
     fun stepsRunBriefingThenHeadlinesThenReader() {
         assertEquals(
-            listOf(OnboardingContract.Step.BRIEFING, OnboardingContract.Step.HEADLINES, OnboardingContract.Step.READER),
-            OnboardingViewModel(figureRepository).state.value.steps,
+            listOf(
+                OnboardingContract.Step.BRIEFING,
+                OnboardingContract.Step.HEADLINES,
+                OnboardingContract.Step.READER,
+                OnboardingContract.Step.PICK,
+            ),
+            viewModel().state.value.steps,
         )
     }
 
     @Test
     fun continueMovesToTheNextStep() = runTest(testDispatcher) {
-        val viewModel = OnboardingViewModel(figureRepository)
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
 
         viewModel.onIntent(OnboardingContract.Intent.Continue)
@@ -53,7 +67,7 @@ class OnboardingViewModelTest {
 
     @Test
     fun backReturnsToThePreviousStep() = runTest(testDispatcher) {
-        val viewModel = OnboardingViewModel(figureRepository)
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
@@ -64,7 +78,7 @@ class OnboardingViewModelTest {
 
     @Test
     fun backOnTheFirstStepStaysOnItWithoutFinishing() = runTest(testDispatcher) {
-        val viewModel = OnboardingViewModel(figureRepository)
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
         val effects = mutableListOf<OnboardingContract.SideEffect>()
         backgroundScope.launch { viewModel.sideEffects.collect { effects.add(it) } }
@@ -77,7 +91,7 @@ class OnboardingViewModelTest {
 
     @Test
     fun skipIsIgnoredOnTheBriefingStep() = runTest(testDispatcher) {
-        val viewModel = OnboardingViewModel(figureRepository)
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
         val effects = mutableListOf<OnboardingContract.SideEffect>()
         backgroundScope.launch { viewModel.sideEffects.collect { effects.add(it) } }
@@ -89,26 +103,162 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun skipOnTheHeadlinesStepFinishes() = runTest(testDispatcher) {
-        val viewModel = OnboardingViewModel(figureRepository)
+    fun skipOnTheHeadlinesStepOpensThePickStep() = runTest(testDispatcher) {
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
         viewModel.onIntent(OnboardingContract.Intent.Skip)
 
-        assertEquals(OnboardingContract.SideEffect.Finished, viewModel.sideEffects.first())
+        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
     }
 
     @Test
-    fun continueOnTheLastStepFinishes() = runTest(testDispatcher) {
-        val viewModel = OnboardingViewModel(figureRepository)
+    fun skipOnTheReaderStepOpensThePickStepWithoutFinishing() = runTest(testDispatcher) {
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
+        val effects = collectEffects(viewModel)
         repeat(2) { viewModel.onIntent(OnboardingContract.Intent.Continue) }
+
+        viewModel.onIntent(OnboardingContract.Intent.Skip)
+
+        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
+        assertEquals(emptyList(), effects)
+    }
+
+    @Test
+    fun skipIsIgnoredOnThePickStepAndBackReturnsToTheReaderStep() = runTest(testDispatcher) {
+        val viewModel = onPickStep()
+        val effects = collectEffects(viewModel)
+
+        viewModel.onIntent(OnboardingContract.Intent.Skip)
+        assertEquals(OnboardingContract.Step.PICK, viewModel.state.value.currentStep)
+        assertEquals(emptyList(), effects)
+
+        viewModel.onIntent(OnboardingContract.Intent.Back)
         assertEquals(OnboardingContract.Step.READER, viewModel.state.value.currentStep)
+    }
+
+    @Test
+    fun aSwipeMovesToTheStepItSettlesOnWithoutFinishing() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.state.collect {} }
+        val effects = collectEffects(viewModel)
+
+        viewModel.onIntent(OnboardingContract.Intent.GoToStep(2))
+        assertEquals(OnboardingContract.Step.READER, viewModel.state.value.currentStep)
+
+        viewModel.onIntent(OnboardingContract.Intent.GoToStep(0))
+        assertEquals(OnboardingContract.Step.BRIEFING, viewModel.state.value.currentStep)
+        assertEquals(emptyList(), effects)
+    }
+
+    @Test
+    fun continueOnThePickStepFinishesWithoutSavingWhenTheReaderKeptTheDefault() = runTest(testDispatcher) {
+        val viewModel = onPickStep()
 
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
         assertEquals(OnboardingContract.SideEffect.Finished, viewModel.sideEffects.first())
+        assertEquals(emptyList(), dayAssignmentRepository.assignCalls)
+    }
+
+    @Test
+    fun pickStepShowsNoSelectionUntilTheScheduleSettlesThenPreselectsToday() = runTest(testDispatcher) {
+        dayAssignmentRepository.resolved.value = false
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        val viewModel = onPickStep()
+        assertNull(viewModel.state.value.selection)
+
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(TEN_BOOM.id, LensFilter.HOPE))
+        dayAssignmentRepository.resolved.value = true
+
+        assertEquals(OnboardingContract.PickSelection(TEN_BOOM.id, LensFilter.HOPE), viewModel.state.value.selection)
+    }
+
+    @Test
+    fun aLaterScheduleUpdatesTheDefaultWhileTheReaderHasNotPicked() = runTest(testDispatcher) {
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, null))
+        val viewModel = onPickStep()
+        assertEquals(OnboardingContract.PickSelection(LEWIS.id, LensFilter.NEWS), viewModel.state.value.selection)
+
+        // The signed-in schedule replaces the fallback defaults moments later.
+        dayAssignmentRepository.resolved.value = false
+        assertNull(viewModel.state.value.selection)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(TEN_BOOM.id, LensFilter.WRITINGS))
+        dayAssignmentRepository.resolved.value = true
+
+        assertEquals(OnboardingContract.PickSelection(TEN_BOOM.id, LensFilter.WRITINGS), viewModel.state.value.selection)
+    }
+
+    @Test
+    fun theReadersPickIsNeverReplacedByTheScheduleSettlingAfterwards() = runTest(testDispatcher) {
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, null))
+        val viewModel = onPickStep()
+
+        viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
+        dayAssignmentRepository.resolved.value = false
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, LensFilter.WRITINGS))
+        dayAssignmentRepository.resolved.value = true
+
+        assertEquals(OnboardingContract.PickSelection(TEN_BOOM.id, LensFilter.HOPE), viewModel.state.value.selection)
+    }
+
+    @Test
+    fun aPickBeforeTheScheduleSettlesIsIgnoredAndFinishingWaits() = runTest(testDispatcher) {
+        dayAssignmentRepository.resolved.value = false
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        val viewModel = onPickStep()
+        val effects = collectEffects(viewModel)
+
+        viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
+        viewModel.onIntent(OnboardingContract.Intent.Continue)
+
+        assertNull(viewModel.state.value.selection)
+        assertEquals(emptyList(), effects)
+        assertEquals(emptyList(), dayAssignmentRepository.assignCalls)
+    }
+
+    @Test
+    fun finishingSavesThePickForTodayOnlyBeforeOpeningTheApp() = runTest(testDispatcher) {
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, null))
+        val viewModel = onPickStep()
+        val effects = collectEffects(viewModel)
+
+        viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
+        viewModel.onIntent(OnboardingContract.Intent.Continue)
+
+        assertEquals(listOf(Triple(TODAY, TEN_BOOM.id, LensFilter.HOPE)), dayAssignmentRepository.assignCalls)
+        assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects)
+    }
+
+    @Test
+    fun eraChipsNarrowTheDeckButTheSelectionStaysShown() = runTest(testDispatcher) {
+        figureRepository.figures.value = listOf(LEWIS, AUGUSTINE)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, null))
+        val viewModel = onPickStep()
+
+        viewModel.onIntent(OnboardingContract.Intent.SelectEra(FigureEra.EARLY_CHURCH))
+
+        assertEquals(listOf(AUGUSTINE.id), viewModel.state.value.deck.map { it.card.id })
+        assertEquals(LEWIS.name, viewModel.state.value.selectedReporter?.card?.name)
+        assertEquals(2, viewModel.state.value.reporters.size)
+    }
+
+    private fun TestScope.onPickStep(): OnboardingViewModel {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.state.collect {} }
+        repeat(3) { viewModel.onIntent(OnboardingContract.Intent.Continue) }
+        return viewModel
+    }
+
+    private fun TestScope.collectEffects(viewModel: OnboardingViewModel): List<OnboardingContract.SideEffect> {
+        val effects = mutableListOf<OnboardingContract.SideEffect>()
+        backgroundScope.launch { viewModel.sideEffects.collect { effects.add(it) } }
+        return effects
     }
 
     @Test
@@ -116,7 +266,7 @@ class OnboardingViewModelTest {
         figureRepository.figures.value = listOf(
             Figure(id = 1, name = "Corrie ten Boom", category = FigureCategory.MISSIONARY, century = "20th", portraitUrl = "https://x/a.png"),
         )
-        val viewModel = OnboardingViewModel(figureRepository)
+        val viewModel = viewModel()
         backgroundScope.launch { viewModel.state.collect {} }
 
         val figures = viewModel.state.value.sampleFigures
@@ -125,6 +275,25 @@ class OnboardingViewModelTest {
         // Not yet synced: falls back to initials rather than dropping the reporter.
         assertNull(figures[1].portraitUrl)
     }
+}
+
+private const val TODAY = 4
+private val LEWIS = Figure(id = 1, name = "C.S. Lewis", category = FigureCategory.THEOLOGIAN, century = "20th")
+private val TEN_BOOM = Figure(id = 2, name = "Corrie ten Boom", category = FigureCategory.MISSIONARY, century = "20th")
+private val AUGUSTINE = Figure(id = 3, name = "Augustine of Hippo", category = FigureCategory.CHURCH_FATHER, century = "4th")
+
+private class FakeOnboardingDayAssignmentRepository : DayAssignmentRepository {
+    val assignments = MutableStateFlow<Map<Int, DayAssignment>>(emptyMap())
+    val resolved = MutableStateFlow(true)
+    val assignCalls = mutableListOf<Triple<Int, Long, LensFilter?>>()
+    override fun observeAssignments(): Flow<Map<Int, DayAssignment>> = assignments
+    override suspend fun assign(dayOfWeek: Int, figureId: Long, lens: LensFilter?) {
+        assignCalls.add(Triple(dayOfWeek, figureId, lens))
+    }
+    override suspend fun clear(dayOfWeek: Int) = Unit
+    override suspend fun resolveReporter(epochDay: Long, dayOfWeek: Int): Long? = null
+    override val isResolved: StateFlow<Boolean> = resolved
+    override suspend fun resolve(userId: String?) = Unit
 }
 
 private class FakeOnboardingFigureRepository : FigureRepository {

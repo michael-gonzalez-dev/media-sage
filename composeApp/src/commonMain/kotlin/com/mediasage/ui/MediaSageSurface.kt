@@ -35,6 +35,9 @@ fun MediaSageSurface(
     bordered: Boolean = false,
     shadowElevation: Dp = 0.dp,
     enabled: Boolean = true,
+    // When true, any minimum size the caller sets (e.g. a 48dp button) reaches the content, so it fills the surface
+    // and its own alignment can centre it. Off by default, so content that wraps itself keeps doing so.
+    fillMinSize: Boolean = false,
     content: @Composable (contentColor: Color) -> Unit,
 ) {
     val comicColors = rememberComicSurfaceColors(orientation)
@@ -50,7 +53,7 @@ fun MediaSageSurface(
         border = if (bordered) BorderStroke(1.dp, comicColors.border) else null,
         shadowElevation = shadowElevation,
     ) {
-        Box(modifier = comicColors.background) {
+        Box(modifier = comicColors.background, propagateMinConstraints = fillMinSize) {
             content(comicColors.content)
         }
     }

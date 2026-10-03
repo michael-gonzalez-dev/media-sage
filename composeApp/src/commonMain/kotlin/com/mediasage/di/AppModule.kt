@@ -38,8 +38,10 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    single { OnboardingGate(get<ProfileRepository>(), get<AuthRepository>(), get<AuthPreferencesRepository>()) }
-    viewModel {
+    single {
+        OnboardingGate(get<ProfileRepository>(), get<AuthRepository>(), get<AuthPreferencesRepository>(), get<DailyReflectionRepository>())
+    }
+    viewModel { (isDebugBuild: Boolean) ->
         AppViewModel(
             get<FigureRepository>(),
             get<DayAssignmentRepository>(),
@@ -50,6 +52,7 @@ val appModule = module {
             get<OnboardingGate>(),
             get<ThemePreferencesRepository>(),
             get<AuthRepository>(),
+            isDebugBuild,
         )
     }
     viewModel {
@@ -100,7 +103,7 @@ val appModule = module {
             get<AnalyticsService>(),
         )
     }
-    viewModel { OnboardingViewModel(get<FigureRepository>()) }
+    viewModel { OnboardingViewModel(get<FigureRepository>(), get<DayAssignmentRepository>()) }
     viewModel { SettingsViewModel(get<AuthRepository>(), get<ThemePreferencesRepository>(), get<AnalyticsService>()) }
     viewModel {
         ReaderViewModel(

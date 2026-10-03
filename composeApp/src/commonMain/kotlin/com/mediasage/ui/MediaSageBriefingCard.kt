@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.mediasage.theme.LensFaith
@@ -52,7 +53,8 @@ private val FigurePlaceholderSize = 80.dp
  * exact visual structure the live Briefing screen and the Day Detail screen both render for a
  * briefing's figure — split out from [MediaSageBriefingBody] so a screen that switches between
  * several of a figure's briefings (e.g. morning/evening) can show this once and only swap the body
- * underneath. Theme and sources live per-briefing, not here — see [MediaSageBriefingBody].
+ * underneath. Theme and sources live per-briefing, not here — see [MediaSageBriefingBody]. [imageHeight] lets a
+ * smaller preview of the briefing (onboarding) keep the same look in less space.
  */
 @Composable
 fun MediaSageBriefingHeader(
@@ -61,12 +63,13 @@ fun MediaSageBriefingHeader(
     modifier: Modifier = Modifier,
     onFigureTap: (() -> Unit)? = null,
     theme: String? = null,
+    imageHeight: Dp = CardImageHeight,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(CardImageHeight)
+                .height(imageHeight)
                 .clip(MaterialTheme.shapes.small)
                 .then(if (onFigureTap != null) Modifier.clickable(onClick = onFigureTap) else Modifier),
         ) {

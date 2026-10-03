@@ -1,8 +1,11 @@
 package com.mediasage.feature.onboarding
 
 import com.mediasage.data.AuthPreferencesRepository
+import com.mediasage.data.repository.epochMillis
+import com.mediasage.data.repository.localEpochDay
 import com.mediasage.domain.model.OnboardingStatus
 import com.mediasage.domain.repository.AuthRepository
+import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.ProfileRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -16,6 +19,8 @@ class OnboardingGate(
     private val profileRepository: ProfileRepository,
     private val authRepository: AuthRepository,
     private val preferences: AuthPreferencesRepository,
+    private val dailyReflectionRepository: DailyReflectionRepository,
+    private val todayEpochDay: () -> Long = { localEpochDay(epochMillis()) },
 ) {
 
     /**
@@ -23,13 +28,20 @@ class OnboardingGate(
      * server-side reset (completion set back to null) takes effect on the next launch. With no
      * cached completion the server answers; if it can't be reached, the reader gets the main tabs
      * and nothing is recorded, so a new account still sees onboarding on a later launch.
+     *
+     * The flow ends with picking today's reporter, which can't take effect once today's briefing exists. So
+     * onboarding also waits for a day with no briefing yet on this device. Nothing is recorded, so it appears on a
+     * later day's launch. Only an account reset by hand can already have a briefing, so the check never waits on a
+     * sync: a briefing written on another device that day is not seen here. [checkTodaysBriefing] is off in debug
+     * builds, so a tester can reset their account and see the flow again the same day.
      */
-    suspend fun shouldShowOnboarding(userId: String, backgroundScope: CoroutineScope): Boolean {
+    suspend fun shouldShowOnboarding(userId: String, backgroundScope: CoroutineScope, checkTodaysBriefing: Boolean = true): Boolean {
         if (userId in preferences.onboardingCompletedUserIds.first()) {
             backgroundScope.launch { refresh(userId) }
             return false
         }
-        return refresh(userId) == OnboardingStatus.NOT_COMPLETED
+        if (refresh(userId) != OnboardingStatus.NOT_COMPLETED) return false
+        return !checkTodaysBriefing || dailyReflectionRepository.getLockedFigureId(todayEpochDay()) == null
     }
 
     /** Recorded on the device first, so onboarding never reappears here even if the server write fails. */
