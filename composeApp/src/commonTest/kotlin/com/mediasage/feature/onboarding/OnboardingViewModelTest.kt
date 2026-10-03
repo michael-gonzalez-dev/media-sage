@@ -160,7 +160,7 @@ class OnboardingViewModelTest {
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
         assertEquals(OnboardingContract.SideEffect.Finished, viewModel.sideEffects.first())
-        assertEquals(emptyList(), dayAssignmentRepository.assignCalls)
+        assertEquals(emptyList<Triple<Int, Long, LensFilter?>>(), dayAssignmentRepository.assignCalls)
     }
 
     @Test
@@ -229,7 +229,7 @@ class OnboardingViewModelTest {
 
         assertNull(viewModel.state.value.selection)
         assertEquals(emptyList(), effects)
-        assertEquals(emptyList(), dayAssignmentRepository.assignCalls)
+        assertEquals(emptyList<Triple<Int, Long, LensFilter?>>(), dayAssignmentRepository.assignCalls)
     }
 
     @Test
@@ -242,7 +242,7 @@ class OnboardingViewModelTest {
         viewModel.onIntent(OnboardingContract.Intent.SelectReporter(TEN_BOOM.id, LensFilter.HOPE))
         viewModel.onIntent(OnboardingContract.Intent.Continue)
 
-        assertEquals(listOf(Triple(TODAY, TEN_BOOM.id, LensFilter.HOPE)), dayAssignmentRepository.assignCalls)
+        assertEquals(listOf(Triple(TODAY, TEN_BOOM.id, LensFilter.HOPE as LensFilter?)), dayAssignmentRepository.assignCalls)
         assertEquals(listOf<OnboardingContract.SideEffect>(OnboardingContract.SideEffect.Finished), effects)
     }
 
