@@ -6,6 +6,20 @@ import com.mediasage.data.local.dao.SyncMetaDao
 import com.mediasage.data.local.entity.FigureEntity
 import com.mediasage.data.local.entity.QuoteEntity
 import com.mediasage.data.local.entity.SyncMetaEntity
+import com.mediasage.data.remote.AssignmentDefaultDto
+import com.mediasage.data.remote.DailyReflectionRequestDto
+import com.mediasage.data.remote.DailyReflectionResponseDto
+import com.mediasage.data.remote.EncourageRequestDto
+import com.mediasage.data.remote.EncourageResultDto
+import com.mediasage.data.remote.FiguresResponse
+import com.mediasage.data.remote.MatchRequestDto
+import com.mediasage.data.remote.MatchResultDto
+import com.mediasage.data.remote.MediaSageApi
+import com.mediasage.data.remote.NewsArticleDto
+import com.mediasage.data.remote.QuoteDto
+import com.mediasage.data.remote.QuotesResponse
+import com.mediasage.data.remote.ScripturePassageDto
+import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +46,108 @@ class QuoteRepositoryTest {
         remote: FakeMemorizedQuoteRemoteDataSource? = FakeMemorizedQuoteRemoteDataSource(),
         syncMetaDao: FakeSyncMetaDaoForMemorizedQuoteSync = FakeSyncMetaDaoForMemorizedQuoteSync(),
         authRepository: FakeAuthRepositoryForMemorizedQuoteSync = FakeAuthRepositoryForMemorizedQuoteSync(USER_ID),
-    ) = QuoteRepositoryImpl(dao, figureDao, remote, syncMetaDao, authRepository)
+        library: List<QuoteDto> = emptyList(),
+    ) = QuoteRepositoryImpl(dao, figureDao, remote, syncMetaDao, authRepository, FakeMediaSageApiForQuoteLibrary(library))
+
+    private val restless = QuoteDto(figureId = augustine.id, text = "Our heart is restless.", source = "Confessions, I.1 (397)")
+    private val dream = QuoteDto(figureId = lewis.id, text = "You are never too old to dream.", source = "Letters (1955)")
+
+    @Test
+    fun syncLibrary_savesEveryLibraryQuoteWithItsSourceOnAFreshInstall() = runTest {
+        val dao = FakeQuoteDao()
+
+        repo(dao = dao, library = listOf(restless, dream)).syncLibrary()
+
+        assertEquals(
+            setOf(Triple(augustine.id, restless.text, restless.source), Triple(lewis.id, dream.text, dream.source)),
+            dao.store.values.map { Triple(it.figureId, it.text, it.source) }.toSet(),
+        )
+        assertTrue(dao.store.values.all { it.verified })
+    }
+
+    @Test
+    fun syncLibrary_dropsASavedQuoteThatLeftTheLibrary() = runTest {
+        val dao = FakeQuoteDao(
+            listOf(QuoteEntity(id = 1, figureId = augustine.id, text = "Removed line.", source = "", themes = "", verified = true))
+        )
+
+        repo(dao = dao, library = listOf(dream)).syncLibrary()
+
+        assertEquals(listOf(dream.text), dao.store.values.map { it.text })
+    }
+
+    @Test
+    fun syncLibrary_clearsTheMemorizedQuoteWhenItLeavesTheLibrary() = runTest {
+        val dao = FakeQuoteDao(
+            listOf(
+                QuoteEntity(
+                    id = 1, figureId = augustine.id, text = "Removed line.", source = "", themes = "",
+                    verified = true, memorized = true,
+                ),
+            )
+        )
+        val repository = repo(dao = dao, library = listOf(dream))
+
+        repository.syncLibrary()
+
+        assertNull(repository.observeMemorizedQuote().first())
+    }
+
+    @Test
+    fun syncLibrary_keepsTheMemorizedQuoteAndRefreshesItsSourceWhenItStaysInTheLibrary() = runTest {
+        val dao = FakeQuoteDao(
+            listOf(
+                QuoteEntity(
+                    id = 1, figureId = augustine.id, text = restless.text, source = "", themes = "",
+                    memorized = true, synced = false,
+                ),
+            )
+        )
+
+        repo(dao = dao, library = listOf(restless)).syncLibrary()
+
+        val saved = dao.store.values.single()
+        assertTrue(saved.memorized)
+        assertFalse(saved.synced)
+        assertTrue(saved.verified)
+        assertEquals(restless.source, saved.source)
+    }
+
+    @Test
+    fun syncLibrary_keepsTheSavedLibraryWhenTheServerReturnsNoQuotes() = runTest {
+        val dao = FakeQuoteDao(
+            listOf(QuoteEntity(id = 1, figureId = augustine.id, text = restless.text, source = "", themes = "", verified = true))
+        )
+
+        repo(dao = dao, library = emptyList()).syncLibrary()
+
+        assertEquals(1, dao.store.size)
+    }
+
+    @Test
+    fun syncLibrary_skipsQuotesOfReportersThisPhoneDoesNotHave() = runTest {
+        val dao = FakeQuoteDao()
+        val unknownReporter = QuoteDto(figureId = 99, text = "From a reporter not synced yet.")
+
+        repo(dao = dao, library = listOf(dream, unknownReporter)).syncLibrary()
+
+        assertEquals(listOf(dream.text), dao.store.values.map { it.text })
+    }
+
+    @Test
+    fun resolve_doesNotRestoreAPulledMemorizedQuoteThatLeftTheLibrary() = runTest {
+        val dao = FakeQuoteDao(
+            listOf(QuoteEntity(id = 1, figureId = lewis.id, text = dream.text, source = "", themes = "", verified = true))
+        )
+        val remote = FakeMemorizedQuoteRemoteDataSource(
+            initialRow = MemorizedQuoteRow(userId = USER_ID, figureServerId = augustine.serverId, quoteText = "Removed line.")
+        )
+
+        repo(dao = dao, remote = remote).resolve(USER_ID)
+
+        assertFalse(dao.store.values.any { it.memorized })
+        assertEquals(listOf(dream.text), dao.store.values.map { it.text })
+    }
 
     @Test
     fun memorizeQuote_replacesAnyPreviouslyMemorizedQuote() = runTest {
@@ -248,6 +363,17 @@ private class FakeQuoteDao(initial: List<QuoteEntity> = emptyList()) : QuoteDao 
     }
 
     override suspend fun deleteById(id: Long) { store.remove(id) }
+
+    override suspend fun getAll(): List<QuoteEntity> = store.values.toList()
+
+    override suspend fun hasLibrary(): Boolean = store.values.any { it.verified }
+
+    override suspend fun updateLibraryQuote(figureId: Long, text: String, source: String, themes: String) {
+        val entity = store.values.find { it.figureId == figureId && it.text == text } ?: return
+        store[entity.id] = entity.copy(source = source, themes = themes, verified = true)
+    }
+
+    override suspend fun deleteByIds(ids: List<Long>) { ids.forEach { store.remove(it) } }
 }
 
 private class FakeFigureDaoForMemorizedQuoteSync(figures: List<FigureEntity> = emptyList()) : FigureDao {
@@ -315,4 +441,19 @@ private class FakeMemorizedQuoteRemoteDataSource(
     }
 
     override suspend fun fetch(userId: String): MemorizedQuoteRow? = row?.takeIf { it.userId == userId }
+}
+
+private class FakeMediaSageApiForQuoteLibrary(private val library: List<QuoteDto>) : MediaSageApi {
+    override suspend fun getQuotes(): QuotesResponse = QuotesResponse(library)
+    override suspend fun getFigures(since: Long?): FiguresResponse = error("not used in this test")
+    override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
+    override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
+    override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto = error("not used in this test")
+    override suspend fun matchQuote(request: MatchRequestDto): MatchResultDto = error("not used in this test")
+    override suspend fun searchScripture(query: String, limit: Int): List<ScriptureVerseDto> =
+        error("not used in this test")
+    override suspend fun getPassage(passageId: String): ScripturePassageDto = error("not used in this test")
+    override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
+        error("not used in this test")
+    override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = error("not used in this test")
 }

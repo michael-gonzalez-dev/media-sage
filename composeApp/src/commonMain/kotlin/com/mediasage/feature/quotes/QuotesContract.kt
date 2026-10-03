@@ -4,6 +4,8 @@ object QuotesContract {
 
     data class QuoteItem(
         val quoteText: String,
+        /** The work and year the quote comes from. */
+        val source: String = "",
         val isMemorized: Boolean = false,
     )
 

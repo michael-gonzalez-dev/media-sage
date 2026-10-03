@@ -8,14 +8,12 @@ import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
 import com.mediasage.domain.model.DayAssignment
-import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
 import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.model.Quote
 import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
-import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.QuoteRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -268,18 +266,34 @@ class FigureDetailViewModelTest {
     }
 
     @Test
-    fun quotes_reflectWhicheverQuoteIsCurrentlyMemorized() = runTest(testDispatcher) {
-        val encouragement = Encouragement(
-            summary = null, quoteText = "You are never too old to dream.", figureName = "C.S. Lewis",
-            figureRole = "Author", scriptureReference = "", scriptureText = "", explanation = "",
-            connectionThemes = emptyList(), matchTheme = "", tone = "", headlineTitle = "Some headline",
+    fun quotes_listEveryLibraryQuoteOfTheFigureWithItsSource() = runTest(testDispatcher) {
+        val library = listOf(
+            Quote(id = 1L, figureId = 2L, text = "You are never too old to dream.", source = "Letters (1955)", themes = emptyList()),
+            Quote(id = 2L, figureId = 2L, text = "Aim at heaven.", source = "Mere Christianity (1952)", themes = emptyList()),
         )
+        val (viewModel, _, _) = figureDetailViewModel(
+            figureId = 2L,
+            figures = listOf(augustine, lewis),
+            quoteRepo = DetailFakeQuoteRepository(library = library),
+        )
+
+        val state = viewModel.state.value as FigureDetailContract.UiState.Success
+        assertEquals(
+            listOf(
+                FigureQuoteItem("You are never too old to dream.", "Letters (1955)"),
+                FigureQuoteItem("Aim at heaven.", "Mere Christianity (1952)"),
+            ),
+            state.quotes,
+        )
+    }
+
+    @Test
+    fun quotes_reflectWhicheverQuoteIsCurrentlyMemorized() = runTest(testDispatcher) {
         val memorized = Quote(id = 1L, figureId = 2L, text = "You are never too old to dream.", source = "", themes = emptyList())
         val (viewModel, _, _) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
-            encouragements = listOf(encouragement),
-            quoteRepo = DetailFakeQuoteRepository(memorized),
+            quoteRepo = DetailFakeQuoteRepository(memorized, library = listOf(memorized)),
         )
 
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
@@ -297,17 +311,15 @@ class FigureDetailViewModelTest {
         assignments: Map<Int, DayAssignment> = emptyMap(),
         lockedFigureIdsByEpochDay: Map<Long, Long> = emptyMap(),
         lockedThemesByEpochDay: Map<Long, LensFilter> = emptyMap(),
-        encouragements: List<Encouragement> = emptyList(),
         quoteRepo: DetailFakeQuoteRepository = DetailFakeQuoteRepository(),
         analyticsService: FakeAnalyticsServiceForFigureDetail = FakeAnalyticsServiceForFigureDetail(),
         holdWrites: CompletableDeferred<Unit>? = null,
     ): Triple<FigureDetailViewModel, DetailFakeDayAssignmentRepository, FakeAnalyticsServiceForFigureDetail> {
         val figureRepo = DetailFakeFigureRepository(figures)
-        val encouragementRepo = DetailFakeEncouragementRepository(encouragements)
         val dayAssignmentRepo = DetailFakeDayAssignmentRepository(MutableStateFlow(assignments), holdWrites)
         val reflectionRepo = FakeDailyReflectionRepository(lockedFigureIdsByEpochDay, lockedThemesByEpochDay)
         val viewModel = FigureDetailViewModel(
-            figureId, figureRepo, encouragementRepo, dayAssignmentRepo, reflectionRepo, quoteRepo, analyticsService,
+            figureId, figureRepo, dayAssignmentRepo, reflectionRepo, quoteRepo, analyticsService,
         )
         backgroundScope.launch(testDispatcher) { viewModel.state.collect {} }
         return Triple(viewModel, dayAssignmentRepo, analyticsService)
@@ -329,30 +341,6 @@ private class DetailFakeFigureRepository(private val figures: List<Figure>) : Fi
     override suspend fun syncFigures() = Unit
 }
 
-private class DetailFakeEncouragementRepository(
-    private val encouragements: List<Encouragement> = emptyList(),
-) : EncouragementRepository {
-    override suspend fun getEncouragement(
-        headlineTitle: String,
-        headlineSource: String,
-        headlineImageUrl: String?,
-        articleUrl: String?,
-        articleSnippet: String?,
-        headlineCategory: String,
-        headlinePublishedAt: Long,
-    ): Encouragement = throw UnsupportedOperationException()
-    override fun observeAll(): Flow<List<Encouragement>> = MutableStateFlow(emptyList())
-    override fun observeBookmarked(): Flow<List<Encouragement>> = MutableStateFlow(emptyList())
-    override fun observeCountByFigureName(): Flow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    override fun observeByFigureId(figureId: Long): Flow<List<Encouragement>> = MutableStateFlow(encouragements)
-    override fun observeIsBookmarked(articleUrl: String): Flow<Boolean> = MutableStateFlow(false)
-    override suspend fun toggleBookmark(articleUrl: String) = Unit
-    override fun observeByEpochDay(epochDay: Long): Flow<List<Encouragement>> = MutableStateFlow(emptyList())
-    override fun observeActiveEpochDays(): Flow<Set<Long>> = MutableStateFlow(emptySet())
-    override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
-    override suspend fun resolve(userId: String?) = Unit
-}
-
 private class DetailFakeDayAssignmentRepository(
     private val assignmentsFlow: MutableStateFlow<Map<Int, DayAssignment>>,
     private val holdWrites: CompletableDeferred<Unit>? = null,
@@ -372,13 +360,18 @@ private class DetailFakeDayAssignmentRepository(
     override suspend fun resolve(userId: String?) = Unit
 }
 
-private class DetailFakeQuoteRepository(private val memorizedQuote: Quote? = null) : QuoteRepository {
+private class DetailFakeQuoteRepository(
+    private val memorizedQuote: Quote? = null,
+    private val library: List<Quote> = emptyList(),
+) : QuoteRepository {
     val memorizeCalls = mutableListOf<Pair<Long, String>>()
-    override fun observeAllQuotes(): Flow<List<Quote>> = MutableStateFlow(listOfNotNull(memorizedQuote))
-    override fun observeQuotesByFigure(figureId: Long): Flow<List<Quote>> = MutableStateFlow(listOfNotNull(memorizedQuote))
+    override fun observeAllQuotes(): Flow<List<Quote>> = MutableStateFlow(library)
+    override fun observeQuotesByFigure(figureId: Long): Flow<List<Quote>> =
+        MutableStateFlow(library.filter { it.figureId == figureId })
     override suspend fun getQuoteById(id: Long): Quote? = memorizedQuote?.takeIf { it.id == id }
     override suspend fun getLatestQuoteForFigure(figureId: Long): Quote? = memorizedQuote
     override suspend fun saveQuote(text: String, source: String, themes: List<String>, figureId: Long) = Unit
+    override suspend fun syncLibrary() = Unit
     override fun observeMemorizedQuote(): Flow<Quote?> = MutableStateFlow(memorizedQuote)
     override suspend fun memorizeQuote(figureId: Long, text: String) {
         memorizeCalls.add(figureId to text)

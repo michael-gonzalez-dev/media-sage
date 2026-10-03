@@ -16,15 +16,15 @@ internal class FigureDetailStateProvider : PreviewParameterProvider<FigureDetail
             quotes = listOf(
                 FigureQuoteItem(
                     "Hardships often prepare ordinary people for an extraordinary destiny.",
-                    "Schools Nationwide Integrate Compassion and Empathy Into Core Curriculum"
+                    "The Weight of Glory (1941)"
                 ),
                 FigureQuoteItem(
                     "You are never too old to set another goal or to dream a new dream.",
-                    "Community Gardens Transform Urban Neighborhoods Across America"
+                    "Mere Christianity (1952)"
                 ),
                 FigureQuoteItem(
                     "We are what we believe we are.",
-                    "New Research Links Daily Gratitude Practice to Mental Health Improvements"
+                    "The Problem of Pain (1940)"
                 ),
             )
         ),
@@ -36,7 +36,7 @@ internal class FigureDetailStateProvider : PreviewParameterProvider<FigureDetail
             quotes = listOf(
                 FigureQuoteItem(
                     "Silence in the face of evil is itself evil. Not to speak is to speak.",
-                    "Bipartisan Coalition Introduces Comprehensive Poverty Relief Legislation"
+                    "The Cost of Discipleship (1937)"
                 )
             )
         ),

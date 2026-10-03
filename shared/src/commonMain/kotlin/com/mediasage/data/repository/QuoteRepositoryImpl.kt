@@ -6,6 +6,8 @@ import com.mediasage.data.local.dao.SyncMetaDao
 import com.mediasage.data.local.entity.QuoteEntity
 import com.mediasage.data.local.entity.SyncMetaEntity
 import com.mediasage.data.mapper.toDomain
+import com.mediasage.data.remote.MediaSageApi
+import com.mediasage.data.remote.QuoteDto
 import com.mediasage.domain.model.Quote
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.QuoteRepository
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class QuoteRepositoryImpl(
@@ -22,6 +25,7 @@ class QuoteRepositoryImpl(
     private val remote: MemorizedQuoteRemoteDataSource?,
     private val syncMetaDao: SyncMetaDao,
     private val authRepository: AuthRepository,
+    private val api: MediaSageApi,
 ) : QuoteRepository {
 
     private val _isResolved = MutableStateFlow(false)
@@ -50,15 +54,24 @@ class QuoteRepositoryImpl(
         )
     }
 
+    override suspend fun syncLibrary() {
+        val response = api.getQuotes()
+        // An empty library means the server failed to read it, never that every quote was removed.
+        if (response.quotes.isEmpty()) return
+        val figureIds = figureDao.observeAll().first().map { it.id }.toSet()
+        val library = response.quotes.filter { it.figureId in figureIds }.map { it.toEntity() }
+        val libraryKeys = library.map { it.figureId to it.text }.toSet()
+        val staleIds = quoteDao.getAll().filterNot { (it.figureId to it.text) in libraryKeys }.map { it.id }
+        quoteDao.applyLibrary(staleIds, library)
+    }
+
     override fun observeMemorizedQuote(): Flow<Quote?> =
         quoteDao.observeMemorizedQuote().map { it?.toDomain() }
 
     override suspend fun memorizeQuote(figureId: Long, text: String) {
-        // The Figure Detail quote list is sourced from EncouragementRepository, not this DAO's
-        // catalog — a quote can appear there with no corresponding QuoteEntity row yet (e.g. the
-        // best-effort saveQuote() at match time silently no-opped on a figure-name lookup miss).
-        // memorize()'s UPDATE only ever touches an existing row, so without this it can clear the
-        // previous pin and then match nothing, leaving the memorized quote blank with no way back.
+        // memorize()'s UPDATE only ever touches an existing row, so without this a quote with no
+        // row yet would clear the previous pin and then match nothing, leaving the memorized quote
+        // blank with no way back.
         if (quoteDao.getByFigureAndText(figureId, text) == null) {
             quoteDao.insertIgnore(QuoteEntity(figureId = figureId, text = text, source = "", themes = ""))
         }
@@ -128,6 +141,9 @@ class QuoteRepositoryImpl(
         val row = remote.fetch(userId) ?: return
         val figure = figureDao.getByServerId(row.figureServerId) ?: return
         if (quoteDao.getByFigureAndText(figure.id, row.quoteText) == null) {
+            // Once the library has loaded, a quote missing from it was removed or unverified.
+            // Restoring it here would bring back a quote the library sync just cleared.
+            if (quoteDao.hasLibrary()) return
             quoteDao.insertIgnore(
                 QuoteEntity(
                     figureId = figure.id,
@@ -141,6 +157,14 @@ class QuoteRepositoryImpl(
         quoteDao.setMemorized(figure.id, row.quoteText, synced = true)
     }
 }
+
+private fun QuoteDto.toEntity() = QuoteEntity(
+    figureId = figureId,
+    text = text,
+    source = source,
+    themes = themes,
+    verified = true,
+)
 
 private fun QuoteEntity.toMemorizedQuoteRow(userId: String, figureServerId: Long) = MemorizedQuoteRow(
     userId = userId,

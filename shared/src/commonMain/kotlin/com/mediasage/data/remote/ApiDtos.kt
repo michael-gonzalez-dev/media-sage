@@ -97,6 +97,22 @@ data class FigureDto(
     val updatedAt: Long = 0
 )
 
+// ---- Quote library endpoint DTOs ----
+
+// Always the whole library: anything a phone saved that isn't in it has been removed or unverified.
+@Serializable
+data class QuotesResponse(
+    val quotes: List<QuoteDto>
+)
+
+@Serializable
+data class QuoteDto(
+    val figureId: Long,
+    val text: String,
+    val source: String = "",
+    val themes: String = ""
+)
+
 // ---- Daily Reflection endpoint DTOs ----
 
 @Serializable

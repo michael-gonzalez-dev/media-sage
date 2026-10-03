@@ -16,6 +16,7 @@ import com.mediasage.data.remote.MatchRequestDto
 import com.mediasage.data.remote.MatchResultDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.data.remote.NewsArticleDto
+import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.domain.model.BriefingDay
@@ -596,6 +597,7 @@ private class FakeReflectionApi(
 
     override suspend fun getFigures(since: Long?): FiguresResponse =
         FiguresResponse(syncedAt = 0L, figures = emptyList())
+    override suspend fun getQuotes(): QuotesResponse = QuotesResponse(quotes = emptyList())
 
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = emptyList()
 

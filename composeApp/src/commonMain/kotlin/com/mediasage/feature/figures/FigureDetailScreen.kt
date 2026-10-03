@@ -325,7 +325,7 @@ private fun QuotesTabContent(
                     quoteText = quote.quoteText,
                     isPinned = quote.isPinned,
                     onPinQuote = { onPinQuote(quote.quoteText) },
-                    footerText = quote.headlineTitle.takeIf { it.isNotBlank() }?.let { "In response to: $it" },
+                    footerText = quote.source,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
             }

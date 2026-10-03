@@ -3,6 +3,7 @@ package com.mediasage.data.remote
 /** Client-side API service for communicating with the Media Sage server. */
 interface MediaSageApi {
     suspend fun getFigures(since: Long? = null): FiguresResponse
+    suspend fun getQuotes(): QuotesResponse
     suspend fun getHeadlines(locale: String = "us", limit: Int = 10): List<NewsArticleDto>
     suspend fun searchNews(query: String, limit: Int = 10): List<NewsArticleDto>
     suspend fun encourage(request: EncourageRequestDto): EncourageResultDto

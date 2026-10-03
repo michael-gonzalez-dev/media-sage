@@ -18,7 +18,6 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                     lifespan = "1898–1963",
                     themes = listOf("Faith", "Reason"),
                     imageUrl = null,
-                    quoteCount = 3,
                     isPinned = true
                 ),
                 VoiceFigureItem(
@@ -28,8 +27,7 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                     role = "Theologian & Martyr",
                     lifespan = "1898–1963",
                     themes = listOf("Justice", "Discipleship", "Grace"),
-                    imageUrl = null,
-                    quoteCount = 1
+                    imageUrl = null
                 ),
                 VoiceFigureItem(
                     id = 3L,
@@ -38,8 +36,7 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                     role = "Pastor & Civil Rights Leader",
                     lifespan = "1898–1963",
                     themes = listOf("Justice", "Hope"),
-                    imageUrl = null,
-                    quoteCount = 0
+                    imageUrl = null
                 ),
                 VoiceFigureItem(
                     id = 4L,
@@ -48,8 +45,7 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                     role = "Mystic & Theologian",
                     lifespan = "1347–1380",
                     themes = listOf("Love", "Contemplation"),
-                    imageUrl = null,
-                    quoteCount = 2
+                    imageUrl = null
                 ),
             )
         ),

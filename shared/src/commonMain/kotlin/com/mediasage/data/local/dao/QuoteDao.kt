@@ -19,7 +19,9 @@ interface QuoteDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(quote: QuoteEntity): Long
 
-    @Query("SELECT * FROM quotes WHERE figureId = :figureId")
+    // Only verified rows are library quotes. A quote saved at match time or restored from another
+    // sign-in stays hidden until the library sync confirms it.
+    @Query("SELECT * FROM quotes WHERE figureId = :figureId AND verified = 1 ORDER BY id")
     fun observeByFigure(figureId: Long): Flow<List<QuoteEntity>>
 
     @Query("SELECT * FROM quotes WHERE figureId = :figureId ORDER BY id DESC LIMIT 1")
@@ -31,8 +33,32 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes WHERE figureId = :figureId AND text = :text LIMIT 1")
     suspend fun getByFigureAndText(figureId: Long, text: String): QuoteEntity?
 
-    @Query("SELECT * FROM quotes")
+    @Query("SELECT * FROM quotes WHERE verified = 1 ORDER BY id")
     fun observeAll(): Flow<List<QuoteEntity>>
+
+    @Query("SELECT * FROM quotes")
+    suspend fun getAll(): List<QuoteEntity>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM quotes WHERE verified = 1)")
+    suspend fun hasLibrary(): Boolean
+
+    @Query("UPDATE quotes SET source = :source, themes = :themes, verified = 1 WHERE figureId = :figureId AND text = :text")
+    suspend fun updateLibraryQuote(figureId: Long, text: String, source: String, themes: String)
+
+    @Query("DELETE FROM quotes WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
+
+    /**
+     * Removes [staleIds] and saves [library] in one go. An existing row is updated in place rather
+     * than replaced, so a quote that stays in the library keeps its memorized and synced flags.
+     */
+    @Transaction
+    suspend fun applyLibrary(staleIds: List<Long>, library: List<QuoteEntity>) {
+        if (staleIds.isNotEmpty()) deleteByIds(staleIds)
+        library.forEach { quote ->
+            if (insertIgnore(quote) == -1L) updateLibraryQuote(quote.figureId, quote.text, quote.source, quote.themes)
+        }
+    }
 
     @Query("SELECT * FROM quotes WHERE memorized = 1 LIMIT 1")
     fun observeMemorizedQuote(): Flow<QuoteEntity?>

@@ -67,6 +67,7 @@ fun Application.configureRouting() {
         dailyReflectionRoutes()
         scriptureRoutes()
         figureRoutes()
+        quoteRoutes()
         assignmentDefaultsRoutes()
     }
 }

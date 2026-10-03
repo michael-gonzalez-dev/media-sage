@@ -251,23 +251,6 @@ private fun PortraitCard(figure: VoiceFigureItem, onClick: () -> Unit) {
                         FigurePlaceholder(name = figure.name, size = 72.dp)
                     }
                 }
-
-                if (figure.quoteCount > 0) {
-                    Text(
-                        text = "${figure.quoteCount}",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(6.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = MaterialTheme.shapes.small
-                            )
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
-                    )
-                }
             }
 
             Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {

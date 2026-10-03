@@ -44,6 +44,7 @@ object FigureDetailContract {
 
 data class FigureQuoteItem(
     val quoteText: String,
-    val headlineTitle: String,
+    /** The work and year the quote comes from. */
+    val source: String,
     val isPinned: Boolean = false,
 )

@@ -553,6 +553,7 @@ private class FakeQuoteRepository(private val latestQuote: Quote?) : QuoteReposi
     override suspend fun getQuoteById(id: Long): Quote? = latestQuote?.takeIf { it.id == id }
     override suspend fun getLatestQuoteForFigure(figureId: Long): Quote? = latestQuote
     override suspend fun saveQuote(text: String, source: String, themes: List<String>, figureId: Long) = Unit
+    override suspend fun syncLibrary() = Unit
     override fun observeMemorizedQuote(): Flow<Quote?> = MutableStateFlow(latestQuote)
     override suspend fun memorizeQuote(figureId: Long, text: String) = Unit
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)

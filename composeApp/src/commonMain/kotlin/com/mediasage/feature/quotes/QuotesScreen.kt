@@ -103,6 +103,7 @@ private fun QuotesList(
                     quoteText = quote.quoteText,
                     isPinned = quote.isMemorized,
                     onPinQuote = { onQuoteSelected(section.figureId, quote.quoteText) },
+                    footerText = quote.source,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp),
                 )
             }
