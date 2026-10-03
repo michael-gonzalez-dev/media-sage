@@ -247,6 +247,14 @@ val MIGRATION_37_38 = object : Migration(37, 38) {
     }
 }
 
+val MIGRATION_38_39 = object : Migration(38, 39) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE figures ADD COLUMN knownFor TEXT NOT NULL DEFAULT ''")
+        // Cached figures predate the column, so a delta sync would never fill it in: force the next sync to be a full one.
+        connection.execSQL("UPDATE sync_meta SET lastFigureSyncAt = NULL")
+    }
+}
+
 val MIGRATION_12_13 = object : Migration(12, 13) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

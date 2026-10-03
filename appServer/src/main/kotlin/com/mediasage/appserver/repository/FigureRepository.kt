@@ -24,6 +24,7 @@ data class FigureDto(
     val lifespan: String,
     val bio: String,
     val themes: String,
+    val knownFor: String = "",
     val portraitUrl: String?,
     val isEnabled: Boolean,
     val updatedAt: Long = 0
@@ -62,6 +63,7 @@ class FigureRepository(private val baseUrl: String) {
                     lifespan = row[FigureTable.lifespan],
                     bio = row[FigureTable.bio],
                     themes = row[FigureTable.themes],
+                    knownFor = row[FigureTable.knownFor],
                     portraitUrl = resolveUrl(row[FigureTable.portraitUrl]),
                     isEnabled = row[FigureTable.isEnabled],
                     updatedAt = row[FigureTable.updatedAt]

@@ -5,6 +5,7 @@ import com.mediasage.appserver.db.ServerDatabase
 import com.mediasage.appserver.repository.FigureRepository
 import com.mediasage.appserver.routes.figureRoutes
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -19,6 +20,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class FigureRoutesTest {
 
@@ -35,6 +37,7 @@ class FigureRoutesTest {
                 it[role] = "Theologian & Reformer"
                 it[lifespan] = "1483-1546"
                 it[bio] = "German professor of theology and seminal figure of the Protestant Reformation."
+                it[knownFor] = "Luther published the Ninety-five Theses."
                 it[isEnabled] = true
             }
             FigureTable.insert {
@@ -62,5 +65,15 @@ class FigureRoutesTest {
 
         val response = client.get("/api/figures")
         assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    fun figuresEndpointIncludesKnownFor() = testApplication {
+        install(ContentNegotiation) { json() }
+        install(Koin) { modules(module { single { FigureRepository("http://localhost:8080") } }) }
+        routing { figureRoutes() }
+
+        val body = client.get("/api/figures").bodyAsText()
+        assertTrue(body.contains("\"knownFor\":\"Luther published the Ninety-five Theses.\""))
     }
 }

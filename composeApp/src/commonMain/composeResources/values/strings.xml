@@ -70,6 +70,10 @@
     <string name="you_recent_briefing_yesterday">Yesterday</string>
     <string name="you_recent_briefings_more">More</string>
     <string name="you_carousel_assign_hint">Add</string>
+    <string name="reporter_card_show_back">Show profile</string>
+    <string name="reporter_card_show_front">Show portrait</string>
+    <string name="reporter_card_role_lifespan">%1$s · %2$s</string>
+    <string name="reporter_card_lenses">Brief me through</string>
     <string name="you_lens_section_title">TODAY'S LENS</string>
     <string name="you_lens_today">Headlines</string>
     <string name="you_lens_writings">Writings</string>
@@ -86,7 +90,7 @@
     <string name="you_picker_search_clear">Clear search</string>
     <string name="you_picker_clear_day">Clear day</string>
     <string name="you_picker_empty">No figures match your search</string>
-    <string name="you_picker_choose_theme">Choose a Theme</string>
+    <string name="you_picker_choose_theme">Choose a Lens</string>
     <string name="you_picker_back_description">Back to figure list</string>
 
     <!-- Settings screen -->
@@ -255,7 +259,7 @@
     <string name="onboarding_continue">Continue</string>
     <string name="onboarding_finish">Start reading</string>
     <string name="onboarding_briefing_title">Your daily briefing</string>
-    <string name="onboarding_briefing_mission">Your daily briefing pairs scripture with a reporter's hard-won wisdom. You choose the lens. It can be today's headlines, their own writings or a theme like hope.</string>
+    <string name="onboarding_briefing_mission">Your daily briefing pairs scripture with a reporter's hard-won wisdom. You choose the lens. It can be today's headlines, their own writings or a topic like hope.</string>
     <string name="onboarding_briefing_ai">Each briefing is built from a verified library. The quotes are real and tied to their sources. The reflection is written by AI in the reporter's voice and grounded in their verified writings.</string>
     <string name="onboarding_briefing_disclosure_pointer">The full disclosure is in Settings → About.</string>
     <string name="onboarding_headlines_title">Headlines, with insight</string>

@@ -88,6 +88,7 @@ data class FigureDto(
     val lifespan: String = "",
     val bio: String = "",
     val themes: String = "",
+    val knownFor: String = "",
     @SerialName("portraitUrl")
     val portraitUrl: String? = null,
     val isEnabled: Boolean = true,
