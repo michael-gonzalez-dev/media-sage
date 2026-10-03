@@ -60,7 +60,9 @@ import mediasage.composeapp.generated.resources.onboarding_pick_title
 import org.jetbrains.compose.resources.stringResource
 
 private const val STRIP_LEAD_ITEMS = 2
+private const val CARD_ASPECT_RATIO = 5f / 7f // a 2.5 x 3.5 inch trading card
 private val MinCardHeight = 300.dp
+private val MinCardPeek = 32.dp
 private val StepVerticalPadding = 4.dp
 private val StripPortraitSize = 44.dp
 
@@ -93,7 +95,7 @@ internal fun ReporterPickStep(state: OnboardingContract.UiState, onIntent: (Onbo
                     EraChipRow(
                         selectedEra = state.selectedEra,
                         onEraSelected = { onIntent(OnboardingContract.Intent.SelectEra(it)) },
-                        contentPadding = PaddingValues(vertical = 8.dp),
+                        contentPadding = PaddingValues(horizontal = PageSidePadding, vertical = 8.dp),
                     )
                 },
                 deck = { ReporterDeck(deckState, state.selection, pagerState, onIntent) },
@@ -140,14 +142,16 @@ private fun FillDeckLayout(
 
 @Composable
 private fun PickHeader() {
-    StepTitle(stringResource(Res.string.onboarding_pick_title))
-    Text(
-        text = stringResource(Res.string.onboarding_pick_body),
-        style = MaterialTheme.typography.bodyMedium,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 6.dp),
-    )
+    Column(modifier = Modifier.padding(horizontal = PageSidePadding), horizontalAlignment = Alignment.CenterHorizontally) {
+        StepTitle(stringResource(Res.string.onboarding_pick_title))
+        Text(
+            text = stringResource(Res.string.onboarding_pick_body),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 }
 
 @Composable
@@ -156,13 +160,15 @@ private fun ReporterDeck(
     selection: OnboardingContract.PickSelection?,
     pagerState: PagerState,
     onIntent: (OnboardingContract.Intent) -> Unit,
-) {
+) = BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(vertical = 4.dp)) {
+    // Shaped like a real trading card: as wide as its height allows, never wider than the screen with a peek either side.
+    val cardWidth = minOf(maxHeight * CARD_ASPECT_RATIO, maxWidth - MinCardPeek * 2)
     HorizontalPager(
         state = pagerState,
-        contentPadding = PaddingValues(horizontal = 16.dp),
+        contentPadding = PaddingValues(horizontal = (maxWidth - cardWidth) / 2),
         pageSpacing = 8.dp,
         key = { page -> deck.value[page].card.id },
-        modifier = Modifier.fillMaxSize().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxSize(),
     ) { page ->
         val card = deck.value[page].card
         val isSelected = card.id == selection?.reporterId
@@ -192,6 +198,7 @@ private fun PortraitStrip(deck: List<OnboardingContract.PickReporter>, pagerStat
     LazyRow(
         state = stripState,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = PageSidePadding),
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
     ) {
         itemsIndexed(deck, key = { _, reporter -> reporter.card.id }) { index, reporter ->

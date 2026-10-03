@@ -43,14 +43,13 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun stepsRunBriefingThenPickThenHeadlinesReaderAndReflect() {
+    fun stepsRunBriefingThenPickThenHeadlinesThenReader() {
         assertEquals(
             listOf(
                 OnboardingContract.Step.BRIEFING,
                 OnboardingContract.Step.PICK,
                 OnboardingContract.Step.HEADLINES,
                 OnboardingContract.Step.READER,
-                OnboardingContract.Step.REFLECT,
             ),
             viewModel().state.value.steps,
         )

@@ -24,7 +24,6 @@ object OnboardingContract {
         PICK,
         HEADLINES,
         READER,
-        REFLECT,
     }
 
     /** A reporter in the pick step's deck. [era] is null when the century can't be placed, so it shows only under All. */
