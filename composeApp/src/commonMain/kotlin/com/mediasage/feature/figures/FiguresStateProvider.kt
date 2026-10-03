@@ -49,5 +49,38 @@ internal class FiguresStateProvider : PreviewParameterProvider<FiguresContract.U
                 ),
             )
         ),
+        AugustineFiguresState,
     )
 }
+
+private const val PORTRAITS = "https://sfocythzurfdpkegjlsl.supabase.co/storage/v1/object/public/portraits"
+
+/**
+ * The "All" list as the app orders it, used for the thecouragepost.app screenshots. Today's
+ * reporter (Augustine) is pinned first and the rest follow alphabetically.
+ */
+internal val AugustineFiguresState = FiguresContract.UiState.Success(
+    figures = listOf(
+        sampleFigure(36L, "Augustine of Hippo", "Bishop & Church Father", "354-430", FigureEra.EARLY_CHURCH, isPinned = true),
+        sampleFigure(19L, "A.W. Tozer", "Pastor & Author", "1897-1963", FigureEra.MODERN),
+        sampleFigure(57L, "Abraham Lincoln", "President & Statesman", "1809-1865", FigureEra.SEVENTEEN_AND_EIGHTEEN_HUNDREDS),
+        sampleFigure(88L, "Adoniram Judson", "Missionary to Burma", "1788-1850", FigureEra.SEVENTEEN_AND_EIGHTEEN_HUNDREDS),
+    ),
+)
+
+private fun sampleFigure(
+    id: Long,
+    name: String,
+    role: String,
+    lifespan: String,
+    era: FigureEra,
+    isPinned: Boolean = false,
+) = VoiceFigureItem(
+    id = id,
+    name = name,
+    era = era,
+    role = role,
+    lifespan = lifespan,
+    imageUrl = "$PORTRAITS/$id.webp",
+    isPinned = isPinned,
+)

@@ -1,0 +1,257 @@
+/*
+ * Site-wide look for thecouragepost.app. Every page links this file, so a color or font
+ * change here applies everywhere. Colors and fonts mirror the app's default (Classic, light)
+ * theme in composeApp/src/commonMain/kotlin/com/mediasage/theme (Color.kt, Theme.kt, Type.kt).
+ */
+
+/* Fonts are the app's own variable TTFs converted to WOFF2. License: fonts/OFL.txt */
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/fonts/playfair-display.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/fonts/playfair-display-italic.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lora";
+  src: url("/fonts/lora.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Lora";
+  src: url("/fonts/lora-italic.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* Classic light palette (Color.kt) */
+  --color-background: #FFFFFF;   /* White */
+  --color-surface-variant: #F8F8F8; /* OffWhite */
+  --color-ink: #1A1A1A;          /* Ink — onBackground */
+  --color-charcoal: #2A2A2A;     /* Charcoal — onSurfaceVariant */
+  --color-muted: #6B6B6B;        /* Slate — tertiary */
+  --color-primary: #1B2A4A;      /* Navy — primary */
+  --color-primary-light: #3D5A80; /* NavyLight — accent */
+  --color-border: #E0E0E0;       /* CardBorder — outline */
+  --color-rule: #D0D0D0;         /* RuleLine — outlineVariant */
+  --color-amber: #D4A050;        /* BrandAmber */
+  --color-cream: #FBF3E1;        /* ComicCream — chip fill */
+  --color-tan: #F0DFB8;          /* ComicTan — chip gradient end */
+  --color-brown: #9C6B3E;        /* ComicBrown — chip outline */
+
+  /* Type.kt — Playfair Display for headlines, Lora for body */
+  --font-headline: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Lora", Georgia, "Times New Roman", serif;
+
+  --page-width: 720px;
+  --wide-width: 1040px;
+  --radius: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  /* Keeps the footer at the bottom of short pages such as 404. */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* Auto side margins on a flex item stop it stretching, so give every section its full width back. */
+body > * { width: 100%; }
+.site-footer { margin-top: auto; }
+
+img { max-width: 100%; height: auto; display: block; }
+
+a { color: var(--color-primary-light); text-underline-offset: 0.15em; }
+a:hover { color: var(--color-primary); }
+
+h1, h2, h3 {
+  font-family: var(--font-headline);
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+h1 { font-size: clamp(2rem, 6vw, 2.75rem); font-weight: 700; margin: 0 0 0.2em; }
+h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 2.2em 0 0.6em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--color-primary);
+}
+h3 { font-size: 1.15rem; font-weight: 600; margin: 1.6em 0 0.4em; }
+
+ul { padding-left: 1.25em; }
+li { margin-bottom: 0.5em; }
+
+/* ── Site header (masthead) ─────────────────────────────────────────────── */
+
+.site-header {
+  border-bottom: 2px solid var(--color-primary);
+  padding: 18px 20px;
+}
+.site-header__inner {
+  max-width: var(--wide-width);
+  margin: 0 auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.wordmark {
+  font-family: var(--font-headline);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+.wordmark:hover { color: var(--color-primary); }
+
+/* ── Page body ──────────────────────────────────────────────────────────── */
+
+main {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 40px 20px 56px;
+}
+
+.subtitle, .updated {
+  font-style: italic;
+  color: var(--color-muted);
+  margin: 0 0 2em;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95rem; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+/* Narrow screens: let the wide Privacy table scroll inside itself, never the page. */
+.table-scroll { overflow-x: auto; }
+
+/* ── Home page ──────────────────────────────────────────────────────────── */
+
+.hero {
+  text-align: center;
+  padding: 56px 20px 40px;
+  border-bottom: 1px solid var(--color-primary);
+  max-width: var(--wide-width);
+  margin: 0 auto;
+}
+.hero h1 { font-size: clamp(2.6rem, 9vw, 4.25rem); }
+.hero .tagline {
+  font-style: italic;
+  color: var(--color-charcoal);
+  font-size: 1.15rem;
+  margin: 0 0 1.4em;
+}
+
+.chip {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 4px 16px;
+  border: 1.5px solid var(--color-brown);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-cream), var(--color-tan));
+  color: var(--color-ink);
+}
+
+.intro {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 40px 20px 8px;
+  font-size: 1.15rem;
+}
+
+/* Four phones: one column on phones, two on tablets, one row on desktops. */
+.screens {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 20px 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px 32px;
+  list-style: none;
+}
+@media (min-width: 600px) { .screens { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .screens { grid-template-columns: repeat(4, 1fr); } }
+.screens li { margin: 0; text-align: center; }
+.screens figure { margin: 0; }
+.phone {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  border: 8px solid var(--color-ink);
+  border-radius: 36px;
+  overflow: hidden;
+  background: var(--color-background);
+  box-shadow: 0 18px 40px rgba(27, 42, 74, 0.18);
+}
+.screens figcaption {
+  margin-top: 16px;
+  font-style: italic;
+  color: var(--color-charcoal);
+}
+
+.about {
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 8px 20px 56px;
+}
+
+.contact {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--color-rule);
+  font-size: 0.95rem;
+  color: var(--color-charcoal);
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+
+.site-footer {
+  border-top: 1px solid var(--color-rule);
+  background: var(--color-surface-variant);
+  padding: 24px 20px 32px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+/* Mirrors the app's About screen credit: a small donkey beside "Developed by / Onos Monos". */
+.credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--color-charcoal);
+  text-align: left;
+}
+.credit__logo { width: 32px; height: 32px; }
+.credit__text { display: flex; flex-direction: column; line-height: 1.3; }
+.credit__label { font-size: 0.75rem; }
+.credit__name { font-size: 0.85rem; font-weight: 600; }
+.site-footer nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 24px; }

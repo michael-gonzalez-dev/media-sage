@@ -177,9 +177,11 @@ cd website && npx wrangler dev
 
 ## Website
 
-`thecouragepost.app` (Terms, Privacy, placeholder home page, 404 page) is a static site in `website/`, not a Gradle module.
+`thecouragepost.app` (Terms, Privacy, Support, home page with app screenshots, 404 page) is a static site in `website/`, not a Gradle module.
 
 - **Source:** HTML in `website/public/`. `/terms` serves `terms.html`, `/privacy` serves `privacy.html`. The app's About screen links to these URLs, so don't rename the files.
+- **Look:** every page links `website/public/styles.css`, which holds the whole site's colors and fonts as CSS variables. They mirror the app's default Classic light theme (`theme/Color.kt`, `Theme.kt`, `Type.kt`). Change a color or font there, never inline in a page. `fonts/` holds the app's Playfair Display and Lora as WOFF2 (SIL OFL, license in `fonts/OFL.txt`).
+- **Screenshots:** `website/public/images/` are captured from the real screen composables fed curated preview state (`AugustineBriefingState`, `AugustineHeadlineState`, `AugustineFiguresState`, `AugustineReaderState` in the screens' `*StateProvider.kt` files), so every visible quote, portrait and headline is ours to publish. Every quote must be from a US public-domain work, in a public-domain translation, and no publisher news photo may appear.
 - **Routing:** `website/wrangler.jsonc` routes every path on `thecouragepost.app` to the Cloudflare Worker `couragepost-legal-pages`. Unknown paths get `404.html` with a 404 status.
 - **Deploy:** Cloudflare Workers Builds (Git integration, configured in the Cloudflare dashboard under the Worker's Settings → Builds) deploys on every merge to `main` that touches `website/**`. There is no GitHub Actions workflow for it. Build logs are in the Cloudflare dashboard.
 - **www:** a Cloudflare Redirect Rule (dashboard → Rules) 301-redirects `www.thecouragepost.app` to the apex. It isn't in the repo.

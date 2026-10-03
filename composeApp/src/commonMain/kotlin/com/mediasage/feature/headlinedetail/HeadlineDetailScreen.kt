@@ -45,9 +45,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.mediasage.theme.MediaSageTheme
 import com.mediasage.ui.ErrorType
 import com.mediasage.ui.FigurePlaceholder
 import com.mediasage.ui.MediaSageBackRow
@@ -490,3 +493,16 @@ private fun FullLoadingState() {
     }
 }
 
+// region Previews
+
+@Preview(showBackground = true)
+@Composable
+private fun HeadlineDetailScreenPreview(
+    @PreviewParameter(HeadlineDetailStateProvider::class) state: HeadlineDetailContract.UiState
+) {
+    MediaSageTheme {
+        HeadlineDetailScreen(state = state, onIntent = {})
+    }
+}
+
+// endregion
