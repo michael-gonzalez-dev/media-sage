@@ -32,26 +32,31 @@ class FigureSinceRouteTest {
         transaction {
             SchemaUtils.drop(FigureTable)
             SchemaUtils.create(FigureTable)
-            FigureTable.insert {
-                it[name] = "Augustine"
-                it[category] = "theologian"
-                it[century] = "4th"
-                it[role] = "Bishop & Theologian"
-                it[lifespan] = "354-430"
-                it[bio] = ""
-                it[isEnabled] = true
-                it[updatedAt] = oldTimestamp
-            }
-            FigureTable.insert {
-                it[name] = "C.S. Lewis"
-                it[category] = "author"
-                it[century] = "20th"
-                it[role] = "Author & Apologist"
-                it[lifespan] = "1898-1963"
-                it[bio] = ""
-                it[isEnabled] = true
-                it[updatedAt] = recentTimestamp
-            }
+        }
+        insertFigure("Augustine", "theologian", "4th", "Bishop & Theologian", "354-430", enabled = true, updated = oldTimestamp)
+        insertFigure("C.S. Lewis", "author", "20th", "Author & Apologist", "1898-1963", enabled = true, updated = recentTimestamp)
+        insertFigure("John Wesley", "reformer", "18th", "Evangelist", "1703-1791", enabled = false, updated = recentTimestamp)
+        insertFigure("John Calvin", "reformer", "16th", "Reformer", "1509-1564", enabled = false, updated = oldTimestamp)
+    }
+
+    private fun insertFigure(
+        figureName: String,
+        figureCategory: String,
+        figureCentury: String,
+        figureRole: String,
+        figureLifespan: String,
+        enabled: Boolean,
+        updated: Long,
+    ) = transaction {
+        FigureTable.insert {
+            it[name] = figureName
+            it[category] = figureCategory
+            it[century] = figureCentury
+            it[role] = figureRole
+            it[lifespan] = figureLifespan
+            it[bio] = ""
+            it[isEnabled] = enabled
+            it[updatedAt] = updated
         }
     }
 
@@ -98,5 +103,28 @@ class FigureSinceRouteTest {
         assertEquals(HttpStatusCode.OK, response.status)
         val body = response.body<FiguresResponse>()
         assertEquals(0, body.figures.size)
+    }
+
+    @Test
+    fun sinceListsOnlyFiguresDisabledAfterItAndNeverReturnsThemAsFigures() = testApplication {
+        install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) { json() }
+        install(Koin) { modules(module { single { FigureRepository("http://localhost:8080") } }) }
+        routing { figureRoutes() }
+
+        val client = createClient { install(ContentNegotiation) { json() } }
+        val body = client.get("/api/figures?since=$oldTimestamp").body<FiguresResponse>()
+        assertEquals(listOf(3L), body.disabledIds)
+        assertEquals(listOf("C.S. Lewis"), body.figures.map { it.name })
+    }
+
+    @Test
+    fun noSinceParamListsNoDisabledIds() = testApplication {
+        install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) { json() }
+        install(Koin) { modules(module { single { FigureRepository("http://localhost:8080") } }) }
+        routing { figureRoutes() }
+
+        val client = createClient { install(ContentNegotiation) { json() } }
+        val body = client.get("/api/figures").body<FiguresResponse>()
+        assertEquals(emptyList(), body.disabledIds)
     }
 }

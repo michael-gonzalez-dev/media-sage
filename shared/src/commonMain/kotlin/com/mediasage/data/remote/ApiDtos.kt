@@ -75,7 +75,9 @@ data class MatchResultDto(
 @Serializable
 data class FiguresResponse(
     val syncedAt: Long,
-    val figures: List<FigureDto>
+    val figures: List<FigureDto>,
+    // Server ids of figures disabled since the requested time. Empty on a full sync.
+    val disabledIds: List<Long> = emptyList()
 )
 
 @Serializable

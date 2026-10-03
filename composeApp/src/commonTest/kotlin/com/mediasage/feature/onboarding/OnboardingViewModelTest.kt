@@ -177,6 +177,17 @@ class OnboardingViewModelTest {
     }
 
     @Test
+    fun todayAssignedToADisabledReporterPreselectsTheFirstFigureInstead() = runTest(testDispatcher) {
+        // Augustine is today's reporter but was disabled on the server, so he's gone from figures.
+        figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
+        dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(AUGUSTINE.id, LensFilter.HOPE))
+        val viewModel = onPickStep()
+
+        assertEquals(OnboardingContract.PickSelection(LEWIS.id, LensFilter.HOPE), viewModel.state.value.selection)
+        assertEquals(LEWIS.id, viewModel.state.value.selectedReporter?.card?.id)
+    }
+
+    @Test
     fun aLaterScheduleUpdatesTheDefaultWhileTheReaderHasNotPicked() = runTest(testDispatcher) {
         figureRepository.figures.value = listOf(LEWIS, TEN_BOOM)
         dayAssignmentRepository.assignments.value = mapOf(TODAY to DayAssignment(LEWIS.id, null))
