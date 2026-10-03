@@ -4,20 +4,82 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Courage Post</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-         max-width: 720px; margin: 0 auto; padding: 20px 20px 40px; line-height: 1.6; color: #222; }
-  h1 { font-size: 1.8em; margin-top: 0; margin-bottom: 0.2em; }
-  .subtitle { color: #666; font-style: italic; margin-bottom: 2em; }
-  a { color: #1a5fb4; }
-</style>
+<meta name="description" content="A daily briefing grounded in the wisdom of those who lived the Christian faith. Coming soon.">
+<link rel="preload" href="/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/lora.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>The Courage Post</h1>
-  <p class="subtitle">Coming soon</p>
+  <section class="hero">
+    <h1>The Courage Post</h1>
+    <p class="tagline">Discover wisdom for today's world</p>
+    <span class="chip">Coming soon</span>
+  </section>
 
-  <p>The Courage Post is an app built around a daily briefing grounded in the wisdom of those who lived the Christian faith and those who witnessed its impact on the world. Each briefing looks through a lens you choose: the day's headlines, the writings of the day's reporter, or a theme such as hope, grief, or justice. Separately, the day's headlines are paired with sourced quotes from their writings. The app is in beta testing.</p>
+  <main class="intro">
+    <p>The Courage Post is an app built around a daily briefing grounded in the wisdom of those who lived the Christian faith and those who witnessed its impact on the world. Each briefing looks through a lens you choose: the day's headlines, the writings of the day's reporter, or a theme such as hope, grief, or justice. Separately, the day's headlines are paired with sourced quotes from their writings. The app is in beta testing.</p>
+  </main>
 
-  <p><a href="/support">Support</a> · <a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy Policy</a></p>
+  <ul class="screens" aria-label="App screenshots">
+    <li>
+      <figure>
+        <img class="phone" src="/images/briefing-540.webp"
+             srcset="/images/briefing-540.webp 540w, /images/briefing-1080.webp 1080w"
+             sizes="(min-width: 760px) 300px, 80vw" width="540" height="1015" loading="lazy"
+             alt="The daily briefing, with a portrait of Augustine of Hippo and a verse from Matthew">
+        <figcaption>A daily briefing in the voice of the day's reporter.</figcaption>
+      </figure>
+    </li>
+    <li>
+      <figure>
+        <img class="phone" src="/images/headline-540.webp"
+             srcset="/images/headline-540.webp 540w, /images/headline-1080.webp 1080w"
+             sizes="(min-width: 760px) 300px, 80vw" width="540" height="1015" loading="lazy"
+             alt="A headline about retirement savings paired with a quote from Augustine's Confessions">
+        <figcaption>Headlines paired with a sourced quote.</figcaption>
+      </figure>
+    </li>
+    <li>
+      <figure>
+        <img class="phone" src="/images/reporters-540.webp"
+             srcset="/images/reporters-540.webp 540w, /images/reporters-1080.webp 1080w"
+             sizes="(min-width: 760px) 300px, 80vw" width="540" height="1015" loading="lazy"
+             alt="The reporters screen with Augustine pinned first, then A.W. Tozer and Abraham Lincoln">
+        <figcaption>Reporters from every era of the church.</figcaption>
+      </figure>
+    </li>
+    <li>
+      <figure>
+        <img class="phone" src="/images/reader-540.webp"
+             srcset="/images/reader-540.webp 540w, /images/reader-1080.webp 1080w"
+             sizes="(min-width: 760px) 300px, 80vw" width="540" height="1015" loading="lazy"
+             alt="The Reader tab with a week of reporters including Harriet Tubman, a memory quote from Augustine and past briefings">
+        <figcaption>Your week of reporters and the quotes you keep.</figcaption>
+      </figure>
+    </li>
+  </ul>
+
+  <section class="about">
+    <h2>Why The Courage Post</h2>
+    <p>A lot of the news today is designed to keep us anxious, because anxious readers keep scrolling. The Courage Post is built to do the opposite.</p>
+    <p>Each day's briefing grounds you in the hard-won wisdom of people who lived through real hardship long before us and found in God a confidence and peace worth passing on. The day's headlines are paired with that same wisdom.</p>
+    <p>My hope is that a few minutes here each day leaves you steadier than the news alone would.</p>
+    <p class="contact">Made by Michael A. Gonzalez. Questions or ideas? Email <a href="mailto:support@thecouragepost.app">support@thecouragepost.app</a>.</p>
+  </section>
+
+  <footer class="site-footer">
+    <div class="credit">
+      <img class="credit__logo" src="/images/onos-monos-logo.png" width="32" height="32" alt="">
+      <div class="credit__text">
+        <span class="credit__label">Developed by</span>
+        <span class="credit__name">Onos Monos</span>
+      </div>
+    </div>
+    <nav aria-label="Site">
+      <a href="/support">Support</a>
+      <a href="/terms">Terms of Service</a>
+      <a href="/privacy">Privacy Policy</a>
+    </nav>
+  </footer>
 </body>
 </html>
