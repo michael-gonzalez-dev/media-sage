@@ -15,8 +15,8 @@ private const val TODAY_EPOCH_DAY = 20729L
 
 /**
  * Reader tab used for the thecouragepost.app screenshots. The week's roster mixes eras with
- * Augustine today, the memory quote is Confessions I.1 in Pusey's public-domain
- * translation, and the past-briefing lines are written for this sample, not quoted.
+ * Augustine today, the memory quote is Müller as printed in Pierson's George Müller of Bristol
+ * (1899), Appendix N, and the past-briefing lines are written for this sample, not quoted.
  */
 internal val AugustineReaderState = ReaderContract.UiState.Ready(
     weekSlots = listOf(
@@ -29,10 +29,10 @@ internal val AugustineReaderState = ReaderContract.UiState.Ready(
         rosterSlot(DayOfWeek.SUNDAY, 3L, "Dietrich Bonhoeffer", LensFilter.NEWS),
     ),
     quoteCard = ReaderContract.QuoteCard(
-        quoteText = "Thou madest us for Thyself, and our heart is restless, until it repose in Thee.",
-        figureName = "Augustine of Hippo",
-        figureRole = "Bishop & Church Father",
-        figureImageUrl = "$PORTRAITS/36.webp",
+        quoteText = "Where Faith begins, anxiety ends; Where anxiety begins, Faith ends.",
+        figureName = "George Müller",
+        figureRole = "Evangelist & Orphan Care Pioneer",
+        figureImageUrl = "$PORTRAITS/91.webp",
     ),
     pastBriefings = listOf(
         pastBriefing(

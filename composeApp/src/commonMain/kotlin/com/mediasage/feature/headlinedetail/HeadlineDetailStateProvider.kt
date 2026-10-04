@@ -6,17 +6,18 @@ import com.mediasage.ui.ErrorType
 internal class HeadlineDetailStateProvider : PreviewParameterProvider<HeadlineDetailContract.UiState> {
     override val values = sequenceOf(
         HeadlineDetailContract.UiState.Loading,
-        AugustineHeadlineState.copy(encouragement = HeadlineDetailContract.EncouragementState.Loading),
-        AugustineHeadlineState,
+        TozerHeadlineState.copy(encouragement = HeadlineDetailContract.EncouragementState.Loading),
+        TozerHeadlineState,
         HeadlineDetailContract.UiState.Error(errorType = ErrorType.NETWORK),
     )
 }
 
 /**
- * Headline paired with Augustine, used for the thecouragepost.app screenshots. No headline photo,
- * the quote is Confessions I.1 in Pusey's public-domain translation, and the scripture is KJV.
+ * Headline paired with Tozer, used for the thecouragepost.app screenshots. No headline photo,
+ * the quote is from The Pursuit of God (1948, copyright not renewed), and the scripture is the
+ * public-domain Berean Standard Bible.
  */
-internal val AugustineHeadlineState = HeadlineDetailContract.UiState.Success(
+internal val TozerHeadlineState = HeadlineDetailContract.UiState.Success(
     headlineTitle = "Why So Many Americans Have Trouble Spending Their Retirement Savings",
     headlineSource = "Barron's · Oct 3, 2026",
     headlineCategory = "Business",
@@ -24,15 +25,15 @@ internal val AugustineHeadlineState = HeadlineDetailContract.UiState.Success(
     encouragement = HeadlineDetailContract.EncouragementState.Loaded(
         summary = "Many Americans spend decades building a nest egg. Once they retire, " +
             "many find it hard to spend any of it.",
-        quoteText = "Thou madest us for Thyself, and our heart is restless, until it repose in Thee.",
-        figureName = "Augustine of Hippo",
-        figureRole = "Bishop & Church Father",
-        figureImageUrl = "https://sfocythzurfdpkegjlsl.supabase.co/storage/v1/object/public/portraits/36.webp",
+        quoteText = "The man who has God for his treasure has all things in One.",
+        figureName = "A.W. Tozer",
+        figureRole = "Pastor & Author",
+        figureImageUrl = "https://sfocythzurfdpkegjlsl.supabase.co/storage/v1/object/public/portraits/19.webp",
         scriptureReference = "Matthew 6:34",
-        scriptureText = "Take therefore no thought for the morrow: for the morrow shall take thought for the things " +
-            "of itself. Sufficient unto the day is the evil thereof.",
-        matchExplanation = "Saving for the future is wise. Yet even a full account cannot quiet the fear of not " +
-            "having enough. Augustine knew that restlessness well. He found that only God could give the rest he sought.",
+        scriptureText = "Therefore do not worry about tomorrow, for tomorrow will worry about itself. " +
+            "Today has enough trouble of its own.",
+        matchExplanation = "Saving for the future is wise. Yet even a full account cannot quiet the fear of running " +
+            "short. Tozer saw that things make a poor treasure. When God is your treasure, you already have enough.",
         matchTheme = "Faith",
         tone = "Encouraging",
     ),

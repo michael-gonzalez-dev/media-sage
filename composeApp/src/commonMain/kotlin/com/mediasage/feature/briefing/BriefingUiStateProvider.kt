@@ -37,8 +37,8 @@ internal class BriefingUiStateProvider : PreviewParameterProvider<BriefingContra
 }
 
 /**
- * Augustine briefing used for the thecouragepost.app screenshots. The scripture is KJV and the only
- * work cited is Confessions, so everything quoted here is public domain.
+ * Augustine briefing used for the thecouragepost.app screenshots. The scripture is the public-domain
+ * Berean Standard Bible and the only work cited is Confessions, so everything quoted here is public domain.
  */
 internal val AugustineBriefingState = BriefingContract.UiState.Success(
     todayLabel = "Saturday, October 3, 2026",
@@ -47,7 +47,7 @@ internal val AugustineBriefingState = BriefingContract.UiState.Success(
         figureName = "Augustine of Hippo",
         figureImageUrl = "https://sfocythzurfdpkegjlsl.supabase.co/storage/v1/object/public/portraits/36.webp",
         scriptureReference = "Matthew 11:28",
-        scriptureText = "Come unto me, all ye that labour and are heavy laden, and I will give you rest.",
+        scriptureText = "Come to Me, all you who are weary and burdened, and I will give you rest.",
         insight = "I searched for rest in pleasure, in praise, and in clever arguments. " +
             "None of them could hold the weight of my heart. It was made for God, and it would not settle for less.",
         implication = "Your restlessness today is not a failure. It is a signpost. Let it turn you toward the One who made you.",
