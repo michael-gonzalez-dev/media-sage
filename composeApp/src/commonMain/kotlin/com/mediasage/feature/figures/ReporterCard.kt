@@ -308,7 +308,8 @@ private val previewInfo = ReporterCardInfo(
     name = "C.S. Lewis",
     role = "Author & Apologist",
     lifespan = "1898-1963",
-    knownFor = "Lewis wrote The Chronicles of Narnia as well as Mere Christianity and The Screwtape Letters.",
+    knownFor = "Lewis wrote Mere Christianity and The Chronicles of Narnia, which have brought Christian faith " +
+        "to millions of readers.",
     portraitUrl = null,
 )
 
