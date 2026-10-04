@@ -37,7 +37,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (1017, 1, 'Smalcald Articles', 1537),
 (1018, 1, 'Preface to Georg Rhau''s Symphoniae iucundae', 1538),
 (1019, 1, 'Table Talk', 1566), -- compilation: Johannes Aurifaber, 1566 (sayings recorded by Luther's table companions)
-(1020, 1, 'Sermon on the Third Sunday after Trinity', 1528)
+(1020, 1, 'Sermon on the Third Sunday after Trinity', 1528),
+(1021, 1, 'Treatise on Good Works', 1520)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 2: John Calvin
@@ -156,7 +157,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (9005, 9, 'The Lord Our Righteousness', NULL), -- sermon
 (9006, 9, 'A Short Account of God''s Dealings with the Reverend Mr. George Whitefield', 1740),
 (9007, 9, 'A Letter to the Inhabitants of Maryland, Virginia, North and South Carolina', 1740), -- open letter on the treatment of slaves
-(9008, 9, 'A Further Account of God''s Dealings with the Reverend Mr. George Whitefield', 1747)
+(9008, 9, 'A Further Account of God''s Dealings with the Reverend Mr. George Whitefield', 1747),
+(9009, 9, 'The Works of the Reverend George Whitefield', 1771)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 10: John Knox
@@ -1246,6 +1248,7 @@ ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.
 INSERT INTO works (id, figure_id, title, year, recorded_by, for_quotes_only) VALUES
 (6902, 6, 'John Wycliffe and His English Precursors', 1884, 'Gotthard Lechler', true),
 (7902, 7, 'Actes and Monuments', 1563, 'John Foxe', true),
+(12902, 12, 'The Life of Philip Melanchthon', 1855, 'Charles Frederick Ledderhose', true),
 (18902, 18, 'The Life of William Carey, Shoemaker and Missionary', 1885, 'George Smith', true),
 (20902, 20, 'John Hus at the Council of Constance', 1965, 'Peter of Mladoňovice', true),
 (33902, 33, 'Woman under Monasticism', 1896, 'Lina Eckenstein', true),
