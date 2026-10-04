@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -96,7 +96,7 @@ private fun ViewModeToggleButton(
     // Shows the view a tap switches to.
     val (icon, label, next) = when (viewMode) {
         ReaderHistoryContract.ViewMode.CALENDAR ->
-            Triple(Icons.AutoMirrored.Outlined.ViewList, Res.string.reader_history_show_list, ReaderHistoryContract.ViewMode.LIST)
+            Triple(Icons.Outlined.ViewAgenda, Res.string.reader_history_show_list, ReaderHistoryContract.ViewMode.LIST)
         ReaderHistoryContract.ViewMode.LIST ->
             Triple(Icons.Outlined.CalendarMonth, Res.string.reader_history_show_calendar, ReaderHistoryContract.ViewMode.CALENDAR)
     }
