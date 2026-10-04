@@ -15,8 +15,8 @@ private const val TODAY_EPOCH_DAY = 20729L
 
 /**
  * Reader tab used for the thecouragepost.app screenshots. The week's roster mixes eras with
- * Augustine today, the memory quote is Confessions I.1 in Pusey's public-domain
- * translation, and the past-briefing lines are written for this sample, not quoted.
+ * Augustine today, the memory quote is from Tozer's The Pursuit of God (1948, copyright not
+ * renewed), and the past-briefing lines are written for this sample, not quoted.
  */
 internal val AugustineReaderState = ReaderContract.UiState.Ready(
     weekSlots = listOf(
@@ -29,10 +29,10 @@ internal val AugustineReaderState = ReaderContract.UiState.Ready(
         rosterSlot(DayOfWeek.SUNDAY, 3L, "Dietrich Bonhoeffer", LensFilter.NEWS),
     ),
     quoteCard = ReaderContract.QuoteCard(
-        quoteText = "Thou madest us for Thyself, and our heart is restless, until it repose in Thee.",
-        figureName = "Augustine of Hippo",
-        figureRole = "Bishop & Church Father",
-        figureImageUrl = "$PORTRAITS/36.webp",
+        quoteText = "Come near to the holy men and women of the past and you will soon feel the heat of their desire after God.",
+        figureName = "A.W. Tozer",
+        figureRole = "Pastor & Author",
+        figureImageUrl = "$PORTRAITS/19.webp",
     ),
     pastBriefings = listOf(
         pastBriefing(
