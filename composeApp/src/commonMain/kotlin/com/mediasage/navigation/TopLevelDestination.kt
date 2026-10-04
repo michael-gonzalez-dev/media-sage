@@ -1,10 +1,12 @@
 package com.mediasage.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ViewHeadline
+import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
@@ -13,6 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.nav_briefing
 import mediasage.composeapp.generated.resources.nav_headlines
+import mediasage.composeapp.generated.resources.nav_library
 import mediasage.composeapp.generated.resources.nav_voices
 import mediasage.composeapp.generated.resources.nav_you
 import org.jetbrains.compose.resources.StringResource
@@ -41,6 +44,12 @@ enum class TopLevelDestination(
         labelRes = Res.string.nav_voices,
         selectedIcon = Icons.Filled.Groups,
         unselectedIcon = Icons.Outlined.Groups
+    ),
+    LIBRARY(
+        route = Route.Library,
+        labelRes = Res.string.nav_library,
+        selectedIcon = Icons.Filled.AutoStories,
+        unselectedIcon = Icons.Outlined.AutoStories
     ),
     YOU(
         route = Route.You,

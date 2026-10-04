@@ -4,14 +4,17 @@ import com.mediasage.data.local.entity.EncouragementEntity
 import com.mediasage.data.local.entity.FigureEntity
 import com.mediasage.data.local.entity.HeadlineEntity
 import com.mediasage.data.local.entity.QuoteEntity
+import com.mediasage.data.local.entity.WorkEntity
 import com.mediasage.data.remote.EncourageResultDto
 import com.mediasage.data.remote.FigureDto
 import com.mediasage.data.remote.NewsArticleDto
+import com.mediasage.data.remote.WorkDto
 import com.mediasage.domain.model.Encouragement
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
 import com.mediasage.domain.model.Headline
 import com.mediasage.domain.model.Quote
+import com.mediasage.domain.model.Work
 import kotlin.time.Instant
 
 // Figure
@@ -184,4 +187,23 @@ fun Encouragement.toEntity(
     figureId = figureId,
     headlineCategory = headlineCategory,
     headlinePublishedAt = headlinePublishedAt
+)
+
+// Work
+fun WorkDto.toEntity() = WorkEntity(
+    id = id,
+    figureId = figureId,
+    title = title,
+    year = year,
+    recordedBy = recordedBy,
+    coverUrl = coverUrl
+)
+
+fun WorkEntity.toDomain() = Work(
+    id = id,
+    figureId = figureId,
+    title = title,
+    year = year,
+    recordedBy = recordedBy,
+    coverUrl = coverUrl
 )

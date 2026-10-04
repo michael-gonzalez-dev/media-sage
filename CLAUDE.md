@@ -73,16 +73,18 @@ Managed in `gradle/libs.versions.toml`:
 composeApp/src/commonMain/kotlin/com/mediasage/
 ├── App.kt
 ├── theme/               — Color, Type, Theme (MediaSageTheme)
-├── navigation/          — Routes, AppState, Scaffold, TopLevelDestination
-└── feature/
-    ├── home/            — HomeContract, HomeViewModel, HomeScreen
-    ├── match/           — MatchContract, MatchViewModel, MatchScreen
-    └── figures/         — FiguresContract, FiguresViewModel, FiguresScreen (UI label: "Voices")
+├── navigation/          — Routes, AppState, Scaffold, TopLevelDestination (bottom bar: Briefing, Headlines, Reporters, Library, Reader)
+└── feature/             — one package per screen, each with Contract, ViewModel, Screen
+    ├── briefing/        — Briefing tab
+    ├── headlines/       — Headlines tab (headlinedetail/ opens one headline)
+    ├── figures/         — Reporters tab (code names: SAGES, nav_voices) and the reporter detail page
+    ├── library/         — Library tab: every reporter's works as a Shelf of covers or a List
+    └── you/             — Reader tab (code names: YOU, nav_you)
 
 shared/src/commonMain/kotlin/com/mediasage/
 ├── di/                  — Koin modules
 ├── domain/
-│   ├── model/           — Figure, Quote, Headline, Match
+│   ├── model/           — Figure, Quote, Headline, Work, Match
 │   └── repository/      — Repository interfaces
 └── data/
     ├── local/
@@ -96,7 +98,7 @@ shared/src/commonMain/kotlin/com/mediasage/
 appServer/src/main/kotlin/com/mediasage/appserver/
 ├── Application.kt       — Entry point, Koin setup
 ├── plugins/             — ContentNegotiation, CORS, CallLogging, StatusPages
-├── routes/              — Health, News, Encourage, Scripture, Figures, Quotes, DailyReflection
+├── routes/              — Health, News, Encourage, Scripture, Figures, Works, Quotes, DailyReflection
 ├── service/             — ClaudeApiClient, NewsApiClient, ScriptureApiClient
 └── di/                  — ServerModule
 

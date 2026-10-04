@@ -20,6 +20,10 @@ class MediaSageApiImpl(
         return httpClient.get("$baseUrl/api/quotes").body()
     }
 
+    override suspend fun getWorks(): WorksResponse {
+        return httpClient.get("$baseUrl/api/works").body()
+    }
+
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> {
         return httpClient.get("$baseUrl/api/news/headlines") {
             parameter("locale", locale)

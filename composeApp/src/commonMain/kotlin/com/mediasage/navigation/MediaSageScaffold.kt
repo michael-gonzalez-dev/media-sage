@@ -48,6 +48,8 @@ import com.mediasage.feature.figures.FigureDetailViewModel
 import com.mediasage.feature.figures.FiguresScreen
 import com.mediasage.feature.figures.FiguresViewModel
 import com.mediasage.feature.headlines.HeadlinesContract
+import com.mediasage.feature.library.LibraryScreen
+import com.mediasage.feature.library.LibraryViewModel
 import com.mediasage.feature.headlines.HeadlinesScreen
 import com.mediasage.feature.headlines.HeadlinesViewModel
 import com.mediasage.feature.headlinedetail.HeadlineDetailScreen
@@ -218,6 +220,11 @@ fun MediaSageScaffold(
                         onIntent = vm::onIntent,
                         onNavigateBack = { appState.navigateBack() }
                     )
+                }
+                is Route.Library -> TrackedNavEntry(route) {
+                    val vm = koinViewModel<LibraryViewModel>()
+                    val state by vm.state.collectAsStateWithLifecycle()
+                    LibraryScreen(state = state, onIntent = vm::onIntent)
                 }
                 is Route.You -> TrackedNavEntry(route) {
                     val vm = koinViewModel<ReaderViewModel>()

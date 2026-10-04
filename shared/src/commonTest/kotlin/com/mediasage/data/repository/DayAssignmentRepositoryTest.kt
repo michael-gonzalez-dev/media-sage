@@ -21,6 +21,7 @@ import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
+import com.mediasage.data.remote.WorksResponse
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DailyReflection
 import com.mediasage.domain.model.LensFilter
@@ -596,6 +597,7 @@ private class FakeAssignmentApi(
 ) : MediaSageApi {
     var callCount = 0
 
+    override suspend fun getWorks(): WorksResponse = error("not used in this test")
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> {
         callCount++
         if (shouldThrow) throw RuntimeException("Network failure")

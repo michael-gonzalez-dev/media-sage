@@ -20,6 +20,7 @@ import com.mediasage.data.remote.QuoteDto
 import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
+import com.mediasage.data.remote.WorksResponse
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -455,5 +456,6 @@ private class FakeMediaSageApiForQuoteLibrary(private val library: List<QuoteDto
     override suspend fun getPassage(passageId: String): ScripturePassageDto = error("not used in this test")
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
         error("not used in this test")
+    override suspend fun getWorks(): WorksResponse = error("not used in this test")
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = error("not used in this test")
 }

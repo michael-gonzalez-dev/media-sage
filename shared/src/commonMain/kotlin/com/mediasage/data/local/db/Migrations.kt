@@ -269,6 +269,16 @@ val MIGRATION_39_40 = object : Migration(39, 40) {
     }
 }
 
+// The Library's copy of the server bibliography, replaced whole on each sync.
+val MIGRATION_40_41 = object : Migration(40, 41) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `works` (`id` INTEGER NOT NULL, `figureId` INTEGER NOT NULL, `title` TEXT NOT NULL, " +
+                "`year` INTEGER, `recordedBy` TEXT, `coverUrl` TEXT, PRIMARY KEY(`id`))"
+        )
+    }
+}
+
 val MIGRATION_12_13 = object : Migration(12, 13) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

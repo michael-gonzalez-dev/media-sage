@@ -22,5 +22,8 @@ object WorkTable : Table("works") {
     /** A recorded work listed only so "Cited in …" quotes can cite it; briefings never draw on it. */
     val forQuotesOnly = bool("for_quotes_only").default(false)
 
+    /** The book's cover image, shown in the app's Library. Empty until covers are sourced; the app then draws a default cover. */
+    val coverUrl = varchar("cover_url", 1024).nullable()
+
     override val primaryKey = PrimaryKey(id)
 }

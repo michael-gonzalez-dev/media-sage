@@ -21,6 +21,7 @@ import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
+import com.mediasage.data.remote.WorksResponse
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.model.UserSession
@@ -725,6 +726,7 @@ private class FakeReflectionApi(
     var callCount = 0
     var lastRequest: DailyReflectionRequestDto? = null
 
+    override suspend fun getWorks(): WorksResponse = error("not used in this test")
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = emptyList()
 
     override suspend fun getFigures(since: Long?): FiguresResponse =
