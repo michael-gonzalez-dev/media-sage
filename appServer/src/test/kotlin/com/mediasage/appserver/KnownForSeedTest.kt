@@ -13,10 +13,10 @@ class KnownForSeedTest {
     private fun resource(name: String): String =
         checkNotNull(javaClass.classLoader.getResource(name)) { "$name not found" }.readText()
 
-    // Seed rows end (..., themes, known_for, portrait_url, is_enabled).
+    // Seed rows end (..., themes, known_for, portrait_url, is_enabled). Bios span several lines.
     private val seedRow = Regex(
-        """^INSERT INTO figures .*? VALUES \((\d+),.*,'(?:[^']|'')*','((?:[^']|'')*)',(?:'[^']*'|NULL),(?:true|false)\);$""",
-        RegexOption.MULTILINE
+        """^INSERT INTO figures .*? VALUES \((\d+),.*?,'(?:[^']|'')*','((?:[^']|'')*)',(?:'[^']*'|NULL),(?:true|false)\);$""",
+        setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL)
     )
 
     private val backfillRow = Regex(
