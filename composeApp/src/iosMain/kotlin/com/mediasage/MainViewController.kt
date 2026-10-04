@@ -6,6 +6,7 @@ import com.mediasage.di.appModule
 import com.mediasage.di.databaseModule
 import com.mediasage.di.headlinesModule
 import com.mediasage.di.notificationModule
+import com.mediasage.di.reportersModule
 import com.mediasage.di.sharedModule
 import com.mediasage.di.themeModule
 import com.mediasage.di.userModule
@@ -19,6 +20,7 @@ fun initKoin(supabaseUrl: String, supabaseAnonKey: String, analyticsService: Ana
             themeModule,
             userModule,
             headlinesModule,
+            reportersModule,
             notificationModule,
             sharedModule(
                 serverBaseUrl = "https://media-sage-production.up.railway.app",

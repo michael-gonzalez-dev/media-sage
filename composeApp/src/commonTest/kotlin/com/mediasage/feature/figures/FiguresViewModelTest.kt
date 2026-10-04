@@ -2,13 +2,22 @@
 
 package com.mediasage.feature.figures
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
+import com.mediasage.data.ReporterView
+import com.mediasage.data.ReporterViewPreferencesRepository
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.repository.epochMillis
+import com.mediasage.domain.model.BriefingDay
+import com.mediasage.domain.model.DailyReflection
 import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
 import com.mediasage.domain.model.FigureEra
 import com.mediasage.domain.model.LensFilter
+import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
 import com.mediasage.domain.repository.FigureRepository
 import kotlinx.coroutines.Dispatchers
@@ -20,12 +29,18 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 class FiguresViewModelTest {
 
@@ -44,7 +59,7 @@ class FiguresViewModelTest {
     @Test
     fun emitsLoadingInitially() {
         val figureRepo = FakeFigureRepository(MutableStateFlow(emptyList()))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         assertIs<FiguresContract.UiState.Success>(vm.state.value)
     }
@@ -53,7 +68,7 @@ class FiguresViewModelTest {
     fun emitsSuccessWithFiguresFromRepository() = runTest(testDispatcher) {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals(1, state.figures.size)
@@ -65,7 +80,7 @@ class FiguresViewModelTest {
     fun refreshSetsIsRefreshingTrueThenFalse() = runTest(testDispatcher) {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         vm.onIntent(FiguresContract.Intent.Refresh)
 
@@ -77,7 +92,7 @@ class FiguresViewModelTest {
     fun refreshCallsSyncFigures() = runTest(testDispatcher) {
         val figures = listOf(buildFigure("Augustine", "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         vm.onIntent(FiguresContract.Intent.Refresh)
 
@@ -91,7 +106,7 @@ class FiguresViewModelTest {
             buildFigure(id = 2L, name = "C.S. Lewis", role = "Author & Apologist")
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("aug"))
 
@@ -108,7 +123,7 @@ class FiguresViewModelTest {
             buildFigure(id = 2L, name = "C.S. Lewis", role = "Author & Apologist")
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("APOLOGIST"))
 
@@ -124,7 +139,7 @@ class FiguresViewModelTest {
             buildFigure(id = 2L, name = "C.S. Lewis", role = "Author & Apologist")
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo)
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("aug"))
         assertEquals(1, assertIs<FiguresContract.UiState.Success>(vm.state.value).figures.size)
@@ -138,7 +153,7 @@ class FiguresViewModelTest {
         val figures = listOf(buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val analyticsService = FakeAnalyticsServiceForFiguresScreen()
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), analyticsService)
+        val vm = figuresViewModel(figureRepo, analyticsService = analyticsService)
 
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("a"))
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("au"))
@@ -151,7 +166,7 @@ class FiguresViewModelTest {
         val figures = listOf(buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo"))
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         val analyticsService = FakeAnalyticsServiceForFiguresScreen()
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), analyticsService)
+        val vm = figuresViewModel(figureRepo, analyticsService = analyticsService)
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged("a"))
         vm.onIntent(FiguresContract.Intent.SearchQueryChanged(""))
 
@@ -172,7 +187,7 @@ class FiguresViewModelTest {
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
         // Assign Zwingli (id=2) to every day so the test is day-of-week agnostic
         val dayAssignmentRepo = FakeDayAssignmentRepository(assignments = (0..6).associate { it to DayAssignment(figureId = 2L, lens = null) })
-        val vm = FiguresViewModel(figureRepo, dayAssignmentRepo, FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo, dayAssignmentRepo)
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
         assertEquals("Zwingli", state.figures[0].name)
@@ -180,19 +195,18 @@ class FiguresViewModelTest {
     }
 
     @Test
-    fun unpinnedFiguresSortAlphabetically() = runTest(testDispatcher) {
+    fun unpinnedFiguresSortAlphabeticallyAfterTodaysPick() = runTest(testDispatcher) {
         val figures = listOf(
             buildFigure(id = 1L, name = "Zwingli", role = "Reformer"),
             buildFigure(id = 2L, name = "Augustine", role = "Bishop of Hippo"),
-            buildFigure(id = 3L, name = "Calvin", role = "Reformer")
+            buildFigure(id = 3L, name = "Calvin", role = "Reformer"),
+            buildFigure(id = 4L, name = "Bonhoeffer", role = "Theologian & Martyr")
         )
         val figureRepo = FakeFigureRepository(MutableStateFlow(figures))
-        val vm = FiguresViewModel(figureRepo, FakeDayAssignmentRepository(), FakeAnalyticsServiceForFiguresScreen())
+        val vm = figuresViewModel(figureRepo, FakeDayAssignmentRepository(everyDay(3L)))
 
         val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
-        assertEquals("Augustine", state.figures[0].name)
-        assertEquals("Calvin", state.figures[1].name)
-        assertEquals("Zwingli", state.figures[2].name)
+        assertEquals(listOf("Calvin", "Augustine", "Bonhoeffer", "Zwingli"), state.figures.map { it.name })
     }
 
     @Test
@@ -295,6 +309,188 @@ class FiguresViewModelTest {
         assertEquals(FigureEra.MODERN, state.figures.first { it.name == "Bonhoeffer" }.era)
     }
 
+    @Test
+    fun deckListsEveryShownReporterByNameWhileTheGridPinsTodaysPickFirst() = runTest(testDispatcher) {
+        val vm = figuresViewModel(FakeFigureRepository(MutableStateFlow(abc())), FakeDayAssignmentRepository(everyDay(3L)))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(listOf("Calvin", "Augustine", "Bonhoeffer"), state.figures.map { it.name })
+        assertEquals(listOf("Augustine", "Bonhoeffer", "Calvin"), state.deck.map { it.name })
+    }
+
+    @Test
+    fun todayPick_isTodaysAssignmentWithItsLens() = runTest(testDispatcher) {
+        val assignments = (0..6).associateWith { DayAssignment(figureId = 2L, lens = LensFilter.HOPE) }
+        val vm = figuresViewModel(FakeFigureRepository(MutableStateFlow(abc())), FakeDayAssignmentRepository(assignments))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FiguresContract.ReporterPick(2L, LensFilter.HOPE), state.todayPick)
+        assertNull(state.scheduledPick)
+    }
+
+    @Test
+    fun todayPick_fallsBackToTheFirstReporterThroughNewsWhenTodayIsUnassigned() = runTest(testDispatcher) {
+        val vm = figuresViewModel(FakeFigureRepository(MutableStateFlow(abc())))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FiguresContract.ReporterPick(1L, LensFilter.NEWS), state.todayPick)
+        assertTrue(state.figures.first { it.id == 1L }.isPinned)
+    }
+
+    @Test
+    fun todayPick_fallsBackWhenTodaysReporterIsNoLongerListed() = runTest(testDispatcher) {
+        val vm = figuresViewModel(FakeFigureRepository(MutableStateFlow(abc())), FakeDayAssignmentRepository(everyDay(99L)))
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(1L, state.todayPick?.figureId)
+    }
+
+    @Test
+    fun onceTodaysBriefingIsWritten_itsReporterStaysTodaysPickAndANewPickStartsNextWeek() = runTest(testDispatcher) {
+        val assignments = (0..6).associateWith { DayAssignment(figureId = 3L, lens = LensFilter.GRACE) }
+        val reflections = FakeDailyReflectionRepositoryForFigures(lockedFigureId = 1L, lockedLens = LensFilter.HOPE)
+        val vm = figuresViewModel(
+            FakeFigureRepository(MutableStateFlow(abc())),
+            FakeDayAssignmentRepository(assignments),
+            reflectionRepo = reflections,
+        )
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FiguresContract.ReporterPick(1L, LensFilter.HOPE), state.todayPick)
+        assertEquals(FiguresContract.ScheduledPick(3L, LensFilter.GRACE, todayWeekdayLabel), state.scheduledPick)
+    }
+
+    @Test
+    fun lockedBriefingWithNoSavedLensMeansNews() = runTest(testDispatcher) {
+        val reflections = FakeDailyReflectionRepositoryForFigures(lockedFigureId = 2L, lockedLens = null)
+        val vm = figuresViewModel(FakeFigureRepository(MutableStateFlow(abc())), reflectionRepo = reflections)
+
+        val state = assertIs<FiguresContract.UiState.Success>(vm.state.value)
+        assertEquals(FiguresContract.ReporterPick(2L, LensFilter.NEWS), state.todayPick)
+        assertNull(state.scheduledPick)
+    }
+
+    @Test
+    fun viewIsTheDeckUntilTheReaderPicksTheGridAndTheChoiceIsKept() = runTest(testDispatcher) {
+        val dataStore = FakeReporterViewDataStore()
+        val figureRepo = FakeFigureRepository(MutableStateFlow(abc()))
+        val vm = figuresViewModel(figureRepo, dataStore = dataStore)
+        assertEquals(ReporterView.DECK, assertIs<FiguresContract.UiState.Success>(vm.state.value).view)
+
+        vm.onIntent(FiguresContract.Intent.ViewSelected(ReporterView.GRID))
+
+        assertEquals(ReporterView.GRID, assertIs<FiguresContract.UiState.Success>(vm.state.value).view)
+        val reopened = figuresViewModel(figureRepo, dataStore = dataStore)
+        assertEquals(ReporterView.GRID, assertIs<FiguresContract.UiState.Success>(reopened.state.value).view)
+    }
+
+    @Test
+    fun lensSelected_makesTheReporterTodaysPickAtOnceWhenTodayHasNoBriefingYet() = runTest(testDispatcher) {
+        val dayAssignments = FakeDayAssignmentRepository()
+        val analyticsService = FakeAnalyticsServiceForFiguresScreen()
+        val vm = figuresViewModel(FakeFigureRepository(MutableStateFlow(abc())), dayAssignments, analyticsService = analyticsService)
+
+        vm.onIntent(FiguresContract.Intent.LensSelected(3L, LensFilter.HOPE))
+
+        assertEquals(listOf(Triple(todayOrdinal, 3L, LensFilter.HOPE as LensFilter?)), dayAssignments.assignCalls)
+        assertNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
+        assertEquals(listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "3")), analyticsService.loggedEvents)
+    }
+
+    @Test
+    fun lensSelected_asksFirstWhenTodaysBriefingIsAnotherReporter() = runTest(testDispatcher) {
+        val dayAssignments = FakeDayAssignmentRepository()
+        val vm = lockedViewModel(dayAssignments)
+
+        vm.onIntent(FiguresContract.Intent.LensSelected(3L, LensFilter.HOPE))
+
+        assertTrue(dayAssignments.assignCalls.isEmpty())
+        val pending = assertNotNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
+        assertEquals("Augustine", pending.currentFigureName)
+        assertEquals("Calvin", pending.newFigureName)
+        assertEquals(LensFilter.HOPE, pending.lens)
+        assertTrue(pending.isReporterChange)
+        assertEquals(todayWeekdayLabel, pending.nextWeekdayLabel)
+    }
+
+    @Test
+    fun confirmReassignment_assignsTheReporterAndLensAndClosesTheDialog() = runTest(testDispatcher) {
+        val dayAssignments = FakeDayAssignmentRepository()
+        val vm = lockedViewModel(dayAssignments)
+        vm.onIntent(FiguresContract.Intent.LensSelected(3L, LensFilter.HOPE))
+
+        vm.onIntent(FiguresContract.Intent.ConfirmReassignment)
+
+        assertEquals(listOf(Triple(todayOrdinal, 3L, LensFilter.HOPE as LensFilter?)), dayAssignments.assignCalls)
+        assertNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
+    }
+
+    @Test
+    fun cancelReassignment_changesNothing() = runTest(testDispatcher) {
+        val dayAssignments = FakeDayAssignmentRepository()
+        val vm = lockedViewModel(dayAssignments)
+        vm.onIntent(FiguresContract.Intent.LensSelected(3L, LensFilter.HOPE))
+
+        vm.onIntent(FiguresContract.Intent.CancelReassignment)
+
+        assertTrue(dayAssignments.assignCalls.isEmpty())
+        assertNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
+    }
+
+    @Test
+    fun lensSelected_onTodaysLockedReporterThroughTheirLockedLensAssignsWithoutAsking() = runTest(testDispatcher) {
+        val dayAssignments = FakeDayAssignmentRepository()
+        // No saved lens on the locked briefing means News.
+        val vm = lockedViewModel(dayAssignments)
+
+        vm.onIntent(FiguresContract.Intent.LensSelected(1L, LensFilter.NEWS))
+
+        assertEquals(listOf(Triple(todayOrdinal, 1L, LensFilter.NEWS as LensFilter?)), dayAssignments.assignCalls)
+        assertNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
+    }
+
+    @Test
+    fun lensSelected_onTodaysLockedReporterThroughAnotherLensAsksAboutTheLensOnly() = runTest(testDispatcher) {
+        val dayAssignments = FakeDayAssignmentRepository()
+        val vm = lockedViewModel(dayAssignments)
+
+        vm.onIntent(FiguresContract.Intent.LensSelected(1L, LensFilter.GRACE))
+
+        assertTrue(dayAssignments.assignCalls.isEmpty())
+        val pending = assertNotNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
+        assertFalse(pending.isReporterChange)
+    }
+
+    /** Augustine (id 1) has already written today's briefing, through News. */
+    private fun lockedViewModel(dayAssignments: FakeDayAssignmentRepository): FiguresViewModel = figuresViewModel(
+        FakeFigureRepository(MutableStateFlow(abc())),
+        dayAssignments,
+        reflectionRepo = FakeDailyReflectionRepositoryForFigures(lockedFigureId = 1L, lockedLens = null),
+    )
+
+    private fun abc() = listOf(
+        buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo"),
+        buildFigure(id = 2L, name = "Bonhoeffer", role = "Theologian & Martyr"),
+        buildFigure(id = 3L, name = "Calvin", role = "Reformer")
+    )
+
+    // Assigned to every day so the test is day-of-week agnostic.
+    private fun everyDay(figureId: Long) = (0..6).associateWith { DayAssignment(figureId = figureId, lens = null) }
+
+    private fun figuresViewModel(
+        figureRepo: FakeFigureRepository,
+        dayAssignmentRepo: FakeDayAssignmentRepository = FakeDayAssignmentRepository(),
+        analyticsService: FakeAnalyticsServiceForFiguresScreen = FakeAnalyticsServiceForFiguresScreen(),
+        reflectionRepo: FakeDailyReflectionRepositoryForFigures = FakeDailyReflectionRepositoryForFigures(),
+        dataStore: FakeReporterViewDataStore = FakeReporterViewDataStore(),
+    ) = FiguresViewModel(
+        figureRepo,
+        dayAssignmentRepo,
+        reflectionRepo,
+        ReporterViewPreferencesRepository(dataStore),
+        analyticsService,
+    )
+
     private fun eraViewModel(pinnedId: Long? = null): FiguresViewModel {
         val figures = listOf(
             buildFigure(id = 1L, name = "Augustine", role = "Bishop of Hippo", century = "4th"),
@@ -303,11 +499,16 @@ class FiguresViewModelTest {
             buildFigure(id = 4L, name = "Bonhoeffer", role = "Theologian & Martyr", century = "20th")
         )
         val assignments = pinnedId?.let { id -> (0..6).associate { it to DayAssignment(figureId = id, lens = null) } }
-        return FiguresViewModel(
+        return figuresViewModel(
             FakeFigureRepository(MutableStateFlow(figures)),
             FakeDayAssignmentRepository(assignments = assignments ?: emptyMap()),
-            FakeAnalyticsServiceForFiguresScreen()
         )
+    }
+    private companion object {
+        val today = Instant.fromEpochMilliseconds(epochMillis()).toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val todayOrdinal = today.dayOfWeek.ordinal
+        val todayEpochDay = today.toEpochDays().toLong()
+        val todayWeekdayLabel = today.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
     }
 }
 
@@ -338,8 +539,11 @@ private class FakeAnalyticsServiceForFiguresScreen : AnalyticsService {
 private class FakeDayAssignmentRepository(
     private val assignments: Map<Int, DayAssignment> = emptyMap()
 ) : DayAssignmentRepository {
+    val assignCalls = mutableListOf<Triple<Int, Long, LensFilter?>>()
     override fun observeAssignments(): Flow<Map<Int, DayAssignment>> = flowOf(assignments)
-    override suspend fun assign(dayOfWeek: Int, figureId: Long, lens: LensFilter?) = Unit
+    override suspend fun assign(dayOfWeek: Int, figureId: Long, lens: LensFilter?) {
+        assignCalls.add(Triple(dayOfWeek, figureId, lens))
+    }
     override suspend fun clear(dayOfWeek: Int) = Unit
     override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
     override suspend fun resolveReporter(epochDay: Long, dayOfWeek: Int): Long? = null
@@ -357,4 +561,35 @@ private class FakeFigureRepository(
     override suspend fun getFigureById(id: Long): Figure? = flow.value.firstOrNull { it.id == id }
     override suspend fun getFigureByName(name: String): Figure? = flow.value.firstOrNull { it.name == name }
     override suspend fun syncFigures() { syncCallCount++ }
+}
+
+/** Today's briefing, written by [lockedFigureId] through [lockedLens] (null means News); no briefing when [lockedFigureId] is null. */
+private class FakeDailyReflectionRepositoryForFigures(
+    private val lockedFigureId: Long? = null,
+    private val lockedLens: LensFilter? = null,
+) : DailyReflectionRepository {
+    override suspend fun getOrFetch(
+        figureId: Long,
+        figureName: String,
+        headlines: List<String>,
+        tone: String,
+        theme: String?,
+    ): DailyReflection = throw UnsupportedOperationException()
+    override fun observeByEpochDayRange(startEpochDay: Long, endEpochDay: Long): Flow<List<BriefingDay>> =
+        flowOf(listOfNotNull(lockedFigureId?.let { BriefingDay(epochDay = startEpochDay, figureId = it) }))
+    override suspend fun getForDay(epochDay: Long, tone: String): DailyReflection? = null
+    override suspend fun getEarliestBriefingEpochDay(): Long? = null
+    override suspend fun getLockedFigureId(epochDay: Long): Long? = lockedFigureId
+    override suspend fun getLockedTheme(epochDay: Long): LensFilter? = lockedLens
+    override val isResolved: StateFlow<Boolean> = MutableStateFlow(true)
+    override suspend fun resolve(userId: String?) = Unit
+}
+
+private class FakeReporterViewDataStore : DataStore<Preferences> {
+    private val state = MutableStateFlow(emptyPreferences())
+    override val data: Flow<Preferences> = state
+    override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
+        state.value = transform(state.value)
+        return state.value
+    }
 }

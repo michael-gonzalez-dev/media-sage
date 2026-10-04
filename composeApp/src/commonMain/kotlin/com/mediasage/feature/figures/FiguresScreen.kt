@@ -9,36 +9,47 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.ViewCarousel
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,6 +61,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.mediasage.data.ReporterView
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.theme.ReaderAmber
 import com.mediasage.ui.EraChipRow
@@ -62,6 +74,8 @@ import mediasage.composeapp.generated.resources.title_voices
 import mediasage.composeapp.generated.resources.voices_empty_state
 import mediasage.composeapp.generated.resources.voices_filtered_empty_subtitle
 import mediasage.composeapp.generated.resources.voices_filtered_empty_title
+import mediasage.composeapp.generated.resources.voices_show_deck
+import mediasage.composeapp.generated.resources.voices_show_grid
 import mediasage.composeapp.generated.resources.voices_subtitle
 import org.jetbrains.compose.resources.stringResource
 
@@ -75,32 +89,49 @@ fun FiguresScreen(
 ) {
     when (state) {
         is FiguresContract.UiState.Loading -> LoadingState()
-        is FiguresContract.UiState.Success -> VoicesGrid(
-            state = state,
-            onIntent = onIntent,
-            onFigureClick = { id ->
-                onIntent(FiguresContract.Intent.FigureClicked(id))
-                onNavigateToFigureDetail(id)
+        is FiguresContract.UiState.Success -> {
+            ReportersContent(
+                state = state,
+                onIntent = onIntent,
+                onFigureClick = { id ->
+                    onIntent(FiguresContract.Intent.FigureClicked(id))
+                    onNavigateToFigureDetail(id)
+                }
+            )
+            state.pendingReassignment?.let { pending ->
+                PendingReassignmentDialog(
+                    pending = pending,
+                    onConfirm = { onIntent(FiguresContract.Intent.ConfirmReassignment) },
+                    onDismiss = { onIntent(FiguresContract.Intent.CancelReassignment) },
+                )
             }
-        )
+        }
     }
 }
 
+/**
+ * The field keeps its own text and passes each change on, so typing never waits for the ViewModel's state to come
+ * back. In the deck the field sits inside a layout that composes a frame late, and a field fed from that state lost
+ * keystrokes typed quickly.
+ */
 @Composable
-private fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
+private fun SearchBar(query: String, onQueryChanged: (String) -> Unit, modifier: Modifier = Modifier) {
+    val textState = rememberTextFieldState(initialText = query)
+    val latestOnQueryChanged by rememberUpdatedState(onQueryChanged)
+    LaunchedEffect(textState) {
+        snapshotFlow { textState.text.toString() }.collect { latestOnQueryChanged(it) }
+    }
     OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChanged,
-        modifier = Modifier
-            .fillMaxWidth()
+        state = textState,
+        modifier = modifier
             .background(MaterialTheme.colorScheme.surface)
             .padding(vertical = 8.dp),
         label = { Text(stringResource(Res.string.search_voices_hint)) },
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
         shape = MaterialTheme.shapes.medium,
         trailingIcon = {
-            if (query.isNotBlank()) {
-                IconButton(onClick = { onQueryChanged("") }) {
+            if (textState.text.isNotBlank()) {
+                IconButton(onClick = { textState.clearText() }) {
                     Icon(imageVector = Icons.Filled.Close, contentDescription = null)
                 }
             }
@@ -108,8 +139,28 @@ private fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
     )
 }
 
+/** The search field, with the button that switches between the card deck and the grid at its end. */
 @Composable
-private fun VoicesGrid(
+private fun SearchRow(state: FiguresContract.UiState.Success, onIntent: (FiguresContract.Intent) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        SearchBar(
+            query = state.searchQuery,
+            onQueryChanged = { onIntent(FiguresContract.Intent.SearchQueryChanged(it)) },
+            modifier = Modifier.weight(1f),
+        )
+        // Shows the view a tap switches to.
+        val (icon, label, next) = when (state.view) {
+            ReporterView.DECK -> Triple(Icons.Outlined.GridView, Res.string.voices_show_grid, ReporterView.GRID)
+            ReporterView.GRID -> Triple(Icons.Outlined.ViewCarousel, Res.string.voices_show_deck, ReporterView.DECK)
+        }
+        IconButton(onClick = { onIntent(FiguresContract.Intent.ViewSelected(next)) }, modifier = Modifier.padding(start = 4.dp, top = 8.dp)) {
+            Icon(imageVector = icon, contentDescription = stringResource(label))
+        }
+    }
+}
+
+@Composable
+private fun ReportersContent(
     state: FiguresContract.UiState.Success,
     onIntent: (FiguresContract.Intent) -> Unit,
     onFigureClick: (Long) -> Unit
@@ -118,48 +169,16 @@ private fun VoicesGrid(
     val gridState = rememberLazyGridState()
     val listState = rememberLazyListState()
 
-    val collapsed by remember {
+    // The grid scrolls the header shut and keeps it pinned above; the deck carries the header in its own scroll.
+    val collapsed by remember(state.view) {
         derivedStateOf {
-            gridState.firstVisibleItemIndex > 0 || gridState.firstVisibleItemScrollOffset > 0
+            state.view == ReporterView.GRID && (gridState.firstVisibleItemIndex > 0 || gridState.firstVisibleItemScrollOffset > 0)
         }
     }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Sticky header — lives outside the grid so it never scrolls away
-            ScreenHeader(
-                title = stringResource(Res.string.title_voices),
-                listState = listState,
-                isCollapsed = collapsed,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 16.dp),
-                expandedTitleSize = 24f,
-                subtitle = {
-                    Text(
-                        text = stringResource(Res.string.voices_subtitle),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                },
-                stickyContent = {
-                    SearchBar(
-                        query = state.searchQuery,
-                        onQueryChanged = { onIntent(FiguresContract.Intent.SearchQueryChanged(it)) }
-                    )
-                }
-            )
-            // Outside ScreenHeader's 16dp inset so the chips scroll edge-to-edge; the row's own
-            // contentPadding lines resting chips up with the search field above.
-            EraChipRow(
-                selectedEra = state.selectedEra,
-                onEraSelected = { onIntent(FiguresContract.Intent.EraSelected(it)) },
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 4.dp)
-            )
-
+            if (state.view == ReporterView.GRID) ReportersHeader(state, onIntent, listState, collapsed)
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -169,23 +188,15 @@ private fun VoicesGrid(
                         onRefresh = { onIntent(FiguresContract.Intent.Refresh) }
                     )
             ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    state = gridState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    if (state.figures.isEmpty()) {
-                        item(span = { GridItemSpan(maxLineSpan) }) {
-                            if (state.isFiltered) FilteredEmptyState() else EmptyState()
-                        }
-                    } else {
-                        items(state.figures, key = { it.id }) { figure ->
-                            PortraitCard(figure = figure, onClick = { onFigureClick(figure.id) })
-                        }
-                    }
+                when (state.view) {
+                    ReporterView.GRID -> VoicesGrid(state, gridState, onFigureClick)
+                    ReporterView.DECK -> VoicesDeck(
+                        state = state,
+                        onIntent = onIntent,
+                        onReadMore = onFigureClick,
+                        header = { ReportersHeader(state, onIntent, listState, collapsed = false) },
+                        emptyState = { if (state.isFiltered) FilteredEmptyState() else EmptyState() },
+                    )
                 }
 
                 PullToRefreshDefaults.Indicator(
@@ -193,6 +204,65 @@ private fun VoicesGrid(
                     isRefreshing = state.isRefreshing,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReportersHeader(
+    state: FiguresContract.UiState.Success,
+    onIntent: (FiguresContract.Intent) -> Unit,
+    listState: LazyListState,
+    collapsed: Boolean,
+) {
+    // Above the grid it stays pinned and collapses as the grid scrolls; in the deck it scrolls with the cards.
+    ScreenHeader(
+        title = stringResource(Res.string.title_voices),
+        listState = listState,
+        isCollapsed = collapsed,
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp),
+        expandedTitleSize = 24f,
+        subtitle = {
+            Text(
+                text = stringResource(Res.string.voices_subtitle),
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        },
+        stickyContent = { SearchRow(state, onIntent) }
+    )
+    // Outside ScreenHeader's 16dp inset so the chips scroll edge-to-edge; the row's own
+    // contentPadding lines resting chips up with the search field above.
+    EraChipRow(
+        selectedEra = state.selectedEra,
+        onEraSelected = { onIntent(FiguresContract.Intent.EraSelected(it)) },
+        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun VoicesGrid(state: FiguresContract.UiState.Success, gridState: LazyGridState, onFigureClick: (Long) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        state = gridState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (state.figures.isEmpty()) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                if (state.isFiltered) FilteredEmptyState() else EmptyState()
+            }
+        } else {
+            items(state.figures, key = { it.id }) { figure ->
+                PortraitCard(figure = figure, onClick = { onFigureClick(figure.id) })
             }
         }
     }

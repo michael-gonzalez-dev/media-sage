@@ -8,6 +8,7 @@ import com.mediasage.di.databaseModule
 import com.mediasage.di.headlinesModule
 import com.mediasage.di.mockApiModule
 import com.mediasage.di.notificationModule
+import com.mediasage.di.reportersModule
 import com.mediasage.di.sharedModule
 import com.mediasage.di.themeModule
 import com.mediasage.di.userModule
@@ -24,6 +25,7 @@ class MediaSageApplication : Application() {
             add(themeModule)
             add(userModule)
             add(headlinesModule)
+            add(reportersModule)
             add(notificationModule)
             add(
                 sharedModule(

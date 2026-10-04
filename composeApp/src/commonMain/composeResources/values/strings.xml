@@ -41,6 +41,8 @@
     <string name="search_voices_hint">Search reporters…</string>
     <string name="voices_filtered_empty_title">No reporters found</string>
     <string name="voices_filtered_empty_subtitle">Try another era or a different search.</string>
+    <string name="voices_show_deck">Show as cards</string>
+    <string name="voices_show_grid">Show as grid</string>
     <string name="era_all">All</string>
     <string name="era_early_church">Early Church</string>
     <string name="era_middle_ages">Middle Ages</string>
@@ -74,6 +76,9 @@
     <string name="reporter_card_show_front">Show portrait</string>
     <string name="reporter_card_role_lifespan">%1$s · %2$s</string>
     <string name="reporter_card_lenses">Brief me through</string>
+    <string name="reporter_card_read_more">Read more</string>
+    <string name="reporter_card_today_pick">Today's pick</string>
+    <string name="reporter_card_weekday_pick">%1$s's pick</string>
     <string name="you_lens_section_title">TODAY'S LENS</string>
     <string name="you_lens_today">Headlines</string>
     <string name="you_lens_writings">Writings</string>
@@ -268,10 +273,9 @@
     <string name="onboarding_reader_body">The Reader tab is where you set your weekly roster of reporters. You can also memorize quotes and revisit past briefings.</string>
     <string name="onboarding_pick_title">Choose today's reporter</string>
     <string name="onboarding_pick_body">Tap a card to flip it, then tap a lens.</string>
-    <string name="onboarding_pick_tag">Today's pick</string>
     <string name="onboarding_pick_selection">Today: %1$s through %2$s</string>
     <string name="onboarding_pick_loading">Loading today's schedule…</string>
-    <string name="onboarding_pick_jump">Show %1$s</string>
+    <string name="reporter_deck_jump">Show %1$s</string>
     <string name="onboarding_sample_scripture_news_reference">Isaiah 41:10</string>
     <string name="onboarding_sample_scripture_news_text">Fear not, for I am with you.</string>
     <string name="onboarding_sample_scripture_writings_reference">Psalm 119:105</string>

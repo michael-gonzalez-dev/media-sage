@@ -100,7 +100,11 @@ fun FigureDetailScreen(
                         PinLensPickerSheet(state = state, onIntent = onIntent)
                     }
                     state.pendingReassignment?.let { pending ->
-                        PinReassignDialog(pending = pending, onIntent = onIntent)
+                        PendingReassignmentDialog(
+                            pending = pending,
+                            onConfirm = { onIntent(FigureDetailContract.Intent.ConfirmReassignment) },
+                            onDismiss = { onIntent(FigureDetailContract.Intent.CancelReassignment) },
+                        )
                     }
                 }
             }
@@ -127,10 +131,12 @@ private fun PinLensPickerSheet(
     }
 }
 
+/** Asks before a pick that can only start next week, because today's briefing is already written. Shared with the Reporters tab. */
 @Composable
-private fun PinReassignDialog(
+internal fun PendingReassignmentDialog(
     pending: FigureDetailContract.PendingReassignment,
-    onIntent: (FigureDetailContract.Intent) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val lensLabel = stringResource((pending.lens ?: LensFilter.NEWS).labelRes())
     val changeLabel = if (pending.isReporterChange) {
@@ -142,8 +148,8 @@ private fun PinReassignDialog(
         currentFigureName = pending.currentFigureName,
         newAssignmentLabel = changeLabel,
         nextWeekdayLabel = pending.nextWeekdayLabel,
-        onConfirm = { onIntent(FigureDetailContract.Intent.ConfirmReassignment) },
-        onDismiss = { onIntent(FigureDetailContract.Intent.CancelReassignment) },
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
     )
 }
 
