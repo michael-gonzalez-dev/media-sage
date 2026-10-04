@@ -94,6 +94,7 @@ fun sharedModule(
     single { get<MediaSageDatabase>().discoveredQuoteDao() }
     single { get<MediaSageDatabase>().userReflectionNoteDao() }
     single { get<MediaSageDatabase>().localAccountKeyDao() }
+    single { get<MediaSageDatabase>().parkedDailyReflectionDao() }
 
     // Repositories — interface bound to implementation
     single<FigureRepository> { FigureRepositoryImpl(get(), get(), get()) }
@@ -104,7 +105,7 @@ fun sharedModule(
     }
     single<WikipediaRepository> { WikipediaRepositoryImpl(get()) }
     single<DailyReflectionRepository> {
-        DailyReflectionRepositoryImpl(get(), get(), get(), getOrNull(), get(), get())
+        DailyReflectionRepositoryImpl(get(), get(), get(), getOrNull(), get(), get(), get())
     }
     single<AuthRepository> { AuthRepositoryImpl(getOrNull<SupabaseClient>()) }
     single<ProfileRepository> { ProfileRepositoryImpl(getOrNull()) }

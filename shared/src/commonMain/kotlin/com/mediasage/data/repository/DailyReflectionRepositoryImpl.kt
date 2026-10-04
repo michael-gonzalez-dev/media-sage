@@ -2,9 +2,12 @@ package com.mediasage.data.repository
 
 import com.mediasage.data.local.dao.DailyReflectionDao
 import com.mediasage.data.local.dao.FigureDao
+import com.mediasage.data.local.dao.ParkedDailyReflectionDao
 import com.mediasage.data.local.dao.SyncMetaDao
 import com.mediasage.data.local.entity.DailyReflectionEntity
 import com.mediasage.data.local.entity.SyncMetaEntity
+import com.mediasage.data.local.entity.parkedFor
+import com.mediasage.data.local.entity.toUnsyncedReflection
 import com.mediasage.data.remote.DailyReflectionRequestDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.domain.model.BriefingDay
@@ -27,6 +30,7 @@ class DailyReflectionRepositoryImpl(
     private val remote: DailyReflectionRemoteDataSource?,
     private val syncMetaDao: SyncMetaDao,
     private val authRepository: AuthRepository,
+    private val parkedDao: ParkedDailyReflectionDao,
 ) : DailyReflectionRepository {
 
     private val _isResolved = MutableStateFlow(false)
@@ -191,6 +195,7 @@ class DailyReflectionRepositoryImpl(
         resetIfAccountChanged(userId)
         pushPending()
         pullAndReconcile(userId)
+        restoreParked(userId)
     }
 
     private suspend fun currentUserId(): String? =
@@ -234,8 +239,27 @@ class DailyReflectionRepositoryImpl(
         if (previousUserId == userId) return
         // Only wipe when a *different* account previously synced on this device — a null
         // previousUserId means this is the first sync ever, so any local pre-sync reflections stay.
-        if (previousUserId != null) dao.clearAll()
+        // The wipe keeps one account's briefings from showing under another, but briefings that never
+        // reached the previous account's backup (offline, or a sync outage) would be lost for good, and
+        // that account's session is already gone, so they can't be uploaded now. They're parked under
+        // its id instead, and restoreParked brings them back when it signs in again. Parking before the
+        // sync-meta update means a crash in between just parks the same rows again on the next pass.
+        if (previousUserId != null) {
+            parkedDao.upsertAll(dao.getPendingSync().map { it.parkedFor(previousUserId) })
+            dao.clearAll()
+        }
         syncMetaDao.upsert((meta ?: SyncMetaEntity()).copy(lastDailyReflectionSyncUserId = userId))
+    }
+
+    // Runs after the pull, and with insertIfAbsent, so a briefing this account already has in its backup
+    // for the same day, tone and lens (say, from another device) wins over the parked copy. Restored rows
+    // are unsynced, so pushPending uploads them; any push that fails is retried on the next pass.
+    private suspend fun restoreParked(userId: String) {
+        val parked = parkedDao.getForUser(userId)
+        if (parked.isEmpty()) return
+        parked.forEach { dao.insertIfAbsent(it.toUnsyncedReflection()) }
+        parkedDao.deleteForUser(userId)
+        pushPending()
     }
 
     private suspend fun pullAndReconcile(userId: String) {
