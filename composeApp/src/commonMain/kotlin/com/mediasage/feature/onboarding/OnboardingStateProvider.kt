@@ -12,7 +12,8 @@ private val sampleReporters = listOf(
             name = "C.S. Lewis",
             role = "Author & Apologist",
             lifespan = "1898-1963",
-            knownFor = "Lewis wrote The Chronicles of Narnia as well as Mere Christianity and The Screwtape Letters.",
+            knownFor = "Lewis wrote Mere Christianity and The Chronicles of Narnia, which have brought Christian faith " +
+                "to millions of readers.",
             portraitUrl = null,
         ),
         era = FigureEra.MODERN,
@@ -23,7 +24,8 @@ private val sampleReporters = listOf(
             name = "Corrie ten Boom",
             role = "Holocaust Survivor & Evangelist",
             lifespan = "1892-1983",
-            knownFor = "Corrie ten Boom hid Jewish people from the Nazis at home and told the story in The Hiding Place.",
+            knownFor = "Corrie ten Boom survived a Nazi camp after hiding Jewish people and spent the rest of her life " +
+                "preaching forgiveness around the world.",
             portraitUrl = null,
         ),
         era = FigureEra.MODERN,

@@ -74,15 +74,16 @@ internal val AugustineFiguresState = FiguresContract.UiState.Success(
         ),
         sampleFigure(
             19L, "A.W. Tozer", "Pastor & Author", "1897-1963", FigureEra.MODERN,
-            "Tozer wrote The Pursuit of God, a short book on knowing God that is still widely read.",
+            "Tozer wrote The Pursuit of God and The Knowledge of the Holy, which called evangelicals back to a deep " +
+                "personal hunger for God.",
         ),
         sampleFigure(
             57L, "Abraham Lincoln", "President & Statesman", "1809-1865", FigureEra.SEVENTEEN_AND_EIGHTEEN_HUNDREDS,
-            "Lincoln issued the Emancipation Proclamation and gave the Gettysburg Address during the Civil War.",
+            "Lincoln led the Union through the Civil War and pushed through the 13th Amendment, which ended slavery in the United States.",
         ),
         sampleFigure(
             88L, "Adoniram Judson", "Missionary to Burma", "1788-1850", FigureEra.SEVENTEEN_AND_EIGHTEEN_HUNDREDS,
-            "Judson translated the whole Bible into Burmese and wrote a Burmese dictionary.",
+            "Judson translated the whole Bible into Burmese, a translation still used by Myanmar's Christians today.",
         ),
         sampleFigure(
             31L, "Bernard of Clairvaux", "Abbot & Theologian", "1090-1153", FigureEra.MIDDLE_AGES,
@@ -91,7 +92,7 @@ internal val AugustineFiguresState = FiguresContract.UiState.Success(
         ),
         sampleFigure(
             67L, "Blaise Pascal", "Mathematician & Philosopher", "1623-1662", FigureEra.FIFTEEN_AND_SIXTEEN_HUNDREDS,
-            "Pascal wrote the Pensées, notes for a defense of Christian faith that were published after Pascal died.",
+            "Pascal helped found probability theory, and his Pensées remain a classic defense of Christian faith.",
         ),
         sampleFigure(
             4L, "Charles Spurgeon", "Preacher & Pastor", "1834-1892", FigureEra.SEVENTEEN_AND_EIGHTEEN_HUNDREDS,
