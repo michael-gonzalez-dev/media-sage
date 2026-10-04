@@ -99,8 +99,8 @@ fun OnboardingScreen(
 
 /**
  * The steps as swipeable pages. The view model owns the current step: Continue, Back and Skip move the pager, and a
- * reader's swipe that settles on a page tells the view model. Swiping stops on the pick step, whose cards swipe sideways
- * themselves; Back and Continue are the ways out of it.
+ * reader's swipe that settles on a page tells the view model. On the pick step only a swipe on its title turns the
+ * step; the step keeps its card, chip and portrait swipes to itself (see [ReporterPickStep]).
  */
 @Composable
 private fun OnboardingStepPager(
@@ -127,7 +127,6 @@ private fun OnboardingStepPager(
     }
     HorizontalPager(
         state = pagerState,
-        userScrollEnabled = state.currentStep != OnboardingContract.Step.PICK,
         pageSpacing = 24.dp,
         modifier = modifier,
     ) { index ->

@@ -33,7 +33,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -42,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.mediasage.feature.figures.ReporterCard
@@ -67,9 +72,18 @@ private val StepVerticalPadding = 4.dp
 private val StripPortraitSize = 44.dp
 
 /**
+ * Keeps the step's own sideways swipes (cards, era chips, portraits) from turning the onboarding step when they reach
+ * the end of their row. A swipe on the title and body has no row under it, so it still turns the step.
+ */
+private val KeepSidewaysSwipes = object : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource) = Offset(available.x, 0f)
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity) = Velocity(available.x, 0f)
+}
+
+/**
  * The step after the briefing: one big reporter card at a time, era chips to narrow the deck, and a portrait strip to
  * jump anywhere in it. Tapping a lens on a card's back picks that reporter and lens for today. The step scrolls as a
- * whole, so at the largest text size nothing is cut off.
+ * whole, so at the largest text size nothing is cut off. Swiping the title moves to the next or previous step.
  */
 @Composable
 internal fun ReporterPickStep(state: OnboardingContract.UiState, onIntent: (OnboardingContract.Intent) -> Unit) {
@@ -87,7 +101,13 @@ internal fun ReporterPickStep(state: OnboardingContract.UiState, onIntent: (Onbo
     }
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val availableHeight = maxHeight - StepVerticalPadding * 2
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = StepVerticalPadding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(KeepSidewaysSwipes)
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = StepVerticalPadding),
+        ) {
             FillDeckLayout(
                 availableHeight = availableHeight,
                 top = {
