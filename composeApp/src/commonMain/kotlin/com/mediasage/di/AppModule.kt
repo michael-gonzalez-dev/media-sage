@@ -5,6 +5,7 @@ import com.mediasage.data.ThemePreferencesRepository
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.AuthPreferencesRepository
 import com.mediasage.data.HeadlineCategoryPreferencesRepository
+import com.mediasage.data.ReporterViewPreferencesRepository
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
@@ -79,6 +80,8 @@ val appModule = module {
         FiguresViewModel(
             get<FigureRepository>(),
             get<DayAssignmentRepository>(),
+            get<DailyReflectionRepository>(),
+            get<ReporterViewPreferencesRepository>(),
             get<AnalyticsService>(),
         )
     }
