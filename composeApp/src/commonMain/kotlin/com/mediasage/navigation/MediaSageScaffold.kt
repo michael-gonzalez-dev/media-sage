@@ -1,5 +1,6 @@
 package com.mediasage.navigation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,9 +9,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.*
 import androidx.compose.ui.graphics.Color
@@ -74,6 +82,9 @@ private const val NAV_FADE_OUT_MILLIS = 200
 private val navTabTransition =
     fadeIn(tween(NAV_FADE_IN_MILLIS)) togetherWith fadeOut(tween(NAV_FADE_OUT_MILLIS))
 
+private val BottomBarDividerHeight = 1.dp
+private val BottomBarHeight = 80.dp
+
 @Composable
 fun MediaSageScaffold(
     onSignedOut: () -> Unit = {},
@@ -94,7 +105,12 @@ fun MediaSageScaffold(
         containerColor = if (backgroundBrush != null) Color.Transparent else MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            if (appState.showBottomBar) {
+            // Fades with the screens so the bar leaves and arrives in step with the cross-fade.
+            AnimatedVisibility(
+                visible = appState.showBottomBar,
+                enter = fadeIn(tween(NAV_FADE_IN_MILLIS)),
+                exit = fadeOut(tween(NAV_FADE_OUT_MILLIS)),
+            ) {
                 MediaSageBottomBar(
                     destinations = TopLevelDestination.entries,
                     currentDestination = appState.currentDestination,
@@ -103,9 +119,16 @@ fun MediaSageScaffold(
             }
         }
     ) { padding ->
+        // The bottom inset is left to each entry (see TrackedNavEntry): the Scaffold's bottom padding
+        // changes as the bar shows or hides, and applying it here resized both screens mid-transition.
+        val layoutDirection = LocalLayoutDirection.current
         NavDisplay(
             backStack = appState.backStack,
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(
+                top = padding.calculateTopPadding(),
+                start = padding.calculateStartPadding(layoutDirection),
+                end = padding.calculateEndPadding(layoutDirection),
+            ),
             transitionSpec = { navTabTransition },
             popTransitionSpec = { navTabTransition },
             predictivePopTransitionSpec = { navTabTransition },
@@ -291,6 +314,9 @@ fun MediaSageScaffold(
  * Wraps [NavEntry] with a `screen_view` analytics log on entry — the signal Firebase derives
  * time-on-screen from. Centralized here (rather than in each screen composable) so every
  * destination gets it without a per-screen `LifecycleResumeEffect` copy.
+ *
+ * Also owns the entry's bottom inset, fixed by route rather than by whether the bar is showing,
+ * so neither screen resizes while the bar appears or hides during a transition.
  */
 private fun <T : NavKey> TrackedNavEntry(route: T, content: @Composable () -> Unit): NavEntry<T> =
     NavEntry(route) {
@@ -299,7 +325,22 @@ private fun <T : NavKey> TrackedNavEntry(route: T, content: @Composable () -> Un
             analyticsService.logScreenView(route::class.simpleName ?: "unknown")
             onPauseOrDispose {}
         }
-        content()
+        Box(Modifier.fillMaxSize().padding(bottom = entryBottomPadding(route))) {
+            content()
+        }
+    }
+
+/**
+ * Top-level screens always clear the bottom bar, even while it fades out. Pushed screens get only
+ * the system inset the Scaffold gives when there is no bar.
+ */
+@Composable
+private fun entryBottomPadding(route: NavKey): Dp =
+    if (isTopLevelRoute(route)) {
+        BottomBarDividerHeight + BottomBarHeight +
+            WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    } else {
+        ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
     }
 
 @Composable
@@ -311,10 +352,11 @@ private fun MediaSageBottomBar(
     Column {
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
-            thickness = 1.dp,
+            thickness = BottomBarDividerHeight,
         )
         NavigationBar(
-            modifier = Modifier.navigationBarsPadding(),
+            // Pinned so entryBottomPadding can reserve the bar's space while the bar is hidden.
+            modifier = Modifier.navigationBarsPadding().height(BottomBarHeight),
             windowInsets = WindowInsets(0),
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
