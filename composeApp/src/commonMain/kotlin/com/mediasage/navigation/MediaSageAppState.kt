@@ -17,7 +17,7 @@ class MediaSageAppState(
         get() = backStack.lastOrNull()
 
     val isTopLevel: Boolean
-        get() = currentDestination in TopLevelDestination.entries.map { it.route }
+        get() = currentDestination?.let(::isTopLevelRoute) ?: false
 
     val showBottomBar: Boolean
         get() = isTopLevel
@@ -69,6 +69,9 @@ class MediaSageAppState(
         backStack.removeLastOrNull()
     }
 }
+
+fun isTopLevelRoute(route: NavKey): Boolean =
+    TopLevelDestination.entries.any { it.route == route }
 
 @Composable
 fun rememberMediaSageAppState(): MediaSageAppState {
