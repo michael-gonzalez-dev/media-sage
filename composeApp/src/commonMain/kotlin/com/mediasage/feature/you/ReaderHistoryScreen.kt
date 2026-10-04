@@ -2,7 +2,6 @@ package com.mediasage.feature.you
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,10 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,10 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,9 +34,8 @@ import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.reader_history_intro
 import mediasage.composeapp.generated.resources.reader_history_list_empty_subtitle
 import mediasage.composeapp.generated.resources.reader_history_list_empty_title
-import mediasage.composeapp.generated.resources.reader_history_view_calendar
-import mediasage.composeapp.generated.resources.reader_history_view_list
-import mediasage.composeapp.generated.resources.reader_history_view_options
+import mediasage.composeapp.generated.resources.reader_history_show_calendar
+import mediasage.composeapp.generated.resources.reader_history_show_list
 import mediasage.composeapp.generated.resources.you_nav_history
 import org.jetbrains.compose.resources.stringResource
 
@@ -69,7 +61,7 @@ fun ReaderHistoryScreen(
                         style = MaterialTheme.typography.titleLarge,
                     )
                     if (ready != null) {
-                        ViewModeMenuButton(viewMode = ready.viewMode, onIntent = onIntent)
+                        ViewModeToggleButton(viewMode = ready.viewMode, onIntent = onIntent)
                     }
                 }
             }
@@ -95,52 +87,26 @@ fun ReaderHistoryScreen(
     }
 }
 
-/**
- * A trailing icon button in the top bar that opens a [DropdownMenu] anchored to itself — Compose's
- * equivalent of the near-touch-point popover iOS apps use for a view-mode switch, rather than a
- * second row of tabs competing with the back row for space.
- */
+/** A trailing icon button in the top bar that switches between the calendar and the list, like the Reporters tab's grid toggle. */
 @Composable
-private fun ViewModeMenuButton(
+private fun ViewModeToggleButton(
     viewMode: ReaderHistoryContract.ViewMode,
     onIntent: (ReaderHistoryContract.Intent) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                imageVector = Icons.Filled.MoreVert,
-                contentDescription = stringResource(Res.string.reader_history_view_options),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 0.dp,
-        ) {
-            ReaderHistoryContract.ViewMode.entries.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(option.labelRes())) },
-                    onClick = {
-                        onIntent(ReaderHistoryContract.Intent.ViewModeChanged(option))
-                        expanded = false
-                    },
-                    leadingIcon = {
-                        if (option == viewMode) {
-                            Icon(imageVector = Icons.Filled.Check, contentDescription = null)
-                        }
-                    },
-                )
-            }
-        }
+    // Shows the view a tap switches to.
+    val (icon, label, next) = when (viewMode) {
+        ReaderHistoryContract.ViewMode.CALENDAR ->
+            Triple(Icons.Outlined.ViewAgenda, Res.string.reader_history_show_list, ReaderHistoryContract.ViewMode.LIST)
+        ReaderHistoryContract.ViewMode.LIST ->
+            Triple(Icons.Outlined.CalendarMonth, Res.string.reader_history_show_calendar, ReaderHistoryContract.ViewMode.CALENDAR)
     }
-}
-
-private fun ReaderHistoryContract.ViewMode.labelRes() = when (this) {
-    ReaderHistoryContract.ViewMode.CALENDAR -> Res.string.reader_history_view_calendar
-    ReaderHistoryContract.ViewMode.LIST -> Res.string.reader_history_view_list
+    IconButton(onClick = { onIntent(ReaderHistoryContract.Intent.ViewModeChanged(next)) }) {
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(label),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable

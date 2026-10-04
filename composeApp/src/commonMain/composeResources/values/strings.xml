@@ -162,9 +162,8 @@
     <string name="reader_history_list_empty_title">No briefings</string>
     <string name="reader_history_list_empty_subtitle">Briefings you receive will appear here</string>
     <string name="reader_history_intro">Browse the past to find encouragement for the present.</string>
-    <string name="reader_history_view_calendar">Calendar</string>
-    <string name="reader_history_view_list">List</string>
-    <string name="reader_history_view_options">View options</string>
+    <string name="reader_history_show_calendar">Show as calendar</string>
+    <string name="reader_history_show_list">Show as list</string>
     <string name="history_tab_articles">Articles</string>
     <string name="you_day_detail_articles_label">ARTICLES</string>
     <string name="day_detail_share_action">Share</string>
