@@ -17,11 +17,22 @@ class BibliographySeedTest {
     private val figureIds = Regex("""VALUES \((\d+),'""").findAll(resource("seed_figures.sql"))
         .map { it.groupValues[1].toLong() }.toSet()
 
-    // Rows are (figure_id, source, text, themes, verified); only verified quotes must be covered.
-    private val quoteSources = Regex("""^\((\d+), '((?:[^']|'')*)', '(?:[^']|'')*', '(?:[^']|'')*', true\)""", RegexOption.MULTILINE)
-        .findAll(resource("seed_quotes.sql"))
-        .map { it.groupValues[1].toLong() to it.groupValues[2].replace("''", "'") }
-        .toSet()
+    private data class SeedQuote(val figureId: Long, val source: String, val text: String, val verified: Boolean)
+
+    private val seedQuotes = SEED_QUOTE_ROW.findAll(resource("seed_quotes.sql"))
+        .map { match ->
+            val groups = match.groupValues
+            SeedQuote(groups[1].toLong(), groups[2].replace("''", "'"), groups[3].replace("''", "'"), groups[4] == "true")
+        }
+        .toList()
+
+    // Only verified quotes must be covered by the bibliography.
+    private val quoteSources = seedQuotes.filter { it.verified }.map { it.figureId to it.source }.toSet()
+
+    // Recorded works were drawn from quote sources, and stay in the bibliography after a quote is un-verified.
+    private val allQuoteSources = seedQuotes.map { it.figureId to it.source }.toSet()
+
+    private val verifiedQuotes = seedQuotes.filter { it.verified }.map { Triple(it.figureId, it.source, it.text) }.toSet()
 
     // Rows are (id, figure_id, title, year) for the figure's own works, plus recorded_by in the Recorded Words section.
     private val works = Regex("""^\((\d+), (\d+), '((?:[^']|'')*)', (\d+|NULL)(?:, '((?:[^']|'')*)')?\)""", RegexOption.MULTILINE)
@@ -53,16 +64,33 @@ class BibliographySeedTest {
 
     @Test
     fun theSupabaseUpdateScriptUnverifiesExactlyTheQuotesTheSeedMarksUnverified() {
-        // Supabase is patched by update_quote_sources.sql, not re-seeded, so the two must agree —
-        // an un-verification present only in seed_quotes.sql would never reach production.
+        // Supabase is patched by update_quote_sources.sql and update_quote_verification.sql, not re-seeded, so the
+        // scripts and the seed must agree — an un-verification present only in seed_quotes.sql would never reach production.
         val unverifiedInSeed = UNVERIFIED_SEED_ROW.findAll(resource("seed_quotes.sql"))
             .map { it.groupValues[1].toLong() to it.groupValues[2] }
             .toSet()
-        val unverifiedByScript = UNVERIFY_STATEMENT.findAll(resource("update_quote_sources.sql"))
-            .map { it.groupValues[1].toLong() to it.groupValues[2] }
+        val unverifiedByScript = listOf("update_quote_sources.sql", "update_quote_verification.sql")
+            .flatMap { script -> UNVERIFY_STATEMENT.findAll(resource(script)).map { it.groupValues[1].toLong() to it.groupValues[2] } }
             .toSet()
 
         assertEquals(unverifiedInSeed, unverifiedByScript)
+    }
+
+    @Test
+    fun theVerificationPatchLeavesSupabaseMatchingTheSeed() {
+        // Supabase is patched by update_quote_verification.sql, not re-seeded, so every correction must land on the seed's values.
+        val patch = resource("update_quote_verification.sql")
+        val corrections = QUOTE_CORRECTION.findAll(patch).toList()
+
+        val statements = patch.lines().count { it.startsWith("UPDATE ") }
+        assertEquals(statements, corrections.size + UNVERIFY_STATEMENT.findAll(patch).count(), "every UPDATE is checked")
+
+        val unescape = { value: String -> value.replace("''", "'") }
+        corrections.forEach { match ->
+            val (source, text, figureId) = match.destructured
+            val corrected = Triple(figureId.toLong(), unescape(source), unescape(text))
+            assertTrue(corrected in verifiedQuotes, "seed_quotes.sql lacks verified ($figureId, $source, $text)")
+        }
     }
 
     @Test
@@ -74,7 +102,7 @@ class BibliographySeedTest {
 
     @Test
     fun everyRecordedWorkIsDrawnFromItsFiguresQuotesAndTheyCiteItExactlyAsItsWorksEntryDoes() {
-        val citedIn = quoteSources
+        val citedIn = allQuoteSources
             .filter { (_, source) -> source.startsWith(SECONDARY_SOURCE_PREFIX) }
             .groupBy({ it.first }, { it.second })
 
@@ -100,8 +128,8 @@ class BibliographySeedTest {
 
         QUOTE_SOURCE_UPDATE.findAll(patch).forEach { match ->
             val (newSource, figureId, oldSource) = match.destructured
-            assertTrue(figureId.toLong() to newSource.replace("''", "'") in quoteSources, "seed_quotes.sql lacks $newSource")
-            assertFalse(figureId.toLong() to oldSource.replace("''", "'") in quoteSources, "seed_quotes.sql still has $oldSource")
+            assertTrue(figureId.toLong() to newSource.replace("''", "'") in allQuoteSources, "seed_quotes.sql lacks $newSource")
+            assertFalse(figureId.toLong() to oldSource.replace("''", "'") in allQuoteSources, "seed_quotes.sql still has $oldSource")
         }
         WORK_UPDATE.findAll(patch).forEach { match ->
             val (assignments, id) = match.destructured
@@ -173,6 +201,15 @@ class BibliographySeedTest {
         const val BRIEFING_WINDOW = 5
         val QUOTE_SOURCE_UPDATE = Regex(
             """^UPDATE quotes SET source = '((?:[^']|'')*)' WHERE figure_id = (\d+) AND source = '((?:[^']|'')*)';""",
+            RegexOption.MULTILINE
+        )
+        /** Rows are (figure_id, source, text, themes, verified). */
+        val SEED_QUOTE_ROW = Regex(
+            """^\((\d+), '((?:[^']|'')*)', '((?:[^']|'')*)', '(?:[^']|'')*', (true|false)\)""",
+            RegexOption.MULTILINE
+        )
+        val QUOTE_CORRECTION = Regex(
+            """^UPDATE quotes SET source = '((?:[^']|'')*)', text = '((?:[^']|'')*)' WHERE figure_id = (\d+) AND text = '(?:[^']|'')*';""",
             RegexOption.MULTILINE
         )
         val WORK_UPDATE = Regex("""^UPDATE works SET (.+) WHERE id = (\d+);""", RegexOption.MULTILINE)

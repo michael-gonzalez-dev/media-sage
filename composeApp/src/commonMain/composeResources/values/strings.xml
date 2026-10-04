@@ -288,6 +288,6 @@
     <string name="onboarding_sample_reflection_writings">A lamp does not light the whole road. It lights the next step, and the next step is all that obedience asks of us.</string>
     <string name="onboarding_sample_reflection_hope">Hope does not rest on how things look. It rests on the God who is always what he has promised to be.</string>
     <string name="onboarding_sample_headline_snippet">Volunteers and local churches are helping families rebuild homes lost to the floods.</string>
-    <!-- Corrie ten Boom; the verified quote library (seed_quotes.sql) cites Tramp for the Lord (1974). Exact page not yet confirmed. -->
-    <string name="onboarding_sample_quote">If God sends us on stony paths, he provides strong shoes.</string>
+    <!-- Corrie ten Boom, Each New Day (1977); the same verified quote is in seed_quotes.sql. -->
+    <string name="onboarding_sample_quote">Never be afraid to trust an unknown future to a known God.</string>
 </resources>
