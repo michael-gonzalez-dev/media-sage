@@ -12,7 +12,14 @@ import kotlin.test.assertTrue
  */
 class BibliographySeedTest {
 
-    private data class SeedWork(val id: Long, val figureId: Long, val title: String, val year: Int?, val recordedBy: String?)
+    private data class SeedWork(
+        val id: Long,
+        val figureId: Long,
+        val title: String,
+        val year: Int?,
+        val recordedBy: String?,
+        val forQuotesOnly: Boolean = false,
+    )
 
     private val figureIds = Regex("""VALUES \((\d+),'""").findAll(resource("seed_figures.sql"))
         .map { it.groupValues[1].toLong() }.toSet()
@@ -32,10 +39,21 @@ class BibliographySeedTest {
     // Recorded works were drawn from quote sources, and stay in the bibliography after a quote is un-verified.
     private val allQuoteSources = seedQuotes.map { it.figureId to it.source }.toSet()
 
+    private val verifiedCitedIn = quoteSources.filter { (_, source) -> source.startsWith(SECONDARY_SOURCE_PREFIX) }
+
+    // (figure, text before the change) for every quote add_verified_quotes.sql verifies again or corrects.
+    private val restoredByAddScript = QUOTE_RESTORE.findAll(resource("add_verified_quotes.sql"))
+        .map { it.groupValues[3].toLong() to it.groupValues[4].replace("''", "'") }
+        .toList()
+
     private val verifiedQuotes = seedQuotes.filter { it.verified }.map { Triple(it.figureId, it.source, it.text) }.toSet()
 
-    // Rows are (id, figure_id, title, year) for the figure's own works, plus recorded_by in the Recorded Words section.
-    private val works = Regex("""^\((\d+), (\d+), '((?:[^']|'')*)', (\d+|NULL)(?:, '((?:[^']|'')*)')?\)""", RegexOption.MULTILINE)
+    // Rows are (id, figure_id, title, year) for the figure's own works, plus recorded_by in the Recorded Words section,
+    // plus for_quotes_only in the Recorded for Quotes section.
+    private val works = Regex(
+        """^\((\d+), (\d+), '((?:[^']|'')*)', (\d+|NULL)(?:, '((?:[^']|'')*)')?(?:, (true|false))?\)""",
+        RegexOption.MULTILINE
+    )
         .findAll(resource("seed_works.sql"))
         .map { match ->
             val groups = match.groupValues
@@ -44,12 +62,16 @@ class BibliographySeedTest {
                 figureId = groups[2].toLong(),
                 title = groups[3].replace("''", "'"),
                 year = groups[4].toIntOrNull(),
-                recordedBy = groups[5].ifEmpty { null }?.replace("''", "'")
+                recordedBy = groups[5].ifEmpty { null }?.replace("''", "'"),
+                forQuotesOnly = groups[6] == "true"
             )
         }
         .toList()
 
     private val recordedWorks = works.filter { it.recordedBy != null }
+
+    // The recorded works a briefing may draw on; the rest are listed only so "Cited in" quotes can cite them.
+    private val briefingRecordedWorks = recordedWorks.filterNot { it.forQuotesOnly }
 
     @Test
     fun everyWorkCitedByAVerifiedQuoteIsInThatFiguresBibliography() {
@@ -72,8 +94,10 @@ class BibliographySeedTest {
         val unverifiedByScript = listOf("update_quote_sources.sql", "update_quote_verification.sql")
             .flatMap { script -> UNVERIFY_STATEMENT.findAll(resource(script)).map { it.groupValues[1].toLong() to it.groupValues[2] } }
             .toSet()
+        // add_verified_quotes.sql runs last and verifies some of those again.
+        val reverified = restoredByAddScript.map { (figureId, oldText) -> figureId to oldText.replace("'", "''") }.toSet()
 
-        assertEquals(unverifiedInSeed, unverifiedByScript)
+        assertEquals(unverifiedInSeed, unverifiedByScript - reverified)
     }
 
     @Test
@@ -86,11 +110,35 @@ class BibliographySeedTest {
         assertEquals(statements, corrections.size + UNVERIFY_STATEMENT.findAll(patch).count(), "every UPDATE is checked")
 
         val unescape = { value: String -> value.replace("''", "'") }
+        // add_verified_quotes.sql runs last and may correct a quote's source again.
+        val correctedLater = restoredByAddScript.toSet()
         corrections.forEach { match ->
             val (source, text, figureId) = match.destructured
+            if (figureId.toLong() to unescape(text) in correctedLater) return@forEach
             val corrected = Triple(figureId.toLong(), unescape(source), unescape(text))
             assertTrue(corrected in verifiedQuotes, "seed_quotes.sql lacks verified ($figureId, $source, $text)")
         }
+    }
+
+    @Test
+    fun theAddedQuotesPatchLeavesSupabaseMatchingTheSeed() {
+        // Supabase is patched by add_verified_quotes.sql, not re-seeded, so every quote it adds or restores must land on a
+        // verified seed row.
+        val patch = resource("add_verified_quotes.sql")
+        val restores = QUOTE_RESTORE.findAll(patch).toList()
+        val additions = QUOTE_ADDITION.findAll(patch).toList()
+
+        val statements = patch.lines().count { it.startsWith("UPDATE ") || it.startsWith("INSERT ") }
+        assertEquals(statements, restores.size + additions.size, "every statement is checked")
+
+        val unescape = { value: String -> value.replace("''", "'") }
+        val landed = restores.map { val (source, text, figureId) = it.destructured; Triple(figureId, source, text) } +
+            additions.map { val (figureId, source, text) = it.destructured; Triple(figureId, source, text) }
+        landed.forEach { (figureId, source, text) ->
+            val quote = Triple(figureId.toLong(), unescape(source), unescape(text))
+            assertTrue(quote in verifiedQuotes, "seed_quotes.sql lacks verified $quote")
+        }
+        additions.forEach { assertEquals(it.groupValues[3], it.groupValues[4], "an addition checks for its own text") }
     }
 
     @Test
@@ -101,20 +149,26 @@ class BibliographySeedTest {
     }
 
     @Test
-    fun everyRecordedWorkIsDrawnFromItsFiguresQuotesAndTheyCiteItExactlyAsItsWorksEntryDoes() {
-        val citedIn = allQuoteSources
-            .filter { (_, source) -> source.startsWith(SECONDARY_SOURCE_PREFIX) }
-            .groupBy({ it.first }, { it.second })
-
-        val mismatched = recordedWorks.flatMap { work ->
-            val expected = "$SECONDARY_SOURCE_PREFIX${work.recordedBy}, ${work.title}" + work.year?.let { " ($it)" }.orEmpty()
-            // Matched on the writer, so a shortened or reordered title for the same book is caught too.
-            val sameWriter = citedIn[work.figureId].orEmpty()
-                .filter { SourceWorks.normalize(work.recordedBy!!) in SourceWorks.normalize(it) }
-            if (sameWriter.isEmpty()) listOf("no source for ${work.title}") else sameWriter.filter { it != expected }
+    fun everyVerifiedCitedInQuoteNamesOneOfItsFiguresRecordedWorksExactly() {
+        val unrecorded = verifiedCitedIn.filter { (figureId, source) ->
+            recordedWorks.none { it.figureId == figureId && citesRecordedWork(source, it) }
         }
 
-        assertEquals(emptyList(), mismatched, "\"Cited in\" quote sources must name a recorded work exactly as seed_works.sql does")
+        assertEquals(emptyList(), unrecorded, "\"Cited in\" quote sources must name a recorded work exactly as seed_works.sql does")
+    }
+
+    @Test
+    fun everyRecordedWorkIsCitedByOneOfItsFiguresQuotes() {
+        val uncited = recordedWorks.filter { work ->
+            allQuoteSources.none { (figureId, source) -> figureId == work.figureId && citesRecordedWork(source, work) }
+        }
+
+        assertEquals(emptyList(), uncited.map { it.title })
+    }
+
+    @Test
+    fun onlyRecordedWorksAreKeptForQuotesOnly() {
+        assertEquals(emptyList(), works.filter { it.forQuotesOnly && it.recordedBy == null }.map { it.title })
     }
 
     @Test
@@ -140,18 +194,18 @@ class BibliographySeedTest {
     }
 
     @Test
-    fun onlyFiguresWithFewerThanAFullWindowOfTheirOwnWorksHaveARecordedWork() {
+    fun onlyFiguresWithFewerThanAFullWindowOfTheirOwnWorksHaveARecordedWorkForBriefings() {
         // A briefing looks at five works; a figure with five of their own would never reach a recorded one.
         val ownWorkCounts = works.filter { it.recordedBy == null }.groupingBy { it.figureId }.eachCount()
 
-        val unreachable = recordedWorks.filter { (ownWorkCounts[it.figureId] ?: 0) >= BRIEFING_WINDOW }
+        val unreachable = briefingRecordedWorks.filter { (ownWorkCounts[it.figureId] ?: 0) >= BRIEFING_WINDOW }
 
         assertEquals(emptyList(), unreachable.map { it.title })
     }
 
     @Test
-    fun noFigureHasMoreThanOneRecordedWork() {
-        val repeated = recordedWorks.groupingBy { it.figureId }.eachCount().filterValues { it > 1 }.keys
+    fun noFigureHasMoreThanOneRecordedWorkForBriefings() {
+        val repeated = briefingRecordedWorks.groupingBy { it.figureId }.eachCount().filterValues { it > 1 }.keys
 
         assertEquals(emptySet(), repeated)
     }
@@ -182,6 +236,13 @@ class BibliographySeedTest {
         assertTrue(works.none { YEAR_IN_TITLE.containsMatchIn(it.title) })
     }
 
+    // "Cited in <writer>, <title> (<year>)", optionally with a locator such as ", vol. 1" before the year.
+    private fun citesRecordedWork(source: String, work: SeedWork): Boolean {
+        val citation = "$SECONDARY_SOURCE_PREFIX${work.recordedBy}, ${work.title}"
+        val year = work.year?.let { " ($it)" }.orEmpty()
+        return source == citation + year || (source.startsWith("$citation, ") && source.endsWith(year))
+    }
+
     private fun resource(name: String): String =
         checkNotNull(javaClass.classLoader.getResource(name)) { "$name not on the classpath" }.readText()
 
@@ -210,6 +271,17 @@ class BibliographySeedTest {
         )
         val QUOTE_CORRECTION = Regex(
             """^UPDATE quotes SET source = '((?:[^']|'')*)', text = '((?:[^']|'')*)' WHERE figure_id = (\d+) AND text = '(?:[^']|'')*';""",
+            RegexOption.MULTILINE
+        )
+        val QUOTE_RESTORE = Regex(
+            """^UPDATE quotes SET source = '((?:[^']|'')*)', text = '((?:[^']|'')*)', verified = true """ +
+                """WHERE figure_id = (\d+) AND text = '((?:[^']|'')*)';""",
+            RegexOption.MULTILINE
+        )
+        val QUOTE_ADDITION = Regex(
+            """^INSERT INTO quotes \(figure_id, source, text, themes, verified\) """ +
+                """SELECT (\d+), '((?:[^']|'')*)', '((?:[^']|'')*)', '(?:[^']|'')*', true """ +
+                """WHERE NOT EXISTS \(SELECT 1 FROM quotes WHERE figure_id = \d+ AND text = '((?:[^']|'')*)'\);""",
             RegexOption.MULTILINE
         )
         val WORK_UPDATE = Regex("""^UPDATE works SET (.+) WHERE id = (\d+);""", RegexOption.MULTILINE)

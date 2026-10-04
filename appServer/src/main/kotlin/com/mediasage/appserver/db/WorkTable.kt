@@ -19,5 +19,8 @@ object WorkTable : Table("works") {
     /** The figure wrote it, but about another person's life, so it carries little of the figure's own thought. */
     val isLifeOfAnother = bool("is_life_of_another").default(false)
 
+    /** A recorded work listed only so "Cited in …" quotes can cite it; briefings never draw on it. */
+    val forQuotesOnly = bool("for_quotes_only").default(false)
+
     override val primaryKey = PrimaryKey(id)
 }

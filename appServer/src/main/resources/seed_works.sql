@@ -36,7 +36,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (1016, 1, 'Commentary on Galatians', 1535),
 (1017, 1, 'Smalcald Articles', 1537),
 (1018, 1, 'Preface to Georg Rhau''s Symphoniae iucundae', 1538),
-(1019, 1, 'Table Talk', 1566) -- compilation: Johannes Aurifaber, 1566 (sayings recorded by Luther's table companions)
+(1019, 1, 'Table Talk', 1566), -- compilation: Johannes Aurifaber, 1566 (sayings recorded by Luther's table companions)
+(1020, 1, 'Sermon on the Third Sunday after Trinity', 1528)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 2: John Calvin
@@ -80,7 +81,9 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (4010, 4, 'Faith''s Checkbook', 1888),
 (4011, 4, 'Around the Wicket Gate', 1890),
 (4012, 4, 'The Soul Winner', 1895), -- published posthumously from his lectures
-(4013, 4, 'C.H. Spurgeon''s Autobiography', NULL) -- compilation: Susannah Spurgeon and J.W. Harrald, 1897-1900 (from his diary, letters, and records)
+(4013, 4, 'C.H. Spurgeon''s Autobiography', NULL), -- compilation: Susannah Spurgeon and J.W. Harrald, 1897-1900 (from his diary, letters, and records)
+(4014, 4, 'Feathers for Arrows', 1870),
+(4015, 4, 'The Salt-Cellars', 1889)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 5: John Wesley
@@ -95,7 +98,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (5008, 5, 'A Plain Account of Christian Perfection', 1766),
 (5009, 5, 'Wesley''s Works', NULL), -- compilation: The Works of John Wesley; Wesley's own 32-vol. edition 1771-1774, later Thomas Jackson edition 1829-1831 (volume cites follow Jackson)
 (5010, 5, 'Thoughts Upon Slavery', 1774),
-(5011, 5, 'A Collection of Hymns for the Use of the People Called Methodists', 1780)
+(5011, 5, 'A Collection of Hymns for the Use of the People Called Methodists', 1780),
+(5012, 5, 'Letter to Samuel Furly', 1762)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 6: John Wycliffe
@@ -215,7 +219,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (14011, 14, 'Pneumatologia: A Discourse Concerning the Holy Spirit', 1674),
 (14012, 14, 'Justification by Faith', 1677),
 (14013, 14, 'The Grace and Duty of Being Spiritually Minded', 1681),
-(14014, 14, 'The Glory of Christ', 1684) -- original title: Meditations and Discourses on the Glory of Christ
+(14014, 14, 'The Glory of Christ', 1684), -- original title: Meditations and Discourses on the Glory of Christ
+(14015, 14, 'The True Nature of a Gospel Church', 1689)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 15: Richard Baxter
@@ -379,7 +384,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (29005, 29, 'Sayings of Light and Love', NULL),
 (29006, 29, 'Precautions', NULL),
 (29007, 29, 'Counsels to a Religious on How to Reach Perfection', NULL),
-(29008, 29, 'Romances', NULL)
+(29008, 29, 'Romances', NULL),
+(29009, 29, 'Letter to Catalina of Jesus', 1581)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 30: Teresa of Ávila
@@ -507,7 +513,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (38010, 38, 'Homilies on the Statues', 387),
 (38011, 38, 'On Wealth and Poverty', NULL), -- compilation: modern title for his sermons on Lazarus and the Rich Man (e.g. tr. Catharine Roth, 1981)
 (38012, 38, 'Letters to Olympias', NULL),
-(38013, 38, 'Paschal Homily', NULL) -- attribution disputed: traditionally attributed to Chrysostom
+(38013, 38, 'Paschal Homily', NULL), -- attribution disputed: traditionally attributed to Chrysostom
+(38014, 38, 'No One Can Harm the Man Who Does Not Harm Himself', NULL)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 39: Origen
@@ -550,7 +557,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (42001, 42, 'Against Heresies', NULL),
 (42002, 42, 'Proof of the Apostolic Preaching', NULL),
 (42003, 42, 'Letter to Florinus', NULL), -- fragmentary: survives only in quotations by Eusebius
-(42004, 42, 'Letter to Victor', NULL) -- fragmentary: survives only in quotations by Eusebius
+(42004, 42, 'Letter to Victor', NULL), -- fragmentary: survives only in quotations by Eusebius
+(42005, 42, 'Fragments from the Lost Writings of Irenaeus', NULL)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 43: Clement of Alexandria
@@ -661,7 +669,9 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (49013, 49, 'Letter 22 to Eustochium', 384),
 (49014, 49, 'Letter 52 to Nepotianus', 394),
 (49015, 49, 'Letter 60 to Heliodorus', 396),
-(49016, 49, 'Letter 108 on the Death of Paula', 404)
+(49016, 49, 'Letter 108 on the Death of Paula', 404),
+(49017, 49, 'Letter 58 to Paulinus', 395),
+(49018, 49, 'Letter 125 to Rusticus', 411)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 50: Justin Martyr
@@ -726,7 +736,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (56006, 56, 'Men of Color, to Arms!', 1863),
 (56007, 56, 'Oration in Memory of Abraham Lincoln', 1876),
 (56008, 56, 'Self-Made Men', NULL), -- lecture delivered many times from 1859 onward
-(56009, 56, 'The Significance of Emancipation in the West Indies', 1857) -- address at Canandaigua, N.Y., August 3, 1857 (West India Emancipation)
+(56009, 56, 'The Significance of Emancipation in the West Indies', 1857), -- address at Canandaigua, N.Y., August 3, 1857 (West India Emancipation)
+(56010, 56, 'The Anti-Slavery Movement', 1855)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 57: Abraham Lincoln
@@ -886,7 +897,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (69010, 69, 'St. Francis of Assisi', 1923),
 (69011, 69, 'The Everlasting Man', 1925),
 (69012, 69, 'Saint Thomas Aquinas', 1933),
-(69013, 69, 'Autobiography', 1936) -- posthumous
+(69013, 69, 'Autobiography', 1936), -- posthumous
+(69014, 69, 'Introduction to the Book of Job', 1907)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 70: Francis Bacon
@@ -1032,7 +1044,9 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (81003, 81, 'A Simple Path', 1995), -- compilation: Lucinda Vardey, 1995
 (81004, 81, 'In the Heart of the World', 1997), -- compilation: Becky Benenate, 1997
 (81005, 81, 'No Greater Love', 1997), -- compilation: Becky Benenate and Joseph Durepos, 1997
-(81006, 81, 'Come Be My Light', 2007) -- compilation: Brian Kolodiejchuk, 2007 (private letters)
+(81006, 81, 'Come Be My Light', 2007), -- compilation: Brian Kolodiejchuk, 2007 (private letters)
+(81007, 81, 'Where There Is Love, There Is God', 2010),
+(81008, 81, 'Life in the Spirit', 1983)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 82: Hudson Taylor
@@ -1169,7 +1183,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (97005, 97, 'The Unoccupied Mission Fields of Africa and Asia', 1911),
 (97006, 97, 'The Disintegration of Islam', 1916),
 (97007, 97, 'The Glory of the Cross', 1928),
-(97008, 97, 'The Cross Above the Crescent', 1941)
+(97008, 97, 'The Cross Above the Crescent', 1941),
+(97009, 97, 'The Glory of the Impossible', 1950)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 98: Nate Saint — Only one short authored piece is openly available; his journals were published only within Hitt's Jungle Pilot (1959) and Elliot's Through Gates of Splendor (1957)
@@ -1224,6 +1239,40 @@ INSERT INTO works (id, figure_id, title, year, recorded_by) VALUES
 (94901, 94, 'Goforth of China', 1937, 'Rosalind Goforth'), -- by his wife
 (98901, 98, 'Through Gates of Splendor', 1957, 'Elisabeth Elliot') -- quotes his journals
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year, recorded_by = excluded.recorded_by;
+
+-- Recorded for Quotes: further books by someone else that preserve a figure's own words, listed so a "Cited in ..."
+-- quote can cite them. for_quotes_only keeps them out of briefings, so adding one never changes which works a
+-- briefing draws from. id = figure_id * 1000 + 902 onward. Needs the for_quotes_only column, which the server adds on start.
+INSERT INTO works (id, figure_id, title, year, recorded_by, for_quotes_only) VALUES
+(6902, 6, 'John Wycliffe and His English Precursors', 1884, 'Gotthard Lechler', true),
+(7902, 7, 'Actes and Monuments', 1563, 'John Foxe', true),
+(18902, 18, 'The Life of William Carey, Shoemaker and Missionary', 1885, 'George Smith', true),
+(20902, 20, 'John Hus at the Council of Constance', 1965, 'Peter of Mladoňovice', true),
+(33902, 33, 'Woman under Monasticism', 1896, 'Lina Eckenstein', true),
+(33903, 33, 'The Mediaeval Mind', 1911, 'Henry Osborn Taylor', true),
+(33904, 33, 'Studies in the History and Method of Science', 1917, 'Charles Singer', true),
+(52902, 52, 'The Parliamentary History of England', NULL, 'T.C. Hansard', true),
+(52903, 52, 'The Life of William Wilberforce', 1838, 'Robert Isaac Wilberforce and Samuel Wilberforce', true),
+(53902, 53, '"Moses," The Freedmen''s Record', 1865, 'Ednah Dow Cheney', true),
+(53903, 53, 'Harriet, the Moses of Her People', 1901, 'Sarah Bradford', true),
+(55902, 55, 'Unexpected News: Reading the Bible with Third World Eyes', 1984, 'Robert McAfee Brown', true),
+(55903, 55, 'Tutu: The Authorised Portrait', 2011, 'Allister Sparks and Mpho Tutu', true),
+(59902, 59, 'Complete Surrender: A Biography of Eric Liddell', 1996, 'Julian Wilson', true),
+(62902, 62, 'Memoirs of the Rev. John Newton', 1808, 'Richard Cecil', true),
+(62903, 62, 'John Newton of Olney and St. Mary Woolnoth', 1868, 'Josiah Bull', true),
+(66902, 66, 'Memoirs of the Life, Writings, and Discoveries of Sir Isaac Newton', 1855, 'David Brewster', true),
+(72902, 72, 'Kepler', 1959, 'Max Caspar', true),
+(82902, 82, 'Hudson Taylor in Early Years', 1911, 'Howard Taylor and Geraldine Taylor', true),
+(82903, 82, 'Hudson Taylor and the China Inland Mission', 1918, 'Howard Taylor and Geraldine Taylor', true),
+(83902, 83, 'Amy Carmichael of Dohnavur', 1953, 'Frank Houghton', true),
+(84902, 84, 'The Personal Life of David Livingstone', 1880, 'William Garden Blaikie', true),
+(86902, 86, 'The Life of General William Booth', 1920, 'Harold Begbie', true),
+(88902, 88, 'The Life of Adoniram Judson', 1883, 'Edward Judson', true),
+(90902, 90, 'The Life of Nicholas Lewis, Count Zinzendorf', 1838, 'August Gottlieb Spangenberg', true),
+(91902, 91, 'George Müller of Bristol', 1899, 'Arthur T. Pierson', true),
+(92902, 92, 'A London Sparrow', 1971, 'Phyllis Thompson', true),
+(96902, 96, 'Champion of the Silent Billion', 1961, 'Helen M. Roberts', true)
+ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year, recorded_by = excluded.recorded_by, for_quotes_only = excluded.for_quotes_only;
 
 -- Lives of Others: works a figure wrote about another person's life. A Writings briefing based on one retells that
 -- life instead of the figure's own thought, so it skips them unless the figure has nothing else. Every other lens
