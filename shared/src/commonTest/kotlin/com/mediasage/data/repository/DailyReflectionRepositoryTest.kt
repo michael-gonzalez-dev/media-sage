@@ -2,9 +2,11 @@ package com.mediasage.data.repository
 
 import com.mediasage.data.local.dao.DailyReflectionDao
 import com.mediasage.data.local.dao.FigureDao
+import com.mediasage.data.local.dao.ParkedDailyReflectionDao
 import com.mediasage.data.local.dao.SyncMetaDao
 import com.mediasage.data.local.entity.DailyReflectionEntity
 import com.mediasage.data.local.entity.FigureEntity
+import com.mediasage.data.local.entity.ParkedDailyReflectionEntity
 import com.mediasage.data.local.entity.SyncMetaEntity
 import com.mediasage.data.remote.AssignmentDefaultDto
 import com.mediasage.data.remote.DailyReflectionRequestDto
@@ -35,6 +37,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 private const val USER_ID = "user-1"
+private const val OTHER_USER_ID = "user-2"
 
 class DailyReflectionRepositoryTest {
 
@@ -50,7 +53,8 @@ class DailyReflectionRepositoryTest {
         remote: FakeDailyReflectionRemoteDataSource? = FakeDailyReflectionRemoteDataSource(),
         syncMetaDao: FakeSyncMetaDaoForReflectionSync = FakeSyncMetaDaoForReflectionSync(),
         authRepository: FakeAuthRepositoryForReflectionSync = FakeAuthRepositoryForReflectionSync(USER_ID),
-    ) = DailyReflectionRepositoryImpl(dao, api, figureDao, remote, syncMetaDao, authRepository)
+        parkedDao: FakeParkedDailyReflectionDao = FakeParkedDailyReflectionDao(),
+    ) = DailyReflectionRepositoryImpl(dao, api, figureDao, remote, syncMetaDao, authRepository, parkedDao)
 
     @Test
     fun getOrFetch_returnsCachedReflectionWithoutCallingApiOrPushing() = runTest {
@@ -384,6 +388,104 @@ class DailyReflectionRepositoryTest {
     }
 
     @Test
+    fun resolve_parksTheFirstAccountsUnsyncedBriefingsInsteadOfDeletingThemWhenAnotherAccountSignsIn() = runTest {
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 510L, tone = "morning", synced = false))
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 511L, tone = "morning", synced = true))
+        val parkedDao = FakeParkedDailyReflectionDao()
+        val remote = FakeDailyReflectionRemoteDataSource()
+
+        repo(
+            dao = dao, remote = remote, parkedDao = parkedDao,
+            syncMetaDao = FakeSyncMetaDaoForReflectionSync(SyncMetaEntity(lastDailyReflectionSyncUserId = USER_ID)),
+            authRepository = FakeAuthRepositoryForReflectionSync(OTHER_USER_ID),
+        ).resolve(OTHER_USER_ID)
+
+        assertNull(dao.getRawById("510_morning_NEWS"))
+        assertNull(dao.getRawById("511_morning_NEWS"))
+        assertTrue(remote.pushedRows.isEmpty())
+        assertEquals(listOf("510_morning_NEWS"), parkedDao.getForUser(USER_ID).map { it.id })
+        assertTrue(parkedDao.getForUser(OTHER_USER_ID).isEmpty())
+    }
+
+    @Test
+    fun resolve_restoresAndBacksUpTheFirstAccountsParkedBriefingsWhenItSignsBackIn() = runTest {
+        // One device: the first account leaves an unsynced briefing, a second account signs in, then
+        // the first signs back in. Only the device's tables are shared between the two repositories.
+        val dao = FakeDailyReflectionDao()
+        val parkedDao = FakeParkedDailyReflectionDao()
+        val syncMetaDao = FakeSyncMetaDaoForReflectionSync(SyncMetaEntity(lastDailyReflectionSyncUserId = USER_ID))
+        val remote = FakeDailyReflectionRemoteDataSource()
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 520L, tone = "morning", synced = false))
+        repo(
+            dao = dao, remote = remote, syncMetaDao = syncMetaDao, parkedDao = parkedDao,
+            authRepository = FakeAuthRepositoryForReflectionSync(OTHER_USER_ID),
+        ).resolve(OTHER_USER_ID)
+
+        repo(dao = dao, remote = remote, syncMetaDao = syncMetaDao, parkedDao = parkedDao).resolve(USER_ID)
+
+        assertTrue(dao.getRawById("520_morning_NEWS")!!.synced)
+        assertEquals(listOf(USER_ID), remote.pushedRows.map { it.userId })
+        assertEquals(520L, remote.pushedRows.single().epochDay)
+        assertTrue(parkedDao.getForUser(USER_ID).isEmpty())
+    }
+
+    @Test
+    fun resolve_keepsParkedBriefingsWaitingWhenTheReturningAccountsSyncFails() = runTest {
+        val dao = FakeDailyReflectionDao()
+        val parkedDao = FakeParkedDailyReflectionDao()
+        parkedDao.upsertAll(listOf(parked(USER_ID, epochDay = 530L)))
+
+        repo(
+            dao = dao, parkedDao = parkedDao,
+            remote = FakeDailyReflectionRemoteDataSource(shouldThrowOnFetch = true),
+            syncMetaDao = FakeSyncMetaDaoForReflectionSync(SyncMetaEntity(lastDailyReflectionSyncUserId = OTHER_USER_ID)),
+        ).resolve(USER_ID)
+
+        assertEquals(1, parkedDao.getForUser(USER_ID).size)
+    }
+
+    @Test
+    fun resolve_keepsTheBackedUpBriefingOverAParkedCopyForTheSameSlot() = runTest {
+        val dao = FakeDailyReflectionDao()
+        val parkedDao = FakeParkedDailyReflectionDao()
+        parkedDao.upsertAll(listOf(parked(USER_ID, epochDay = 540L, scriptureReference = "Parked Ref")))
+        val remote = FakeDailyReflectionRemoteDataSource(
+            initialRows = listOf(
+                DailyReflectionRow(
+                    userId = USER_ID, epochDay = 540L, tone = "morning", theme = "NEWS",
+                    figureServerId = lewis.serverId, scriptureReference = "Remote Ref",
+                    scriptureText = "text", insight = "i", implication = "im", inspiration = "in",
+                    sources = emptyList(),
+                )
+            )
+        )
+
+        repo(
+            dao = dao, remote = remote, parkedDao = parkedDao,
+            syncMetaDao = FakeSyncMetaDaoForReflectionSync(SyncMetaEntity(lastDailyReflectionSyncUserId = OTHER_USER_ID)),
+        ).resolve(USER_ID)
+
+        assertEquals("Remote Ref", dao.getRawById("540_morning_NEWS")!!.scriptureReference)
+        assertTrue(remote.pushedRows.isEmpty())
+        assertTrue(parkedDao.getForUser(USER_ID).isEmpty())
+    }
+
+    @Test
+    fun resolve_keepsAndBacksUpGuestBriefingsOnTheDevicesFirstSync() = runTest {
+        val dao = FakeDailyReflectionDao()
+        dao.upsert(reflection(figureId = augustine.id, epochDay = 550L, tone = "morning", synced = false))
+        val parkedDao = FakeParkedDailyReflectionDao()
+        val remote = FakeDailyReflectionRemoteDataSource()
+
+        repo(dao = dao, remote = remote, parkedDao = parkedDao).resolve(USER_ID)
+
+        assertTrue(dao.getRawById("550_morning_NEWS")!!.synced)
+        assertEquals(listOf(USER_ID), remote.pushedRows.map { it.userId })
+        assertTrue(parkedDao.getForUser(USER_ID).isEmpty())
+    }
+
+    @Test
     fun resolve_isNoOpBeyondFlippingIsResolvedWhenRemoteDataSourceIsUnconfigured() = runTest {
         val dao = FakeDailyReflectionDao()
         dao.upsert(reflection(figureId = augustine.id, epochDay = 600L, tone = "morning", synced = false))
@@ -430,6 +532,21 @@ class DailyReflectionRepositoryTest {
 
         assertNull(locked)
     }
+
+    private fun parked(userId: String, epochDay: Long, scriptureReference: String = "ref") = ParkedDailyReflectionEntity(
+        userId = userId,
+        id = "${epochDay}_morning_NEWS",
+        figureId = augustine.id,
+        epochDay = epochDay,
+        tone = "morning",
+        theme = "NEWS",
+        scriptureReference = scriptureReference,
+        scriptureText = "text",
+        insight = "insight",
+        implication = "implication",
+        inspiration = "inspiration",
+        sources = emptyList(),
+    )
 
     private fun reflection(
         figureId: Long,
@@ -505,6 +622,21 @@ private class FakeDailyReflectionDao : DailyReflectionDao {
 
     override suspend fun insertIfAbsent(entity: DailyReflectionEntity) {
         if (!store.containsKey(entity.id)) store[entity.id] = entity
+    }
+}
+
+private class FakeParkedDailyReflectionDao : ParkedDailyReflectionDao {
+    private val store = mutableMapOf<Pair<String, String>, ParkedDailyReflectionEntity>()
+
+    override suspend fun getForUser(userId: String): List<ParkedDailyReflectionEntity> =
+        store.values.filter { it.userId == userId }
+
+    override suspend fun upsertAll(entities: List<ParkedDailyReflectionEntity>) {
+        entities.forEach { store[it.userId to it.id] = it }
+    }
+
+    override suspend fun deleteForUser(userId: String) {
+        store.keys.filter { it.first == userId }.forEach { store.remove(it) }
     }
 }
 

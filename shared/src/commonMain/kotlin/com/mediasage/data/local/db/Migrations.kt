@@ -255,6 +255,20 @@ val MIGRATION_38_39 = object : Migration(38, 39) {
     }
 }
 
+// Briefings set aside when a different account signs in before they were backed up (see
+// DailyReflectionRepositoryImpl.resetIfAccountChanged).
+val MIGRATION_39_40 = object : Migration(39, 40) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `parked_daily_reflection` (`userId` TEXT NOT NULL, `id` TEXT NOT NULL, " +
+                "`figureId` INTEGER NOT NULL, `epochDay` INTEGER NOT NULL, `tone` TEXT NOT NULL, `theme` TEXT NOT NULL, " +
+                "`scriptureReference` TEXT NOT NULL, `scriptureText` TEXT NOT NULL, `insight` TEXT NOT NULL, " +
+                "`implication` TEXT NOT NULL, `inspiration` TEXT NOT NULL, `sources` TEXT NOT NULL, `challenge` TEXT, " +
+                "PRIMARY KEY(`userId`, `id`))"
+        )
+    }
+}
+
 val MIGRATION_12_13 = object : Migration(12, 13) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
