@@ -1048,7 +1048,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (81005, 81, 'No Greater Love', 1997), -- compilation: Becky Benenate and Joseph Durepos, 1997
 (81006, 81, 'Come Be My Light', 2007), -- compilation: Brian Kolodiejchuk, 2007 (private letters)
 (81007, 81, 'Where There Is Love, There Is God', 2010),
-(81008, 81, 'Life in the Spirit', 1983)
+(81008, 81, 'Life in the Spirit', 1983),
+(81009, 81, 'Nobel Lecture', 1979)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 82: Hudson Taylor
@@ -1073,7 +1074,8 @@ INSERT INTO works (id, figure_id, title, year) VALUES
 (83011, 83, 'Kohila', 1939),
 (83012, 83, 'Edges of His Ways', 1955), -- compilation: posthumous, from her devotional notes
 (83013, 83, 'Thou Givest... They Gather', 1958), -- compilation: posthumous
-(83014, 83, 'Candles in the Dark', 1981) -- compilation: her letters, 1981
+(83014, 83, 'Candles in the Dark', 1981), -- compilation: her letters, 1981
+(83015, 83, 'Overweights of Joy', 1906)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year;
 
 -- 84: David Livingstone
@@ -1264,7 +1266,9 @@ INSERT INTO works (id, figure_id, title, year, recorded_by, for_quotes_only) VAL
 (62902, 62, 'Memoirs of the Rev. John Newton', 1808, 'Richard Cecil', true),
 (62903, 62, 'John Newton of Olney and St. Mary Woolnoth', 1868, 'Josiah Bull', true),
 (66902, 66, 'Memoirs of the Life, Writings, and Discoveries of Sir Isaac Newton', 1855, 'David Brewster', true),
+(71902, 71, 'The Life of Galileo Galilei, with Illustrations of the Advancement of Experimental Philosophy', 1830, 'John Elliot Drinkwater Bethune', true),
 (72902, 72, 'Kepler', 1959, 'Max Caspar', true),
+(72903, 72, 'Life of Kepler', 1830, 'John Elliot Drinkwater Bethune', true),
 (82902, 82, 'Hudson Taylor in Early Years', 1911, 'Howard Taylor and Geraldine Taylor', true),
 (82903, 82, 'Hudson Taylor and the China Inland Mission', 1918, 'Howard Taylor and Geraldine Taylor', true),
 (83902, 83, 'Amy Carmichael of Dohnavur', 1953, 'Frank Houghton', true),
@@ -1274,7 +1278,9 @@ INSERT INTO works (id, figure_id, title, year, recorded_by, for_quotes_only) VAL
 (90902, 90, 'The Life of Nicholas Lewis, Count Zinzendorf', 1838, 'August Gottlieb Spangenberg', true),
 (91902, 91, 'George Müller of Bristol', 1899, 'Arthur T. Pierson', true),
 (92902, 92, 'A London Sparrow', 1971, 'Phyllis Thompson', true),
-(96902, 96, 'Champion of the Silent Billion', 1961, 'Helen M. Roberts', true)
+(93902, 93, 'The Evangelisation of the World: A Missionary Band', 1887, 'Benjamin Broomhall', true),
+(96902, 96, 'Champion of the Silent Billion', 1961, 'Helen M. Roberts', true),
+(98902, 98, 'Jungle Pilot: The Life and Witness of Nate Saint', 1959, 'Russell T. Hitt', true)
 ON CONFLICT (id) DO UPDATE SET figure_id = excluded.figure_id, title = excluded.title, year = excluded.year, recorded_by = excluded.recorded_by, for_quotes_only = excluded.for_quotes_only;
 
 -- Lives of Others: works a figure wrote about another person's life. A Writings briefing based on one retells that

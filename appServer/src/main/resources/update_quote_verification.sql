@@ -589,4 +589,12 @@ UPDATE quotes SET source = 'John G. Paton: An Autobiography (1889)', text = 'Wit
 UPDATE quotes SET source = 'The Ministry of Intercession (1897)', text = 'Time spent in prayer will yield more than that given to work. Prayer alone gives work its worth and its success.' WHERE figure_id = 100 AND text = 'Time spent in prayer will yield more than that given to work. Prayer alone gives work its worth and its success.';
 UPDATE quotes SET source = 'Humility (1895)', text = 'Just as water ever seeks and fills the lowest place, so the moment God finds the creature abased and empty, His glory and power flow in to exalt and to bless.' WHERE figure_id = 100 AND text = 'Just as water ever seeks and fills the lowest place, so the moment God finds you abased and empty, His glory and power flow in.';
 
+-- Un-verify: someone else's words, or not in the cited work (3). Added after this script first ran: run these three
+-- statements once, then add_verified_quotes.sql.
+-- ten Boom: Betsie ten Boom's words in The Hiding Place. Judson: Ann Judson's letter, reprinted by Wayland.
+-- Mendel: not found in Iltis, Life of Mendel (1932).
+UPDATE quotes SET verified = false WHERE figure_id = 58 AND text = 'There is no pit so deep that He is not deeper still.';
+UPDATE quotes SET verified = false WHERE figure_id = 74 AND text = 'My scientific studies have afforded me great gratification; and I am convinced that it will not be long before the whole world acknowledges the results of my work.';
+UPDATE quotes SET verified = false WHERE figure_id = 88 AND text = 'Had it not been for the consolations of religion, and an assured conviction that every additional trial was ordered by infinite love and mercy, I must have sunk under my accumulated sufferings.';
+
 COMMIT;

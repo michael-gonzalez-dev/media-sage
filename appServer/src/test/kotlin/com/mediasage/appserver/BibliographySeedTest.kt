@@ -112,9 +112,11 @@ class BibliographySeedTest {
         val unescape = { value: String -> value.replace("''", "'") }
         // add_verified_quotes.sql runs last and may correct a quote's source again.
         val correctedLater = restoredByAddScript.toSet()
+        // A corrected quote can be un-verified further down the same patch; the un-verify test covers those rows.
+        val unverifiedLater = UNVERIFY_STATEMENT.findAll(patch).map { it.groupValues[1].toLong() to unescape(it.groupValues[2]) }.toSet()
         corrections.forEach { match ->
             val (source, text, figureId) = match.destructured
-            if (figureId.toLong() to unescape(text) in correctedLater) return@forEach
+            if (figureId.toLong() to unescape(text) in correctedLater + unverifiedLater) return@forEach
             val corrected = Triple(figureId.toLong(), unescape(source), unescape(text))
             assertTrue(corrected in verifiedQuotes, "seed_quotes.sql lacks verified ($figureId, $source, $text)")
         }
