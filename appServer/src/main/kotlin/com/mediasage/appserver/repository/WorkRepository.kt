@@ -4,14 +4,16 @@ import com.mediasage.appserver.db.WorkTable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class WorkRepository {
+    /** The works a briefing may draw on: the figure's bibliography minus records kept only for quotes to cite. */
     suspend fun getByFigureId(figureId: Long): List<WorkData> = withContext(Dispatchers.IO) {
         transaction {
             WorkTable.selectAll()
-                .where { WorkTable.figureId eq figureId }
+                .where { (WorkTable.figureId eq figureId) and (WorkTable.forQuotesOnly eq false) }
                 .orderBy(WorkTable.id to SortOrder.ASC)
                 .map {
                     WorkData(

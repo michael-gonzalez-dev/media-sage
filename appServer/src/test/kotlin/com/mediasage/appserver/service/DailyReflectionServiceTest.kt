@@ -55,6 +55,7 @@ class DailyReflectionServiceTest {
         titles: List<String>,
         recordedBy: String? = null,
         isLifeOfAnother: Boolean = false,
+        forQuotesOnly: Boolean = false,
     ) = transaction {
         titles.forEach { title ->
             WorkTable.insert {
@@ -63,6 +64,7 @@ class DailyReflectionServiceTest {
                 it[WorkTable.year] = null
                 it[WorkTable.recordedBy] = recordedBy
                 it[WorkTable.isLifeOfAnother] = isLifeOfAnother
+                it[WorkTable.forQuotesOnly] = forQuotesOnly
             }
         }
     }
@@ -159,6 +161,18 @@ class DailyReflectionServiceTest {
 
         assertEquals(listOf("Work 1"), result.sources)
         assertFalse(sentPrompts.single().contains("A Biography of Tozer"))
+    }
+
+    @Test
+    fun generate_neverOffersOrCitesARecordKeptOnlyForQuotes() = runTest {
+        seedWorks(82, listOf("Hudson Taylor's Spiritual Secret"), recordedBy = "Howard Taylor and Geraldine Taylor")
+        seedWorks(82, listOf("Hudson Taylor in Early Years"), recordedBy = "Howard Taylor and Geraldine Taylor", forQuotesOnly = true)
+
+        val result = service(returnedSources = listOf("Hudson Taylor's Spiritual Secret", "Hudson Taylor in Early Years"))
+            .generate(DailyReflectionService.DailyReflectionRequest(figureId = 82, figureName = "Hudson Taylor"))
+
+        assertEquals(listOf("words recorded by Howard Taylor and Geraldine Taylor in Hudson Taylor's Spiritual Secret"), result.sources)
+        assertFalse(sentPrompts.single().contains("Hudson Taylor in Early Years"))
     }
 
     private fun writingsRequest(history: List<String> = emptyList()) = DailyReflectionService.DailyReflectionRequest(
