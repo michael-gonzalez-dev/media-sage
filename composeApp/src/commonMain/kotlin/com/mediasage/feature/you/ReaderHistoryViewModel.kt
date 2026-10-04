@@ -64,7 +64,7 @@ class ReaderHistoryViewModel(
     private val currentMonthEndEpochDay = LocalDate(today.year, today.monthNumber, 1)
         .plus(1, DateTimeUnit.MONTH).toEpochDays().toLong() - 1
 
-    private val viewMode = MutableStateFlow(ReaderHistoryContract.ViewMode.LIST)
+    private val viewMode = MutableStateFlow(ReaderHistoryContract.ViewMode.CALENDAR)
 
     /** The earliest day with a real briefing, resolved once. Falls back to today when there is none. */
     private val earliestEpochDay: Flow<Long> = flow {

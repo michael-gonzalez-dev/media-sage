@@ -300,6 +300,6 @@ class ReaderViewModel(
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
-        const val MAX_PAST_BRIEFINGS = 7
+        const val MAX_PAST_BRIEFINGS = 3
     }
 }

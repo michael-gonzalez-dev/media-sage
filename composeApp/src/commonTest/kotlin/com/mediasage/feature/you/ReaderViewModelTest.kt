@@ -351,7 +351,7 @@ class ReaderViewModelTest {
     }
 
     @Test
-    fun pastBriefingsCapAtSevenMostRecentDays() = runTest(testDispatcher) {
+    fun pastBriefingsCapAtThreeMostRecentDays() = runTest(testDispatcher) {
         val briefings = (1..10).map { daysAgo ->
             BriefingDay(epochDay = todayEpochDay - daysAgo, figureId = 1L, inspiration = "Word $daysAgo")
         }
@@ -359,9 +359,9 @@ class ReaderViewModelTest {
 
         val state = viewModel.state.value as ReaderContract.UiState.Ready
 
-        assertEquals(7, state.pastBriefings.size)
+        assertEquals(3, state.pastBriefings.size)
         assertEquals(todayEpochDay - 1, state.pastBriefings.first().epochDay)
-        assertEquals(todayEpochDay - 7, state.pastBriefings.last().epochDay)
+        assertEquals(todayEpochDay - 3, state.pastBriefings.last().epochDay)
         assertTrue(state.hasMorePastBriefings)
     }
 
@@ -422,14 +422,14 @@ class ReaderViewModelTest {
 
     @Test
     fun hasMorePastBriefingsIsFalseWhenCountIsAtOrBelowTheCap() = runTest(testDispatcher) {
-        val briefings = (1..7).map { daysAgo ->
+        val briefings = (1..3).map { daysAgo ->
             BriefingDay(epochDay = todayEpochDay - daysAgo, figureId = 1L, inspiration = "Word $daysAgo")
         }
         val (viewModel, _) = readerViewModelWithRepo(figure = testFigure, briefings = briefings)
 
         val state = viewModel.state.value as ReaderContract.UiState.Ready
 
-        assertEquals(7, state.pastBriefings.size)
+        assertEquals(3, state.pastBriefings.size)
         assertFalse(state.hasMorePastBriefings)
     }
 
