@@ -15,8 +15,8 @@ private const val TODAY_EPOCH_DAY = 20729L
 
 /**
  * Reader tab used for the thecouragepost.app screenshots. The week's roster mixes eras with
- * Augustine today, the memory quote is from Tozer's The Pursuit of God (1948, copyright not
- * renewed), and the past-briefing lines are written for this sample, not quoted.
+ * Augustine today, the memory quote is Müller as printed in Pierson's George Müller of Bristol
+ * (1899), Appendix N, and the past-briefing lines are written for this sample, not quoted.
  */
 internal val AugustineReaderState = ReaderContract.UiState.Ready(
     weekSlots = listOf(
@@ -29,10 +29,10 @@ internal val AugustineReaderState = ReaderContract.UiState.Ready(
         rosterSlot(DayOfWeek.SUNDAY, 3L, "Dietrich Bonhoeffer", LensFilter.NEWS),
     ),
     quoteCard = ReaderContract.QuoteCard(
-        quoteText = "Come near to the holy men and women of the past and you will soon feel the heat of their desire after God.",
-        figureName = "A.W. Tozer",
-        figureRole = "Pastor & Author",
-        figureImageUrl = "$PORTRAITS/19.webp",
+        quoteText = "Where Faith begins, anxiety ends; Where anxiety begins, Faith ends.",
+        figureName = "George Müller",
+        figureRole = "Evangelist & Orphan Care Pioneer",
+        figureImageUrl = "$PORTRAITS/91.webp",
     ),
     pastBriefings = listOf(
         pastBriefing(
