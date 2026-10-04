@@ -18,6 +18,7 @@ import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
+import com.mediasage.data.remote.WorksResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -163,5 +164,6 @@ private class FakeMediaSageApiForFigureSync(private val response: FiguresRespons
     override suspend fun getPassage(passageId: String): ScripturePassageDto = error("not used in this test")
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
         error("not used in this test")
+    override suspend fun getWorks(): WorksResponse = error("not used in this test")
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = error("not used in this test")
 }

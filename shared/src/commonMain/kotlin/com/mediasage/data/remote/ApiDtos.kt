@@ -97,6 +97,23 @@ data class FigureDto(
     val updatedAt: Long = 0
 )
 
+// ---- Library endpoint DTOs ----
+
+@Serializable
+data class WorksResponse(val works: List<WorkDto>)
+
+@Serializable
+data class WorkDto(
+    val id: Long,
+    /** Server id of the figure whose words the work holds. */
+    val figureId: Long,
+    val title: String,
+    val year: Int? = null,
+    /** Who wrote the book when it isn't the figure; it preserves the figure's words as that person recorded them. */
+    val recordedBy: String? = null,
+    val coverUrl: String? = null
+)
+
 // ---- Quote library endpoint DTOs ----
 
 // Always the whole library: anything a phone saved that isn't in it has been removed or unverified.

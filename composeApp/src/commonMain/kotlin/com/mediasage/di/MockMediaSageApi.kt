@@ -13,6 +13,7 @@ import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
+import com.mediasage.data.remote.WorksResponse
 
 /** Temporary mock API for physical device demos without a server. */
 class MockMediaSageApi : MediaSageApi {
@@ -52,6 +53,8 @@ class MockMediaSageApi : MediaSageApi {
             sources = emptyList(),
             tone = request.tone
         )
+
+    override suspend fun getWorks(): WorksResponse = WorksResponse(works = emptyList())
 
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = emptyList()
 }

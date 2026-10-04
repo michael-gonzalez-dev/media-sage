@@ -27,6 +27,10 @@ sealed interface Route : NavKey {
     @Serializable
     data object Figures : Route
 
+    /** Library tab — every reporter's works, on a shelf of covers or in a list. */
+    @Serializable
+    data object Library : Route
+
     /** Detail screen for a specific figure. */
     @Serializable
     data class FigureDetail(val figureId: Long) : Route
@@ -76,6 +80,7 @@ val navSerializersModule = SerializersModule {
         subclass(Route.HeadlineDetail::class)
         subclass(Route.Figures::class)
         subclass(Route.FigureDetail::class)
+        subclass(Route.Library::class)
         subclass(Route.Quotes::class)
         subclass(Route.You::class)
         subclass(Route.ReaderHistory::class)

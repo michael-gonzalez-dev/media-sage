@@ -22,6 +22,7 @@ import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
 import com.mediasage.data.remote.ScripturePassageDto
 import com.mediasage.data.remote.ScriptureVerseDto
+import com.mediasage.data.remote.WorksResponse
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -750,6 +751,7 @@ private class FakeMediaSageApi(private val result: EncourageResultDto) : MediaSa
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
         DailyReflectionResponseDto(scriptureReference = "", scriptureText = "", insight = "", implication = "", inspiration = "", sources = emptyList(), tone = "morning")
 
+    override suspend fun getWorks(): WorksResponse = error("not used in this test")
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = emptyList()
 }
 

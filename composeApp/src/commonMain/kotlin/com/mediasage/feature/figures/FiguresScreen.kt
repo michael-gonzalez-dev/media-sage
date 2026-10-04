@@ -24,18 +24,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.ViewCarousel
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
@@ -44,12 +39,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,6 +60,7 @@ import com.mediasage.ui.EraChipRow
 import com.mediasage.ui.FigurePlaceholder
 import com.mediasage.ui.MediaSageEmptyState
 import com.mediasage.ui.ScreenHeader
+import com.mediasage.ui.SearchField
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.search_voices_hint
 import mediasage.composeapp.generated.resources.title_voices
@@ -109,42 +102,13 @@ fun FiguresScreen(
     }
 }
 
-/**
- * The field keeps its own text and passes each change on, so typing never waits for the ViewModel's state to come
- * back. In the deck the field sits inside a layout that composes a frame late, and a field fed from that state lost
- * keystrokes typed quickly.
- */
-@Composable
-private fun SearchBar(query: String, onQueryChanged: (String) -> Unit, modifier: Modifier = Modifier) {
-    val textState = rememberTextFieldState(initialText = query)
-    val latestOnQueryChanged by rememberUpdatedState(onQueryChanged)
-    LaunchedEffect(textState) {
-        snapshotFlow { textState.text.toString() }.collect { latestOnQueryChanged(it) }
-    }
-    OutlinedTextField(
-        state = textState,
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(vertical = 8.dp),
-        label = { Text(stringResource(Res.string.search_voices_hint)) },
-        lineLimits = TextFieldLineLimits.SingleLine,
-        shape = MaterialTheme.shapes.medium,
-        trailingIcon = {
-            if (textState.text.isNotBlank()) {
-                IconButton(onClick = { textState.clearText() }) {
-                    Icon(imageVector = Icons.Filled.Close, contentDescription = null)
-                }
-            }
-        }
-    )
-}
-
 /** The search field, with the button that switches between the card deck and the grid at its end. */
 @Composable
 private fun SearchRow(state: FiguresContract.UiState.Success, onIntent: (FiguresContract.Intent) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        SearchBar(
+        SearchField(
             query = state.searchQuery,
+            label = stringResource(Res.string.search_voices_hint),
             onQueryChanged = { onIntent(FiguresContract.Intent.SearchQueryChanged(it)) },
             modifier = Modifier.weight(1f),
         )

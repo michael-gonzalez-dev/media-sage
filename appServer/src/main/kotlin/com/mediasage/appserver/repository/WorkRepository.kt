@@ -1,8 +1,11 @@
 package com.mediasage.appserver.repository
 
+import com.mediasage.appserver.db.FigureTable
 import com.mediasage.appserver.db.WorkTable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.selectAll
@@ -26,7 +29,43 @@ class WorkRepository {
                 }
         }
     }
+
+    /**
+     * Every work of every enabled figure, for the app's Library. Unlike [getByFigureId] it keeps the
+     * quotes-only records: they are real books that preserve a figure's words, so readers can browse them.
+     */
+    suspend fun getAllForEnabledFigures(): List<WorkDto> = withContext(Dispatchers.IO) {
+        transaction {
+            WorkTable.join(FigureTable, JoinType.INNER, onColumn = WorkTable.figureId, otherColumn = FigureTable.id)
+                .selectAll()
+                .where { FigureTable.isEnabled eq true }
+                .orderBy(WorkTable.id to SortOrder.ASC)
+                .map {
+                    WorkDto(
+                        id = it[WorkTable.id],
+                        figureId = it[WorkTable.figureId],
+                        title = it[WorkTable.title],
+                        year = it[WorkTable.year],
+                        recordedBy = it[WorkTable.recordedBy],
+                        coverUrl = it[WorkTable.coverUrl]
+                    )
+                }
+        }
+    }
 }
+
+@Serializable
+data class WorksResponse(val works: List<WorkDto>)
+
+@Serializable
+data class WorkDto(
+    val id: Long,
+    val figureId: Long,
+    val title: String,
+    val year: Int?,
+    val recordedBy: String?,
+    val coverUrl: String?
+)
 
 data class WorkData(
     val id: Long,

@@ -6,6 +6,7 @@
     <string name="nav_briefing">Briefing</string>
     <string name="nav_headlines">Headlines</string>
     <string name="nav_voices">Reporters</string>
+    <string name="nav_library">Library</string>
     <string name="nav_you">Reader</string>
     <string name="nav_back">Back</string>
 
@@ -43,6 +44,16 @@
     <string name="voices_filtered_empty_subtitle">Try another era or a different search.</string>
     <string name="voices_show_deck">Show as cards</string>
     <string name="voices_show_grid">Show as grid</string>
+    <string name="title_library">Library</string>
+    <string name="library_subtitle">The writings behind each briefing and quote</string>
+    <string name="library_show_list">Show as list</string>
+    <string name="library_show_shelf">Show as shelf</string>
+    <string name="library_recorded_by">Words recorded by %1$s</string>
+    <string name="library_empty_title">No works yet</string>
+    <string name="library_empty_subtitle">The Library fills in once the app connects</string>
+    <string name="library_search_hint">Search titles or reporters…</string>
+    <string name="library_filtered_empty_title">No works found</string>
+    <string name="library_filtered_empty_subtitle">Try another era or a different search.</string>
     <string name="era_all">All</string>
     <string name="era_early_church">Early Church</string>
     <string name="era_middle_ages">Middle Ages</string>
@@ -190,6 +201,10 @@
     <string name="figure_detail_no_biography">No biography available.</string>
     <string name="figure_detail_no_quotes">No quotes yet.</string>
 
+    <plurals name="library_work_count">
+        <item quantity="one">%1$d work</item>
+        <item quantity="other">%1$d works</item>
+    </plurals>
     <plurals name="headlines_story_count">
         <item quantity="one">%1$d story</item>
         <item quantity="other">%1$d stories</item>

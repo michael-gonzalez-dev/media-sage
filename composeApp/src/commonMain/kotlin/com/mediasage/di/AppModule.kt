@@ -16,9 +16,11 @@ import com.mediasage.domain.repository.HeadlineRepository
 import com.mediasage.domain.repository.ProfileRepository
 import com.mediasage.domain.repository.QuoteRepository
 import com.mediasage.domain.repository.UserReflectionNoteRepository
+import com.mediasage.domain.repository.WorkRepository
 import com.mediasage.domain.usecase.GetBriefingLoadInputsUseCase
 import com.mediasage.domain.usecase.GetDayDetailUseCase
 import com.mediasage.domain.usecase.GetHeadlinesFeedUseCase
+import com.mediasage.domain.usecase.GetLibraryUseCase
 import com.mediasage.domain.usecase.GetReaderCalendarUseCase
 import com.mediasage.feature.bookmarks.BookmarksViewModel
 import com.mediasage.feature.login.LoginViewModel
@@ -30,6 +32,8 @@ import com.mediasage.feature.figures.FiguresViewModel
 import com.mediasage.feature.history.HistoryViewModel
 import com.mediasage.feature.briefing.BriefingViewModel
 import com.mediasage.feature.headlines.HeadlinesViewModel
+import com.mediasage.feature.library.LibraryViewModel
+import com.mediasage.feature.library.LibraryViewSelection
 import com.mediasage.feature.quotes.QuotesViewModel
 import com.mediasage.feature.headlinedetail.HeadlineDetailViewModel
 import com.mediasage.feature.daydetail.DayDetailViewModel
@@ -95,6 +99,8 @@ val appModule = module {
             get<AnalyticsService>(),
         )
     }
+    single { LibraryViewSelection() }
+    viewModel { LibraryViewModel(get<GetLibraryUseCase>(), get<WorkRepository>(), get<LibraryViewSelection>()) }
     viewModel { QuotesViewModel(get<QuoteRepository>(), get<FigureRepository>(), get<AnalyticsService>()) }
     viewModel {
         LoginViewModel(

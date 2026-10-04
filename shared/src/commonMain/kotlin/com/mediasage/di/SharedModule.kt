@@ -33,6 +33,7 @@ import com.mediasage.data.repository.SavedInsightRemoteDataSource
 import com.mediasage.data.repository.UserReflectionNoteRemoteDataSource
 import com.mediasage.data.repository.UserReflectionNoteRepositoryImpl
 import com.mediasage.data.repository.WikipediaRepositoryImpl
+import com.mediasage.data.repository.WorkRepositoryImpl
 import com.mediasage.domain.repository.AuthRepository
 import com.mediasage.domain.repository.DailyReflectionRepository
 import com.mediasage.domain.repository.DayAssignmentRepository
@@ -43,9 +44,11 @@ import com.mediasage.domain.repository.ProfileRepository
 import com.mediasage.domain.repository.QuoteRepository
 import com.mediasage.domain.repository.UserReflectionNoteRepository
 import com.mediasage.domain.repository.WikipediaRepository
+import com.mediasage.domain.repository.WorkRepository
 import com.mediasage.domain.usecase.GetBriefingLoadInputsUseCase
 import com.mediasage.domain.usecase.GetDayDetailUseCase
 import com.mediasage.domain.usecase.GetHeadlinesFeedUseCase
+import com.mediasage.domain.usecase.GetLibraryUseCase
 import com.mediasage.domain.usecase.GetReaderCalendarUseCase
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
@@ -95,9 +98,11 @@ fun sharedModule(
     single { get<MediaSageDatabase>().userReflectionNoteDao() }
     single { get<MediaSageDatabase>().localAccountKeyDao() }
     single { get<MediaSageDatabase>().parkedDailyReflectionDao() }
+    single { get<MediaSageDatabase>().workDao() }
 
     // Repositories — interface bound to implementation
     single<FigureRepository> { FigureRepositoryImpl(get(), get(), get()) }
+    single<WorkRepository> { WorkRepositoryImpl(get(), get()) }
     single<QuoteRepository> { QuoteRepositoryImpl(get(), get(), getOrNull(), get(), get(), get()) }
     single<HeadlineRepository> { HeadlineRepositoryImpl(get(), get(), get()) }
     single<EncouragementRepository> {
@@ -123,4 +128,5 @@ fun sharedModule(
     single { GetDayDetailUseCase(get()) }
     single { GetHeadlinesFeedUseCase(get(), get()) }
     single { GetBriefingLoadInputsUseCase(get(), get(), get()) }
+    single { GetLibraryUseCase(get(), get()) }
 }
