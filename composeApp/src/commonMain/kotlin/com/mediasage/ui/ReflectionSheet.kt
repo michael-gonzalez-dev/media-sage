@@ -4,16 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
@@ -38,7 +40,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -46,7 +47,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -62,7 +62,6 @@ import com.mediasage.theme.MediaSageTheme
 import com.mediasage.theme.Navy
 import com.mediasage.theme.SlateOnPaper
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import mediasage.composeapp.generated.resources.Res
 import mediasage.composeapp.generated.resources.comic_paper
@@ -82,23 +81,25 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * The Reflect chip's bottom sheet — the reflection challenge question with a note field beneath
- * it. Opens partially expanded with the briefing still visible behind it, draggable to full
- * height; [Modifier.imePadding] on the content keeps the keyboard from covering the field at
- * either height. When [editable] is false (a past briefing whose tone slot is no longer active),
- * the note renders as read-only text and no save/discard affordance is shown. [noteText] is
- * `null` while the saved note is still loading (the sheet opens on [challenge] alone, without
- * waiting on it) — the body shows a loading indicator in place of the field until it resolves.
+ * it. A stock [ModalBottomSheet] sized to its content (no partially-expanded stop), so it moves
+ * with the sheet's own motion. The only customizations are the paper look (painted on the
+ * content, with the bottom insets applied *inside* the paper so it extends behind the keyboard
+ * and navigation bar) and the unsaved-changes confirmation. When [editable] is false (a past
+ * briefing whose tone slot is no longer active), the note renders as read-only text and no
+ * save/discard affordance is shown. [noteText] is `null` while the saved note is still loading
+ * (the sheet opens on [challenge] alone, without waiting on it) — the body shows a loading
+ * indicator in place of the field until it resolves.
  *
  * [SheetState]'s `confirmValueChange` — not `onDismissRequest` — is what gates a *drag* to
  * hidden: a swipe-to-dismiss settles the sheet to [SheetValue.Hidden] before `onDismissRequest`
  * ever fires, so vetoing there is the only way to keep the sheet visually open underneath the
- * discard dialog. `onDismissRequest` (scrim tap, back press) never changes `sheetState` itself,
- * so it can safely decide to show the dialog without the sheet having moved.
+ * discard dialog.
  *
- * Saving closes the sheet: it calls [onSave], waits for the keyboard to close, animates the sheet
- * down, then calls [onDismiss]. Removing the sheet from composition without hiding it first skips
- * the exit animation. [isClosingAfterSave] lifts the discard veto for that hide, since
- * `hasUnsavedChanges` may not have recomposed to false yet when the animation starts.
+ * Every close the sheet starts itself (Save, the close button, Discard) sets `isClosing`,
+ * which waits for the keyboard to close, animates the sheet down, then calls [onDismiss].
+ * Removing the sheet from composition without hiding it first skips the exit animation.
+ * `isClosing` also lifts the discard veto for that hide, since `hasUnsavedChanges` may not have
+ * recomposed to false yet when the animation starts.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,23 +114,26 @@ fun ReflectionSheet(
     modifier: Modifier = Modifier,
 ) {
     var showDiscardDialog by remember { mutableStateOf(false) }
-    var isClosingAfterSave by remember { mutableStateOf(false) }
+    var isClosing by remember { mutableStateOf(false) }
     val hasUnsavedChangesState = rememberUpdatedState(hasUnsavedChanges)
     val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false,
+        skipPartiallyExpanded = true,
         confirmValueChange = { target ->
-            val shouldVeto = target == SheetValue.Hidden && hasUnsavedChangesState.value && !isClosingAfterSave
+            val shouldVeto = target == SheetValue.Hidden && hasUnsavedChangesState.value && !isClosing
             if (shouldVeto) showDiscardDialog = true
             !shouldVeto
         },
     )
-    val scope = rememberCoroutineScope()
-    val requestDismiss = { if (hasUnsavedChanges && !isClosingAfterSave) showDiscardDialog = true else onDismiss() }
 
     ModalBottomSheet(
-        onDismissRequest = requestDismiss,
+        onDismissRequest = {
+            if (hasUnsavedChangesState.value && !isClosing) showDiscardDialog = true else onDismiss()
+        },
         sheetState = sheetState,
-        modifier = modifier,
+        // Stops below the status bar like a native iOS sheet. Letting the sheet reach the top
+        // made the top inset it consumes change with every pixel it moved, resizing the content
+        // mid-drag and making a full-height sheet jump.
+        modifier = modifier.statusBarsPadding(),
         containerColor = Color.Transparent,
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         dragHandle = null,
@@ -139,18 +143,16 @@ fun ReflectionSheet(
         val focusManager = LocalFocusManager.current
         val imeInsets = WindowInsets.ime
         val density = LocalDensity.current
-        val saveAndClose: () -> Unit = {
-            onSave()
-            isClosingAfterSave = true
+        LaunchedEffect(isClosing) {
+            if (!isClosing) return@LaunchedEffect
             focusManager.clearFocus()
-            scope.launch {
-                // Hiding while the keyboard is still closing resizes the sheet mid-animation and
-                // stalls it half-open, so let the keyboard finish first.
-                withTimeoutOrNull(KEYBOARD_HIDE_TIMEOUT_MS) {
-                    snapshotFlow { imeInsets.getBottom(density) }.first { it == 0 }
-                }
-                sheetState.hide()
-            }.invokeOnCompletion { if (!sheetState.isVisible) onDismiss() }
+            // Hiding while the keyboard is still closing resizes the sheet mid-animation and
+            // stalls it half-open, so let the keyboard finish first.
+            withTimeoutOrNull(KEYBOARD_HIDE_TIMEOUT_MS) {
+                snapshotFlow { imeInsets.getBottom(density) }.first { it == 0 }
+            }
+            sheetState.hide()
+            onDismiss()
         }
         ReflectionSheetContent(
             challenge = challenge,
@@ -158,25 +160,37 @@ fun ReflectionSheet(
             editable = editable,
             hasUnsavedChanges = hasUnsavedChanges,
             onNoteChange = onNoteChange,
-            onSave = saveAndClose,
-            onCloseClick = requestDismiss,
-            onFieldFocused = { scope.launch { sheetState.expand() } },
+            onSave = {
+                onSave()
+                isClosing = true
+            },
+            onCloseClick = { if (hasUnsavedChanges) showDiscardDialog = true else isClosing = true },
         )
     }
 
+    // Kept outside the sheet's content: shown from inside it, the dialog dismissed the sheet on
+    // iOS instead of appearing over it.
     if (showDiscardDialog) {
-        MediaSageConfirmDialog(
-            title = stringResource(Res.string.reflect_discard_title),
-            message = stringResource(Res.string.reflect_discard_message),
-            confirmLabel = stringResource(Res.string.reflect_discard_confirm),
-            dismissLabel = stringResource(Res.string.reflect_discard_cancel),
+        ReflectionDiscardDialog(
             onConfirm = {
                 showDiscardDialog = false
-                onDismiss()
+                isClosing = true
             },
             onDismiss = { showDiscardDialog = false },
         )
     }
+}
+
+@Composable
+private fun ReflectionDiscardDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    MediaSageConfirmDialog(
+        title = stringResource(Res.string.reflect_discard_title),
+        message = stringResource(Res.string.reflect_discard_message),
+        confirmLabel = stringResource(Res.string.reflect_discard_confirm),
+        dismissLabel = stringResource(Res.string.reflect_discard_cancel),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+    )
 }
 
 @Composable
@@ -188,19 +202,15 @@ private fun ReflectionSheetContent(
     onNoteChange: (String) -> Unit,
     onSave: () -> Unit,
     onCloseClick: () -> Unit,
-    onFieldFocused: () -> Unit,
 ) {
     // The paper is always a light surface — a tan comic-paper texture in dark mode, white in
     // light mode — so its ink stays the same fixed dark-on-paper palette in both, matching
     // LoginScreen's formOnPaper convention. Only the painted texture itself switches on theme.
-    val titleColor = Navy
+    val accentColor = Navy
     val bodyColor = Ink
     val mutedColor = SlateOnPaper
     val borderColor = CardBorder
     val paperImage = if (MediaSageTheme.isDark) Res.drawable.comic_paper else Res.drawable.reflect_paper_light
-    val background = Modifier
-        .shadow(elevation = 0.dp, shape = MaterialTheme.shapes.medium, clip = false)
-        .paint(painter = painterResource(paperImage), contentScale = ContentScale.FillBounds)
 
     // "Saved" reflects a real comparison against the last-saved text, not a one-shot flag from
     // the save action — so editing away from and then back to the saved value (e.g. deleting and
@@ -241,106 +251,117 @@ private fun ReflectionSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            // Wraps content height by default, which is shorter than the sheet's full drag
-            // range — with the transparent ModalBottomSheet container, dragging past that
-            // point (e.g. to Expanded with the keyboard up, shrinking the visible content
-            // area further) reveals the screen behind through the un-painted gap below this
-            // Column. fillMaxHeight keeps the painted background spanning the whole sheet.
-            .fillMaxHeight()
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            .then(background)
-            .padding(horizontal = 20.dp)
-            .verticalScroll(scrollState)
-            .navigationBarsPadding()
-            .imePadding(),
+            .paint(painter = painterResource(paperImage), contentScale = ContentScale.FillBounds)
+            // The bottom insets the stock sheet would apply around its content, applied inside
+            // the paper instead so the texture runs behind the keyboard and navigation bar.
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+            .padding(horizontal = 20.dp),
     ) {
-        ReflectionSheetHandle(color = mutedColor)
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        ReflectionSheetHeader(
+            titleColor = bodyColor,
+            mutedColor = mutedColor,
+            onCloseClick = onCloseClick,
+        )
+        // Only the body scrolls, so the handle and heading stay put while a long note scrolls
+        // beneath them. weight(fill = false) lets the body shrink to the space left under the
+        // header once the sheet reaches full height, instead of pushing the header off the top.
+        Column(modifier = Modifier.weight(1f, fill = false).verticalScroll(scrollState)) {
             Text(
-                text = stringResource(Res.string.reflect_sheet_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = titleColor,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+                text = challenge,
+                style = MaterialTheme.typography.bodyLarge,
+                fontStyle = FontStyle.Italic,
+                fontWeight = FontWeight.Medium,
+                color = bodyColor,
+                modifier = Modifier.padding(top = 8.dp),
             )
-            IconButton(onClick = onCloseClick, modifier = Modifier.align(Alignment.CenterEnd).size(32.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = stringResource(Res.string.reflect_close_action),
-                    tint = mutedColor,
-                )
-            }
-        }
-        Text(
-            text = stringResource(Res.string.reflect_sheet_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = mutedColor,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text(
-            text = challenge,
-            style = MaterialTheme.typography.bodyLarge,
-            fontStyle = FontStyle.Italic,
-            fontWeight = FontWeight.Medium,
-            color = bodyColor,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-        Column(modifier = Modifier.padding(top = 16.dp)) {
-            if (noteText == null) {
-                NoteLoadingIndicator(color = titleColor)
-            } else if (editable) {
-                OutlinedTextField(
-                    value = fieldText,
-                    onValueChange = {
-                        fieldText = it
-                        onNoteChange(it)
-                    },
-                    placeholder = { Text(stringResource(Res.string.reflect_note_hint)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = bodyColor,
-                        unfocusedTextColor = bodyColor,
-                        disabledTextColor = bodyColor,
-                        focusedBorderColor = titleColor,
-                        unfocusedBorderColor = borderColor,
-                        focusedLabelColor = titleColor,
-                        unfocusedLabelColor = mutedColor,
-                        focusedPlaceholderColor = mutedColor,
-                        unfocusedPlaceholderColor = mutedColor,
-                        cursorColor = titleColor,
-                    ),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp)
-                        .bringIntoViewRequester(bringIntoViewRequester)
-                        .onFocusChanged {
-                            isFieldFocused = it.isFocused
-                            if (it.isFocused) onFieldFocused()
+            Column(modifier = Modifier.padding(top = 16.dp)) {
+                if (noteText == null) {
+                    NoteLoadingIndicator(color = accentColor)
+                } else if (editable) {
+                    OutlinedTextField(
+                        value = fieldText,
+                        onValueChange = {
+                            fieldText = it
+                            onNoteChange(it)
                         },
-                )
-                MediaSageSurface(
-                    onClick = onSave,
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 20.dp),
-                    shape = MaterialTheme.shapes.medium,
-                    bordered = true,
-                    shadowElevation = 2.dp,
-                    enabled = hasUnsavedChanges,
-                ) { contentColor ->
-                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = stringResource(
-                                if (showSavedLabel) Res.string.reflect_saved_confirmation else Res.string.reflect_save_action
-                            ),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = contentColor,
-                        )
+                        placeholder = { Text(stringResource(Res.string.reflect_note_hint)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = bodyColor,
+                            unfocusedTextColor = bodyColor,
+                            disabledTextColor = bodyColor,
+                            focusedBorderColor = accentColor,
+                            unfocusedBorderColor = borderColor,
+                            focusedLabelColor = accentColor,
+                            unfocusedLabelColor = mutedColor,
+                            focusedPlaceholderColor = mutedColor,
+                            unfocusedPlaceholderColor = mutedColor,
+                            cursorColor = accentColor,
+                        ),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp)
+                            .bringIntoViewRequester(bringIntoViewRequester)
+                            .onFocusChanged { isFieldFocused = it.isFocused },
+                    )
+                    MediaSageSurface(
+                        onClick = onSave,
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 20.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        bordered = true,
+                        shadowElevation = 2.dp,
+                        enabled = hasUnsavedChanges,
+                    ) { contentColor ->
+                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = stringResource(
+                                    if (showSavedLabel) Res.string.reflect_saved_confirmation else Res.string.reflect_save_action
+                                ),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = contentColor,
+                            )
+                        }
                     }
+                } else if (noteText.isNotBlank()) {
+                    ReflectionAnswerText(noteText = noteText, bodyColor = bodyColor, dividerColor = borderColor)
                 }
-            } else if (noteText.isNotBlank()) {
-                ReflectionAnswerText(noteText = noteText, bodyColor = bodyColor, dividerColor = borderColor)
             }
         }
     }
+}
+
+/**
+ * The fixed top of the sheet — drag handle, title with the close button, and subtitle — ruled off
+ * from the body so a scrolled note reads as passing beneath it rather than being cut off.
+ */
+@Composable
+private fun ReflectionSheetHeader(titleColor: Color, mutedColor: Color, onCloseClick: () -> Unit) {
+    ReflectionSheetHandle(color = mutedColor)
+    Box(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Text(
+            text = stringResource(Res.string.reflect_sheet_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = titleColor,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+        )
+        IconButton(onClick = onCloseClick, modifier = Modifier.align(Alignment.CenterEnd).size(32.dp)) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(Res.string.reflect_close_action),
+                tint = mutedColor,
+            )
+        }
+    }
+    Text(
+        text = stringResource(Res.string.reflect_sheet_subtitle),
+        style = MaterialTheme.typography.bodyMedium,
+        color = mutedColor,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    // The handle's color rather than CardBorder, which nearly vanishes against the paper.
+    HorizontalDivider(color = mutedColor, thickness = 1.dp, modifier = Modifier.padding(top = 12.dp))
 }
 
 /**
