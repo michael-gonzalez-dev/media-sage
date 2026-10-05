@@ -20,7 +20,7 @@ Five-module Gradle project (`settings.gradle.kts`):
 
 - **composeApp**: UI layer only. Depends on `:shared`. Uses Compose Material3, Koin for DI, Lifecycle ViewModel, and Nav3 for navigation.
 - **shared**: Business logic, data layer, networking. Room for persistence, Ktor Client for HTTP, kotlinx-serialization for JSON. Platform engines: OkHttp (Android), Darwin (iOS).
-- **appServer**: JVM-only Ktor server (Netty). Calls external APIs (Claude, News, Scripture). Uses Koin for DI, CORS, StatusPages, ContentNegotiation, CallLogging. Deployed to Railway.
+- **appServer**: JVM-only Ktor server (Netty). Calls external APIs (Claude, News). Uses Koin for DI, CORS, StatusPages, ContentNegotiation, CallLogging, RateLimit. Deployed to Railway.
 - **agentruntime**: JVM-only Ktor server (Netty, port 8081). Receives Jira and GitHub webhooks, dispatches Claude Code workers via Cloud Run Jobs. Uses Exposed + PostgreSQL (Supabase) for persistent job state. Deployed as a Cloud Run Service on GCP (`media-sage-orchestrator`, `us-central1`). Railway orchestrator service is kept as a manual fallback (deactivated; re-enable by redeploying and updating webhooks).
 - **scripts**: JVM-only standalone scripts. No Ktor server, no Koin. Uses Exposed + SQLite/Postgres for DB access. Run manually via Gradle tasks (e.g., `generateImages`).
 
@@ -40,7 +40,7 @@ Server JSON → Client DTO → Room Entity → Domain Model → UI
 ### Dependency Injection
 
 Koin is used across all modules. Define modules per feature, not per layer.
-- **appServer**: `serverModule(claudeApiKey, newsApiKey, scriptureApiKey, baseUrl, dailyClaudeCallLimit)` — HttpClient, API services
+- **appServer**: `serverModule(claudeApiKey, newsApiKey, baseUrl, dailyClaudeCallLimit, dailyReflectionCallLimit)` — HttpClient, API services
 - **Orchestrator**: `agentModule(config, scope)` — HttpClient, AgentLaunchService, JiraApiClient
 - **Shared**: `sharedModule(serverBaseUrl)` — HttpClient, MediaSageApi, repositories
 
@@ -97,9 +97,9 @@ shared/src/commonMain/kotlin/com/mediasage/
 
 appServer/src/main/kotlin/com/mediasage/appserver/
 ├── Application.kt       — Entry point, Koin setup
-├── plugins/             — ContentNegotiation, CORS, CallLogging, StatusPages
-├── routes/              — Health, News, Encourage, Scripture, Figures, Works, Quotes, DailyReflection
-├── service/             — ClaudeApiClient, NewsApiClient, ScriptureApiClient
+├── plugins/             — ContentNegotiation, CORS, CallLogging, StatusPages, RateLimiting
+├── routes/              — Health, News, Encourage, Figures, Works, Quotes, DailyReflection
+├── service/             — ClaudeApiClient, NewsApiClient, ArticleScraperService
 └── di/                  — ServerModule
 
 agentruntime/src/main/kotlin/com/mediasage/agentruntime/
@@ -203,7 +203,7 @@ cd website && npx wrangler dev
 #### Client vs Service
 
 **Client** — a class that wraps a single `HttpClient` to communicate with one external API provider.
-- No interface. `open` is **conditional, not the default** — Kotlin classes are `final` by design, so keep a Client `final` unless a test needs to subclass it. Declare it `open` (with `open suspend fun` methods) only when its behavior is exercised *through a service or coroutine under `runTest` + `advanceUntilIdle`*, where `MockEngine` would escape virtual time: `MockEngine` runs on `Dispatchers.IO`, so `advanceUntilIdle()` returns before HTTP work completes when the call happens inside a nested `launch`. In that case a no-IO subclass override is preferred over `MockEngine`. A Client tested directly with `MockEngine` — a suspend call awaited in the test with no nested `launch` — stays `final`. Positive example: `JiraApiClient` (agentruntime) is `open` and subclassed by `FakeJiraApiClient` / `RecordingJiraApiClient`, injected into `cloudRunService` and driven under `runTest` + `advanceUntilIdle`. Negative example: the appServer clients (`NewsApiClient`, `ScriptureApiClient`) are tested directly with `MockEngine` and correctly stay `final`.
+- No interface. `open` is **conditional, not the default** — Kotlin classes are `final` by design, so keep a Client `final` unless a test needs to subclass it. Declare it `open` (with `open suspend fun` methods) only when its behavior is exercised *through a service or coroutine under `runTest` + `advanceUntilIdle`*, where `MockEngine` would escape virtual time: `MockEngine` runs on `Dispatchers.IO`, so `advanceUntilIdle()` returns before HTTP work completes when the call happens inside a nested `launch`. In that case a no-IO subclass override is preferred over `MockEngine`. A Client tested directly with `MockEngine` — a suspend call awaited in the test with no nested `launch` — stays `final`. Positive example: `JiraApiClient` (agentruntime) is `open` and subclassed by `FakeJiraApiClient` / `RecordingJiraApiClient`, injected into `cloudRunService` and driven under `runTest` + `advanceUntilIdle`. Negative example: the appServer `NewsApiClient` is tested directly with `MockEngine` and correctly stay `final`.
 - Named `{Provider}ApiClient` (e.g. `JiraApiClient`, `ClaudeApiClient`, `NewsApiClient`).
 - Methods are thin HTTP calls: authenticate, serialize request, deserialize response, return result.
 

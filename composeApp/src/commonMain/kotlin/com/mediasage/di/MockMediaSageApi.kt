@@ -11,8 +11,6 @@ import com.mediasage.data.remote.MatchResultDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
-import com.mediasage.data.remote.ScripturePassageDto
-import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.data.remote.WorksResponse
 
 /** Temporary mock API for physical device demos without a server. */
@@ -33,12 +31,6 @@ class MockMediaSageApi : MediaSageApi {
     @Deprecated("Use encourage instead — TODO MS-46")
     override suspend fun matchQuote(request: MatchRequestDto): MatchResultDto =
         throw NotImplementedError("Deprecated")
-
-    override suspend fun searchScripture(query: String, limit: Int): List<ScriptureVerseDto> =
-        emptyList()
-
-    override suspend fun getPassage(passageId: String): ScripturePassageDto =
-        ScripturePassageDto(id = passageId)
 
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
         DailyReflectionResponseDto(

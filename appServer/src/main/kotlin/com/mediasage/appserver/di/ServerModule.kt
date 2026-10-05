@@ -1,5 +1,6 @@
 package com.mediasage.appserver.di
 
+import com.mediasage.appserver.db.ReflectionCallLimitTable
 import com.mediasage.appserver.repository.ClaudeCallLimitRepository
 import com.mediasage.appserver.repository.EncouragementCacheRepository
 import com.mediasage.appserver.repository.FigureRepository
@@ -11,7 +12,6 @@ import com.mediasage.appserver.service.ClaudeApiClient
 import com.mediasage.appserver.service.DailyReflectionService
 import com.mediasage.appserver.service.HeadlineFetchService
 import com.mediasage.appserver.service.NewsApiClient
-import com.mediasage.appserver.service.ScriptureApiClient
 import io.ktor.client.*
 import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.*
@@ -24,15 +24,14 @@ import org.koin.dsl.module
 fun serverModule(
     claudeApiKey: String,
     newsApiKey: String,
-    scriptureApiKey: String,
     baseUrl: String,
-    dailyClaudeCallLimit: Int
+    dailyClaudeCallLimit: Int,
+    dailyReflectionCallLimit: Int
 ) = module {
     single { createHttpClient() }
 
     single { ClaudeApiClient(get(), claudeApiKey) }
     single { NewsApiClient(get(), newsApiKey) }
-    single { ScriptureApiClient(get(), scriptureApiKey) }
     single { ArticleScraperService() }
     single { FigureRepository(baseUrl) }
     single { QuoteRepository() }
@@ -41,6 +40,8 @@ fun serverModule(
     single { EncouragementCacheRepository() }
     single { ClaudeCallLimitRepository() }
     single<Int>(named("dailyClaudeCallLimit")) { dailyClaudeCallLimit }
+    single(named("reflectionCallLimit")) { ClaudeCallLimitRepository(ReflectionCallLimitTable) }
+    single<Int>(named("dailyReflectionCallLimit")) { dailyReflectionCallLimit }
     single { DailyReflectionService(get(), get()) }
     single { HeadlineFetchService(get(), get(), get()) }
 }

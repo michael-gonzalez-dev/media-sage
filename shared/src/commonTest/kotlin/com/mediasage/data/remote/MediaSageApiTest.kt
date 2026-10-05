@@ -9,7 +9,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class MediaSageApiTest {
 
@@ -97,44 +96,5 @@ class MediaSageApiTest {
         assertEquals(2, result.selectedQuoteId)
         assertEquals(0.92f, result.confidence)
         assertEquals(listOf("hope", "suffering"), result.connectionThemes)
-    }
-
-    @Test
-    fun searchScriptureReturnsVerses() = runTest {
-        val response = """
-        [
-            {
-                "id": "ROM.8.24",
-                "bookId": "ROM",
-                "chapterId": "ROM.8",
-                "reference": "Romans 8:24",
-                "text": "For in hope we were saved."
-            }
-        ]
-        """.trimIndent()
-
-        val api = MediaSageApiImpl(createMockClient(response), "http://localhost:8080")
-        val verses = api.searchScripture("hope")
-
-        assertEquals(1, verses.size)
-        assertEquals("Romans 8:24", verses[0].reference)
-        assertTrue(verses[0].text.contains("hope"))
-    }
-
-    @Test
-    fun getPassageReturnsContent() = runTest {
-        val response = """
-        {
-            "id": "JHN.3.16",
-            "reference": "John 3:16",
-            "content": "For God so loved the world..."
-        }
-        """.trimIndent()
-
-        val api = MediaSageApiImpl(createMockClient(response), "http://localhost:8080")
-        val passage = api.getPassage("JHN.3.16")
-
-        assertEquals("John 3:16", passage.reference)
-        assertTrue(passage.content.contains("God so loved"))
     }
 }

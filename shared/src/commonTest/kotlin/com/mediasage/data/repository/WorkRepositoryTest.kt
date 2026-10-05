@@ -13,8 +13,6 @@ import com.mediasage.data.remote.MatchResultDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
-import com.mediasage.data.remote.ScripturePassageDto
-import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.data.remote.WorkDto
 import com.mediasage.data.remote.WorksResponse
 import com.mediasage.domain.model.Work
@@ -102,9 +100,6 @@ private class FakeMediaSageApiForWorkSync(private val response: WorksResponse) :
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
     override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto = error("not used in this test")
     override suspend fun matchQuote(request: MatchRequestDto): MatchResultDto = error("not used in this test")
-    override suspend fun searchScripture(query: String, limit: Int): List<ScriptureVerseDto> =
-        error("not used in this test")
-    override suspend fun getPassage(passageId: String): ScripturePassageDto = error("not used in this test")
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
         error("not used in this test")
     override suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto> = error("not used in this test")

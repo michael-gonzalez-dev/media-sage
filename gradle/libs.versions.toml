@@ -23,6 +23,9 @@ kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.8.1"
 ksp = "2.3.6"
 ktor = "3.1.3"
+# koin-ktor resolves ktor-server-core to 3.4.0 at runtime, and ktor-server-rate-limit is not binary-compatible
+# across that gap (NoSuchMethodError on Route.getParent), so it is pinned to the core version that actually ships.
+ktor-server-rate-limit = "3.4.0"
 jsoup = "1.18.3"
 logback = "1.5.18"
 logstash-logback-encoder = "8.0"
@@ -108,6 +111,7 @@ ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negoti
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-server-rate-limit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor-server-rate-limit" }
 ktor-server-tests = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
