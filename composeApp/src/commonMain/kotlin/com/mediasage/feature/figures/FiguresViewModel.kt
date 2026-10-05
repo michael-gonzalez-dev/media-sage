@@ -6,6 +6,7 @@ import com.mediasage.data.ReporterView
 import com.mediasage.data.ReporterViewPreferencesRepository
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.analytics.figureScheduleParams
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.DayAssignment
 import com.mediasage.domain.model.Figure
@@ -136,8 +137,10 @@ class FiguresViewModel(
     }
 
     private suspend fun assignToday(figureId: Long, lens: LensFilter) {
-        dayAssignmentRepository.assign(todayDayOfWeekOrdinal(), figureId, lens)
-        analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
+        val todayOrdinal = todayDayOfWeekOrdinal()
+        dayAssignmentRepository.assign(todayOrdinal, figureId, lens)
+        val figureName = figureRepository.getFigureById(figureId)?.name
+        analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, figureScheduleParams(figureId, figureName, todayOrdinal, lens))
     }
 
     private fun buildState(

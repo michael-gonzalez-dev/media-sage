@@ -21,6 +21,9 @@ object AnalyticsEvents {
 
     object Params {
         const val FIGURE_ID = "figure_id"
+        const val FIGURE_NAME = "figure_name"
+        const val DAY_OF_WEEK = "day_of_week"
+        const val LENS = "lens"
         const val METHOD = "method"
         const val ACTION = "action"
         const val SCREEN = "screen"

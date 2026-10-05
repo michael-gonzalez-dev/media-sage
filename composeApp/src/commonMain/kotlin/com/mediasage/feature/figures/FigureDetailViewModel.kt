@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.analytics.figureScheduleParams
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.repository.DailyReflectionRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
@@ -62,7 +64,7 @@ class FigureDetailViewModel(
     private fun handlePinToggle() {
         val current = _state.value as? FigureDetailContract.UiState.Success ?: return
         if (current.isPinned) {
-            viewModelScope.launch { dayAssignmentRepository.clear(todayDayOfWeekOrdinal()) }
+            viewModelScope.launch { clearToday() }
             return
         }
         input.update { it.copy(isLensPickerOpen = true) }
@@ -106,7 +108,21 @@ class FigureDetailViewModel(
 
     private suspend fun assignToday(todayOrdinal: Int, lens: LensFilter?) {
         dayAssignmentRepository.assign(todayOrdinal, figureId, lens)
-        analyticsService.logEvent(AnalyticsEvents.FIGURE_PINNED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
+        logScheduleEvent(AnalyticsEvents.FIGURE_PINNED, emptyMap(), todayOrdinal, lens)
+    }
+
+    /** Logged as a Reader-tab clear would be, since unpinning here empties today's weekday slot the same way. */
+    private suspend fun clearToday() {
+        val todayOrdinal = todayDayOfWeekOrdinal()
+        val lens = dayAssignmentRepository.observeAssignments().first()[todayOrdinal]?.lens
+        dayAssignmentRepository.clear(todayOrdinal)
+        val action = mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR)
+        logScheduleEvent(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT, action, todayOrdinal, lens)
+    }
+
+    private suspend fun logScheduleEvent(event: String, extraParams: Map<String, String>, dayOfWeekOrdinal: Int, lens: LensFilter?) {
+        val figureName = figureRepository.getFigureById(figureId)?.name
+        analyticsService.logEvent(event, extraParams + figureScheduleParams(figureId, figureName, dayOfWeekOrdinal, lens))
     }
 
     private fun load() {

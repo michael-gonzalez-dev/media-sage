@@ -394,7 +394,17 @@ class FiguresViewModelTest {
 
         assertEquals(listOf(Triple(todayOrdinal, 3L, LensFilter.HOPE as LensFilter?)), dayAssignments.assignCalls)
         assertNull(assertIs<FiguresContract.UiState.Success>(vm.state.value).pendingReassignment)
-        assertEquals(listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "3")), analyticsService.loggedEvents)
+        assertEquals(
+            listOf(
+                AnalyticsEvents.FIGURE_PINNED to mapOf(
+                    AnalyticsEvents.Params.FIGURE_ID to "3",
+                    AnalyticsEvents.Params.FIGURE_NAME to "Calvin",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "hope",
+                ),
+            ),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -509,6 +519,7 @@ class FiguresViewModelTest {
         val todayOrdinal = today.dayOfWeek.ordinal
         val todayEpochDay = today.toEpochDays().toLong()
         val todayWeekdayLabel = today.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
+        val todayWeekday = today.dayOfWeek.name.lowercase()
     }
 }
 

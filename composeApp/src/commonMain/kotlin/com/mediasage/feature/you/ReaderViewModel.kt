@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.analytics.dayOfWeekParams
+import com.mediasage.data.analytics.figureScheduleParams
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.BriefingDay
 import com.mediasage.domain.model.DayAssignment
@@ -113,8 +115,9 @@ class ReaderViewModel(
         input.update { it.copy(activeSheet = null) }
         viewModelScope.launch {
             try {
+                val removed = calendarData.first().assignmentsByDayOfWeek[intent.dayOfWeek]
                 dayAssignmentRepository.clear(intent.dayOfWeek)
-                logAssignmentEvent(AnalyticsEvents.Values.ACTION_CLEAR)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_CLEAR, intent.dayOfWeek, removed)
             } finally {
                 writesInFlight.remove(intent.dayOfWeek)
             }
@@ -146,7 +149,8 @@ class ReaderViewModel(
         viewModelScope.launch {
             try {
                 dayAssignmentRepository.assign(intent.dayOfWeek, intent.figureId, intent.lens)
-                logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN)
+                val assignment = DayAssignment(intent.figureId, intent.lens)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_ASSIGN, intent.dayOfWeek, assignment)
             } finally {
                 writesInFlight.remove(intent.dayOfWeek)
             }
@@ -196,15 +200,24 @@ class ReaderViewModel(
         viewModelScope.launch {
             try {
                 dayAssignmentRepository.assign(pending.dayOfWeek, pending.figureId, pending.lens)
-                logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN)
+                val assignment = DayAssignment(pending.figureId, pending.lens)
+                logAssignmentEvent(AnalyticsEvents.Values.ACTION_REASSIGN, pending.dayOfWeek, assignment)
             } finally {
                 writesInFlight.remove(pending.dayOfWeek)
             }
         }
     }
 
-    private fun logAssignmentEvent(action: String) {
-        analyticsService.logEvent(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT, mapOf(AnalyticsEvents.Params.ACTION to action))
+    /** Names the reporter placed on (or, for a clear, removed from) [dayOfWeek]; just the weekday if the day was empty. */
+    private suspend fun logAssignmentEvent(action: String, dayOfWeek: Int, assignment: DayAssignment?) {
+        val scheduleParams = assignment?.let {
+            val figureName = calendarData.first().figures.firstOrNull { figure -> figure.id == it.figureId }?.name
+            figureScheduleParams(it.figureId, figureName, dayOfWeek, it.lens)
+        } ?: dayOfWeekParams(dayOfWeek)
+        analyticsService.logEvent(
+            AnalyticsEvents.FIGURE_DAY_ASSIGNMENT,
+            mapOf(AnalyticsEvents.Params.ACTION to action) + scheduleParams,
+        )
     }
 
     private fun weekdayLabel(dayOfWeek: Int): String =
