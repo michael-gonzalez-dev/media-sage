@@ -23,7 +23,8 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 // Generous ceilings for what the app sends (a GNews title, a 200-character snippet, a GNews URL, a locale code).
-// Anything larger is not the app, and is rejected before it can reach Claude.
+// Anything past a ceiling is trimmed before it reaches Claude, never rejected: the app shows a failed
+// encouragement for any error response, so an app request that happens to run long must still succeed.
 internal const val MAX_HEADLINE_TITLE_LENGTH = 512
 internal const val MAX_ARTICLE_SNIPPET_LENGTH = 1_000
 internal const val MAX_ARTICLE_URL_LENGTH = 1_024
@@ -37,14 +38,14 @@ private data class EncourageRequest(
     val articleSnippet: String? = null
 )
 
-private fun EncourageRequest.validationError(): String? = when {
-    headlineTitle.isBlank() -> "headlineTitle is required"
-    headlineTitle.length > MAX_HEADLINE_TITLE_LENGTH -> "headlineTitle is too long"
-    (articleSnippet?.length ?: 0) > MAX_ARTICLE_SNIPPET_LENGTH -> "articleSnippet is too long"
-    (articleUrl?.length ?: 0) > MAX_ARTICLE_URL_LENGTH -> "articleUrl is too long"
-    locale.length > MAX_LOCALE_LENGTH -> "locale is too long"
-    else -> null
-}
+// A URL longer than the stored feed's URL column can't be a feed headline, so it is dropped rather than trimmed:
+// a trimmed URL could collide with a different article's cache entry.
+private fun EncourageRequest.bounded() = copy(
+    headlineTitle = headlineTitle.take(MAX_HEADLINE_TITLE_LENGTH),
+    locale = locale.take(MAX_LOCALE_LENGTH),
+    articleUrl = articleUrl?.takeIf { it.length <= MAX_ARTICLE_URL_LENGTH },
+    articleSnippet = articleSnippet?.take(MAX_ARTICLE_SNIPPET_LENGTH)
+)
 
 /** Analysis endpoints — Claude AI provides encouragement for headlines. */
 fun Route.analysisRoutes() {
@@ -84,10 +85,10 @@ private class EncourageDependencies(
 
 private fun Route.encourageRoute(deps: EncourageDependencies, figureRepository: FigureRepository) {
     post("/encourage") {
-        val request = call.receive<EncourageRequest>()
+        val request = call.receive<EncourageRequest>().bounded()
 
-        request.validationError()?.let { error ->
-            call.respond(HttpStatusCode.BadRequest, mapOf("error" to error))
+        if (request.headlineTitle.isBlank()) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "headlineTitle is required"))
             return@post
         }
 

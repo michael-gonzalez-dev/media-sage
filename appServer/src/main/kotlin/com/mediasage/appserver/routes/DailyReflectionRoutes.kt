@@ -20,8 +20,9 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 // Ceilings well above what the app sends. A briefing lists every stored headline title (up to 100), and its
-// history covers 7 days x 2 times of day x 10 lenses of short (under ~150 word) briefings. Anything larger is
-// not the app, and is rejected before it can reach Claude.
+// history covers 7 days x 2 times of day x 10 lenses of short (under ~150 word) briefings. Anything past a
+// ceiling is trimmed before it reaches Claude, never rejected: the app shows a failed briefing for any error
+// response, so an app request that happens to run long must still succeed.
 internal const val MAX_SHORT_FIELD_LENGTH = 100
 internal const val MAX_REFLECTION_HEADLINES = 150
 internal const val MAX_PREVIOUS_SCRIPTURES = 300
@@ -43,24 +44,26 @@ fun Route.dailyReflectionRoutes() {
             if (!callLimitRepository.tryConsumeCall(LocalDate.now(ZoneOffset.UTC).toString(), dailyReflectionCallLimit)) {
                 throw DailyLimitExceededException()
             }
-            val result = service.generate(request.toServiceRequest())
+            val result = service.generate(request.bounded().toServiceRequest())
             call.respond(HttpStatusCode.OK, result.toResponse())
         }
     }
 }
 
-internal fun DailyReflectionRequest.validationError(): String? = when {
-    figureId <= 0 || figureName.isBlank() -> "figureId and figureName are required"
-    listOfNotNull(figureName, tone, dayOfWeek, theme, timeOfDay).any { it.length > MAX_SHORT_FIELD_LENGTH } ->
-        "a text field is too long"
-    headlines.size > MAX_REFLECTION_HEADLINES || headlines.any { it.length > MAX_HEADLINE_TITLE_LENGTH } ->
-        "headlines are too long"
-    previousScriptures.size > MAX_PREVIOUS_SCRIPTURES || previousScriptures.any { it.length > MAX_SHORT_FIELD_LENGTH } ->
-        "previousScriptures are too long"
-    previousReflections.size > MAX_PREVIOUS_REFLECTIONS ||
-        previousReflections.any { it.length > MAX_PREVIOUS_REFLECTION_LENGTH } -> "previousReflections are too long"
-    else -> null
-}
+internal fun DailyReflectionRequest.validationError(): String? =
+    if (figureId <= 0 || figureName.isBlank()) "figureId and figureName are required" else null
+
+// History lists are trimmed from the front, so the most recent entries (the app sends them oldest first) are kept.
+internal fun DailyReflectionRequest.bounded() = copy(
+    figureName = figureName.take(MAX_SHORT_FIELD_LENGTH),
+    headlines = headlines.take(MAX_REFLECTION_HEADLINES).map { it.take(MAX_HEADLINE_TITLE_LENGTH) },
+    tone = tone.take(MAX_SHORT_FIELD_LENGTH),
+    dayOfWeek = dayOfWeek.take(MAX_SHORT_FIELD_LENGTH),
+    previousScriptures = previousScriptures.takeLast(MAX_PREVIOUS_SCRIPTURES).map { it.take(MAX_SHORT_FIELD_LENGTH) },
+    previousReflections = previousReflections.takeLast(MAX_PREVIOUS_REFLECTIONS).map { it.take(MAX_PREVIOUS_REFLECTION_LENGTH) },
+    theme = theme?.take(MAX_SHORT_FIELD_LENGTH),
+    timeOfDay = timeOfDay?.take(MAX_SHORT_FIELD_LENGTH)
+)
 
 @Serializable
 data class DailyReflectionRequest(

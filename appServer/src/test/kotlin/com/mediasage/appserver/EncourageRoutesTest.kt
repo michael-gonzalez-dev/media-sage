@@ -28,6 +28,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.content.TextContent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -222,10 +223,12 @@ class EncourageRoutesTest {
         }
     }
 
-    private suspend fun ApplicationTestBuilder.encourage(body: String) = client.post("/api/analysis/encourage") {
-        contentType(ContentType.Application.Json)
-        setBody(body)
-    }
+    private suspend fun ApplicationTestBuilder.encourage(body: String, callerIp: String? = null) =
+        client.post("/api/analysis/encourage") {
+            contentType(ContentType.Application.Json)
+            callerIp?.let { header("X-Real-IP", it) }
+            setBody(body)
+        }
 
     @Test
     fun repeatedArticleUrlDoesNotTriggerSecondClaudeCall() = testApplication {
@@ -313,21 +316,34 @@ class EncourageRoutesTest {
         }
     }
 
+    // The app shows a failed encouragement for any error response, so an oversized request is trimmed
+    // before it reaches Claude rather than rejected.
     @Test
-    fun oversizedFieldsAreRejectedBeforeAnyClaudeCall() = testApplication {
-        var callCount = 0
-        installRoutes(quoteId, claudeCallCount = { callCount++ })
-        val tooLong = "x".repeat(MAX_ARTICLE_SNIPPET_LENGTH + 1)
+    fun oversizedFieldsAreTrimmedBeforeClaudeNotRejected() = testApplication {
+        val prompts = mutableListOf<String>()
+        installRoutes(quoteId, claudeCallCount = {}, onPrompt = { prompts += it })
+        val longTitle = "t".repeat(MAX_HEADLINE_TITLE_LENGTH + 500)
+        val longSnippet = "s".repeat(MAX_ARTICLE_SNIPPET_LENGTH + 500)
 
-        listOf(
-            """{"headlineTitle":"${"x".repeat(MAX_HEADLINE_TITLE_LENGTH + 1)}"}""",
-            """{"headlineTitle":"Markets rally","articleSnippet":"$tooLong"}""",
-            """{"headlineTitle":"Markets rally","articleUrl":"https://example.com/${"x".repeat(MAX_ARTICLE_URL_LENGTH)}"}""",
-            """{"headlineTitle":"Markets rally","locale":"${"x".repeat(MAX_LOCALE_LENGTH + 1)}"}"""
-        ).forEach { body ->
-            assertEquals(HttpStatusCode.BadRequest, encourage(body).status)
-        }
-        assertEquals(0, callCount)
+        val response = encourage(
+            """{"headlineTitle":"$longTitle","articleSnippet":"$longSnippet","locale":"${"x".repeat(MAX_LOCALE_LENGTH + 5)}"}"""
+        )
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(prompts.single().contains("t".repeat(MAX_HEADLINE_TITLE_LENGTH)))
+        assertFalse(prompts.single().contains("t".repeat(MAX_HEADLINE_TITLE_LENGTH + 1)))
+        assertFalse(prompts.single().contains("s".repeat(MAX_ARTICLE_SNIPPET_LENGTH + 1)))
+    }
+
+    @Test
+    fun overlongUrlIsTreatedAsNotInTheFeedAndNotCached() = testApplication {
+        installRoutes(quoteId, claudeCallCount = {})
+        val url = "https://example.com/" + "x".repeat(MAX_ARTICLE_URL_LENGTH)
+
+        val response = encourage("""{"headlineTitle":"Markets rally","articleUrl":"$url"}""")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(null, EncouragementCacheRepository().getByArticleUrlAndLocale(url, "en"))
     }
 
     @Test
@@ -335,11 +351,26 @@ class EncourageRoutesTest {
         var callCount = 0
         installRoutes(quoteId, claudeCallCount = { callCount++ }, encouragePerHour = 1)
 
-        val first = encourage("""{"headlineTitle":"Headline one","articleUrl":"https://example.com/e"}""")
-        val second = encourage("""{"headlineTitle":"Headline two","articleUrl":"https://example.com/f"}""")
+        val first = encourage("""{"headlineTitle":"Headline one","articleUrl":"https://example.com/e"}""", callerIp = "203.0.113.7")
+        val second = encourage("""{"headlineTitle":"Headline two","articleUrl":"https://example.com/f"}""", callerIp = "203.0.113.7")
 
         assertEquals(HttpStatusCode.OK, first.status)
         assertEquals(HttpStatusCode.TooManyRequests, second.status)
         assertEquals(1, callCount)
+    }
+
+    // Without X-Real-IP every request would share Railway's proxy address, so one bucket would throttle
+    // the whole app. Those requests are not limited per caller; the daily budget still applies.
+    @Test
+    fun requestsWithoutACallerAddressAreNotLimitedPerCaller() = testApplication {
+        storeHeadline("https://example.com/g", "Headline one")
+        installRoutes(quoteId, claudeCallCount = {}, encouragePerHour = 1)
+
+        // The second request is a cache hit, so it passes only if the per-caller limit let it through.
+        val first = encourage("""{"headlineTitle":"Headline one","articleUrl":"https://example.com/g"}""")
+        val second = encourage("""{"headlineTitle":"Headline one","articleUrl":"https://example.com/g"}""")
+
+        assertEquals(HttpStatusCode.OK, first.status)
+        assertEquals(HttpStatusCode.OK, second.status)
     }
 }

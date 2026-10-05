@@ -16,8 +16,8 @@ import org.koin.ktor.plugin.Koin
 
 private const val DEFAULT_DAILY_CLAUDE_CALL_LIMIT = 300
 private const val DEFAULT_DAILY_REFLECTION_LIMIT = 2000
-private const val DEFAULT_ENCOURAGE_PER_CALLER_PER_HOUR = 60
-private const val DEFAULT_REFLECTION_PER_CALLER_PER_HOUR = 20
+private const val DEFAULT_ENCOURAGE_PER_CALLER_PER_HOUR = 120
+private const val DEFAULT_REFLECTION_PER_CALLER_PER_HOUR = 60
 
 fun main(args: Array<String>) {
     EngineMain.main(args)

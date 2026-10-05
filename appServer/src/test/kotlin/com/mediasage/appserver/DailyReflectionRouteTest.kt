@@ -2,10 +2,14 @@ package com.mediasage.appserver
 
 import com.mediasage.appserver.prompts.ReflectionTheme
 import com.mediasage.appserver.routes.DailyReflectionRequest
+import com.mediasage.appserver.routes.MAX_HEADLINE_TITLE_LENGTH
+import com.mediasage.appserver.routes.MAX_PREVIOUS_REFLECTIONS
 import com.mediasage.appserver.routes.MAX_PREVIOUS_REFLECTION_LENGTH
 import com.mediasage.appserver.routes.MAX_REFLECTION_HEADLINES
+import com.mediasage.appserver.routes.bounded
 import com.mediasage.appserver.routes.toServiceRequest
 import com.mediasage.appserver.routes.validationError
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -100,15 +104,17 @@ class DailyReflectionRouteTest {
         application { module() }
     }
 
-    private suspend fun ApplicationTestBuilder.postReflection(body: String) = client.post("/api/analysis/daily-reflection") {
-        contentType(ContentType.Application.Json)
-        setBody(body)
-    }
+    private suspend fun ApplicationTestBuilder.postReflection(body: String, callerIp: String? = null) =
+        client.post("/api/analysis/daily-reflection") {
+            contentType(ContentType.Application.Json)
+            callerIp?.let { header("X-Real-IP", it) }
+            setBody(body)
+        }
 
     // The biggest request the real app can send: every stored headline, and a full week of briefings
-    // across both times of day and all 10 lenses. It must never be rejected.
+    // across both times of day and all 10 lenses. Trimming must leave it untouched.
     @Test
-    fun theLargestRequestTheAppSendsIsAccepted() {
+    fun theLargestRequestTheAppSendsIsPassedThroughUntrimmed() {
         val request = DailyReflectionRequest(
             figureId = 19,
             figureName = "A.W. Tozer",
@@ -118,21 +124,27 @@ class DailyReflectionRouteTest {
         )
 
         assertNull(request.validationError())
+        assertEquals(request, request.bounded())
     }
 
     @Test
-    fun oversizedRequestsAreRejectedBeforeAnyClaudeCall() = testApplication {
-        startServer()
-        val tooManyHeadlines = List(MAX_REFLECTION_HEADLINES + 1) { "\"h$it\"" }.joinToString(",")
-        val tooLongReflection = "x".repeat(MAX_PREVIOUS_REFLECTION_LENGTH + 1)
+    fun oversizedRequestsAreTrimmedNotRejected() {
+        val request = DailyReflectionRequest(
+            figureId = 19,
+            figureName = "A.W. Tozer",
+            headlines = List(MAX_REFLECTION_HEADLINES + 50) { "h".repeat(MAX_HEADLINE_TITLE_LENGTH + 10) },
+            previousReflections = List(MAX_PREVIOUS_REFLECTIONS + 50) { "r$it " + "x".repeat(MAX_PREVIOUS_REFLECTION_LENGTH) }
+        )
 
-        listOf(
-            """{"figureId":1,"figureName":"C.S. Lewis","headlines":[$tooManyHeadlines]}""",
-            """{"figureId":1,"figureName":"C.S. Lewis","previousReflections":["$tooLongReflection"]}""",
-            """{"figureId":1,"figureName":"${"x".repeat(101)}"}"""
-        ).forEach { body ->
-            assertEquals(HttpStatusCode.BadRequest, postReflection(body).status)
-        }
+        val bounded = request.bounded()
+
+        assertNull(request.validationError())
+        assertEquals(MAX_REFLECTION_HEADLINES, bounded.headlines.size)
+        assertTrue(bounded.headlines.all { it.length == MAX_HEADLINE_TITLE_LENGTH })
+        assertEquals(MAX_PREVIOUS_REFLECTIONS, bounded.previousReflections.size)
+        assertTrue(bounded.previousReflections.all { it.length == MAX_PREVIOUS_REFLECTION_LENGTH })
+        // The app sends history oldest first, so the most recent entries are the ones kept.
+        assertTrue(bounded.previousReflections.last().startsWith("r${MAX_PREVIOUS_REFLECTIONS + 49} "))
     }
 
     @Test
@@ -148,10 +160,21 @@ class DailyReflectionRouteTest {
     fun oneCallerIsRateLimited() = testApplication {
         startServer("app.claude.reflectionPerCallerPerHour" to "1")
 
-        val first = postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""")
-        val second = postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""")
+        val first = postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""", callerIp = "203.0.113.7")
+        val second = postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""", callerIp = "203.0.113.7")
+        val otherCaller = postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""", callerIp = "198.51.100.4")
 
         assertEquals(HttpStatusCode.BadRequest, first.status)
         assertEquals(HttpStatusCode.TooManyRequests, second.status)
+        assertEquals(HttpStatusCode.BadRequest, otherCaller.status)
+    }
+
+    @Test
+    fun requestsWithoutACallerAddressAreNotLimitedPerCaller() = testApplication {
+        startServer("app.claude.reflectionPerCallerPerHour" to "1")
+
+        repeat(3) {
+            assertEquals(HttpStatusCode.BadRequest, postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""").status)
+        }
     }
 }

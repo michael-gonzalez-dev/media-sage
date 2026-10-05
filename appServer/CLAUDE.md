@@ -23,8 +23,9 @@ appServer/src/main/kotlin/com/mediasage/appserver/
     bounded: a per-caller rate limit (`plugins/RateLimiting.kt`) plus an app-wide daily budget (`ClaudeCallLimitRepository`).
   - Never download a URL a caller sends. The server only fetches URLs it got from its own GNews fetch
     (`ArticleScraperService.preScrape`); look caller URLs up in the stored feed instead.
-  - Every caller-supplied field (strings, lists, numbers such as `limit`) has a maximum, checked before any paid call.
-    Set it well above what the app sends, so the real app is never rejected.
+  - Every caller-supplied field (strings, lists, numbers such as `limit`) has a maximum, applied before any paid call.
+    Set it well above what the app sends, and trim to it rather than reject: the app shows a failure for any error
+    response, so an app request that runs long must still succeed.
   - Never write caller-supplied text into a cache shared by all users; cache what was built from the server's own data.
 - Deployed to Railway (port 8080). Requires manual restart — no hot-reload. Verify the server is running before debugging route behavior.
 
