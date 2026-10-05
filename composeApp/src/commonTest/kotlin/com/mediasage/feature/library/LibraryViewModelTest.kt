@@ -128,6 +128,18 @@ class LibraryViewModelTest {
     }
 
     @Test
+    fun aBookKeepsItsShelfPlaceAndEraWhenASearchHidesItsNeighbors() = runTest(testDispatcher) {
+        val knowledge = Work(id = 19008, figureId = 19, title = "The Knowledge of the Holy", year = 1961)
+        val vm = libraryViewModel(figures = listOf(tozer), works = listOf(pursuit, knowledge))
+
+        vm.onIntent(LibraryContract.Intent.SearchQueryChanged("knowledge"))
+
+        val work = assertIs<LibraryContract.UiState.Success>(vm.state.value).sections.single().works.single()
+        assertEquals(1, work.shelfIndex)
+        assertEquals(FigureEra.MODERN, work.era)
+    }
+
+    @Test
     fun searchingARecorderFindsTheBooksTheyWrote() = runTest(testDispatcher) {
         val vm = libraryViewModel(figures = listOf(tozer, tubman), works = listOf(pursuit, scenes))
 

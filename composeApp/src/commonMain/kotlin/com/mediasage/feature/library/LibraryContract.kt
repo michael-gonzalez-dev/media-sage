@@ -49,4 +49,10 @@ data class LibraryWorkItem(
     /** Printed on the default cover. */
     val reporterName: String,
     val reporterPortraitUrl: String? = null,
+    /** The reporter's figure id; with [shelfIndex] it picks the default cover's color. */
+    val reporterId: Long = 0,
+    /** The reporter's era, which sets the default cover's period binding. */
+    val era: FigureEra? = null,
+    /** The book's place on its reporter's full shelf, before any search, so neighbors take different cover colors. */
+    val shelfIndex: Int = 0,
 )

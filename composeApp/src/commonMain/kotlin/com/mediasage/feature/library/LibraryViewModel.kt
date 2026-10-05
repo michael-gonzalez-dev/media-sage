@@ -2,8 +2,10 @@ package com.mediasage.feature.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureEra
 import com.mediasage.domain.model.LibrarySection
+import com.mediasage.domain.model.Work
 import com.mediasage.domain.repository.WorkRepository
 import com.mediasage.domain.usecase.GetLibraryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,22 +62,28 @@ private data class LibraryInput(
     val selectedWork: LibraryWorkItem? = null,
 )
 
-private fun LibrarySection.toItem() = LibrarySectionItem(
-    figureId = figure.id,
+private fun LibrarySection.toItem(): LibrarySectionItem {
+    val era = FigureEra.fromCentury(figure.century)
+    return LibrarySectionItem(
+        figureId = figure.id,
+        reporterName = figure.name,
+        portraitUrl = figure.portraitUrl,
+        era = era,
+        works = works.mapIndexed { index, work -> work.toItem(figure, era, index) },
+    )
+}
+
+private fun Work.toItem(figure: Figure, era: FigureEra?, shelfIndex: Int) = LibraryWorkItem(
+    id = id,
+    title = title,
+    year = year,
+    recordedBy = recordedBy,
+    coverUrl = coverUrl,
     reporterName = figure.name,
-    portraitUrl = figure.portraitUrl,
-    era = FigureEra.fromCentury(figure.century),
-    works = works.map { work ->
-        LibraryWorkItem(
-            id = work.id,
-            title = work.title,
-            year = work.year,
-            recordedBy = work.recordedBy,
-            coverUrl = work.coverUrl,
-            reporterName = figure.name,
-            reporterPortraitUrl = figure.portraitUrl,
-        )
-    },
+    reporterPortraitUrl = figure.portraitUrl,
+    reporterId = figure.id,
+    era = era,
+    shelfIndex = shelfIndex,
 )
 
 /**
