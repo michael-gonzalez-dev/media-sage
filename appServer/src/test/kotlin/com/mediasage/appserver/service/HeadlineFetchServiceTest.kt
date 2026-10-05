@@ -55,6 +55,9 @@ class HeadlineFetchServiceTest {
 
     private val requestsByCategory = mutableMapOf<String, Int>()
 
+    // These tests cover fetching and filtering, so curation always fails and each category stores its own headlines.
+    private val failingCuration = HeadlineCurationService(claudeApiClientReplying(status = HttpStatusCode.InternalServerError))
+
     private fun createClient(failingCategory: String): HttpClient =
         createClient { category, _ -> if (category == failingCategory) HttpStatusCode.InternalServerError else HttpStatusCode.OK }
 
@@ -91,7 +94,7 @@ class HeadlineFetchServiceTest {
     fun fetchAndStoreAll_onFullSuccess_fetchesAndStoresAllSevenCategories() = runTest {
         val headlineRepository = HeadlineRepository()
         val newsApiClient = NewsApiClient(createClient(failingCategory = "none"), "test-key")
-        val service = HeadlineFetchService(newsApiClient, headlineRepository, ArticleScraperService())
+        val service = HeadlineFetchService(newsApiClient, headlineRepository, ArticleScraperService(), failingCuration)
 
         val summary = service.fetchAndStoreAll(nowMillis = 1000L)
 
@@ -108,7 +111,7 @@ class HeadlineFetchServiceTest {
     fun fetchAndStoreAll_onOneCategoryFailure_otherCategoriesStillPopulate() = runTest {
         val headlineRepository = HeadlineRepository()
         val newsApiClient = NewsApiClient(createClient(failingCategory = "science"), "test-key")
-        val service = HeadlineFetchService(newsApiClient, headlineRepository, ArticleScraperService())
+        val service = HeadlineFetchService(newsApiClient, headlineRepository, ArticleScraperService(), failingCuration)
 
         val summary = service.fetchAndStoreAll(nowMillis = 1000L)
 
@@ -122,7 +125,7 @@ class HeadlineFetchServiceTest {
     fun fetchAndStoreAll_calledTwice_replacesRatherThanAccumulatesPerCategory() = runTest {
         val headlineRepository = HeadlineRepository()
         val newsApiClient = NewsApiClient(createClient(failingCategory = "none"), "test-key")
-        val service = HeadlineFetchService(newsApiClient, headlineRepository, ArticleScraperService())
+        val service = HeadlineFetchService(newsApiClient, headlineRepository, ArticleScraperService(), failingCuration)
 
         service.fetchAndStoreAll(nowMillis = 1000L)
         service.fetchAndStoreAll(nowMillis = 2000L)
@@ -136,7 +139,7 @@ class HeadlineFetchServiceTest {
         val client = createClient { category, attempt ->
             if (category == "technology" && attempt == 1) HttpStatusCode.TooManyRequests else HttpStatusCode.OK
         }
-        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService())
+        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService(), failingCuration)
 
         val summary = service.fetchAndStoreAll(nowMillis = 1000L)
 
@@ -152,7 +155,7 @@ class HeadlineFetchServiceTest {
         val client = createClient { category, _ ->
             if (category == "health") HttpStatusCode.TooManyRequests else HttpStatusCode.OK
         }
-        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService())
+        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService(), failingCuration)
 
         val summary = service.fetchAndStoreAll(nowMillis = 1000L)
 
@@ -166,7 +169,8 @@ class HeadlineFetchServiceTest {
         val service = HeadlineFetchService(
             NewsApiClient(createClient(failingCategory = "science"), "test-key"),
             HeadlineRepository(),
-            ArticleScraperService()
+            ArticleScraperService(),
+            failingCuration
         )
 
         service.fetchAndStoreAll(nowMillis = 1000L)
@@ -180,6 +184,7 @@ class HeadlineFetchServiceTest {
             NewsApiClient(createClient(failingCategory = "none"), "test-key"),
             HeadlineRepository(),
             ArticleScraperService(),
+            failingCuration,
             categoryDelayMillis = 3_000L
         )
 
@@ -195,7 +200,7 @@ class HeadlineFetchServiceTest {
             "43 Things Men Go Through That Women Never Realize" to "https://www.buzzfeed.com/a/43-things",
             "Indonesia ferry death toll hits 66" to "https://www.reuters.com/world/asia/ferry"
         )
-        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService())
+        val service = HeadlineFetchService(NewsApiClient(client, "test-key"), headlineRepository, ArticleScraperService(), failingCuration)
 
         service.fetchAndStoreAll(nowMillis = 1000L)
 
@@ -207,11 +212,11 @@ class HeadlineFetchServiceTest {
     fun fetchAndStoreAll_whenEveryHeadlineIsDropped_keepsThePreviousHeadlines() = runTest {
         val headlineRepository = HeadlineRepository()
         val realNews = createClientReturning("Indonesia ferry death toll hits 66" to "https://www.reuters.com/world/asia/ferry")
-        HeadlineFetchService(NewsApiClient(realNews, "test-key"), headlineRepository, ArticleScraperService())
+        HeadlineFetchService(NewsApiClient(realNews, "test-key"), headlineRepository, ArticleScraperService(), failingCuration)
             .fetchAndStoreAll(nowMillis = 1000L)
 
         val allJunk = createClientReturning("Horoscope for Wednesday" to "https://www.sfgate.com/horoscope/article/wednesday")
-        HeadlineFetchService(NewsApiClient(allJunk, "test-key"), headlineRepository, ArticleScraperService())
+        HeadlineFetchService(NewsApiClient(allJunk, "test-key"), headlineRepository, ArticleScraperService(), failingCuration)
             .fetchAndStoreAll(nowMillis = 2000L)
 
         val stored = headlineRepository.getStored(category = "world")

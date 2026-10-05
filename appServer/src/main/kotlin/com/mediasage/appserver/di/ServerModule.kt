@@ -10,6 +10,7 @@ import com.mediasage.appserver.repository.WorkRepository
 import com.mediasage.appserver.service.ArticleScraperService
 import com.mediasage.appserver.service.ClaudeApiClient
 import com.mediasage.appserver.service.DailyReflectionService
+import com.mediasage.appserver.service.HeadlineCurationService
 import com.mediasage.appserver.service.HeadlineFetchService
 import com.mediasage.appserver.service.NewsApiClient
 import io.ktor.client.*
@@ -43,7 +44,8 @@ fun serverModule(
     single(named("reflectionCallLimit")) { ClaudeCallLimitRepository(ReflectionCallLimitTable) }
     single<Int>(named("dailyReflectionCallLimit")) { dailyReflectionCallLimit }
     single { DailyReflectionService(get(), get()) }
-    single { HeadlineFetchService(get(), get(), get()) }
+    single { HeadlineCurationService(get()) }
+    single { HeadlineFetchService(get(), get(), get(), get()) }
 }
 
 private fun createHttpClient() = HttpClient(OkHttp) {
