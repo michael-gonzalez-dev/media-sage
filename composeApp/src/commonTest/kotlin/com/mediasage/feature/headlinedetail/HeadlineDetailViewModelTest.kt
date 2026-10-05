@@ -192,10 +192,8 @@ class HeadlineDetailViewModelTest {
         vm.onIntent(HeadlineDetailContract.Intent.RetryMatch)
 
         assertEquals(
-            listOf(
-                AnalyticsEvents.CONTENT_RETRY to mapOf(AnalyticsEvents.Params.SURFACE to AnalyticsEvents.Values.SURFACE_HEADLINE_MATCH),
-            ),
-            analyticsService.loggedEvents,
+            listOf(mapOf(AnalyticsEvents.Params.SURFACE to AnalyticsEvents.Values.SURFACE_HEADLINE_MATCH)),
+            analyticsService.paramsOf(AnalyticsEvents.CONTENT_RETRY),
         )
     }
 
@@ -213,13 +211,75 @@ class HeadlineDetailViewModelTest {
 
         assertEquals(
             listOf(
-                AnalyticsEvents.BOOKMARK_TOGGLED to mapOf(
+                expectedHeadlineParams + mapOf(
                     AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ADD,
                     AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HEADLINE_DETAIL,
                 ),
             ),
-            analyticsService.loggedEvents,
+            analyticsService.paramsOf(AnalyticsEvents.BOOKMARK_TOGGLED),
         )
+    }
+
+    @Test
+    fun toggleBookmarkLogsRemoveActionWhenAlreadyBookmarked() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        val vm = buildViewModel(
+            headline = buildHeadline(),
+            encouragement = buildEncouragement(figureName = "Augustine"),
+            analyticsService = analyticsService,
+            isBookmarked = true,
+        )
+
+        vm.onIntent(HeadlineDetailContract.Intent.ToggleBookmark)
+
+        assertEquals(
+            listOf(
+                expectedHeadlineParams + mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REMOVE,
+                    AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HEADLINE_DETAIL,
+                ),
+            ),
+            analyticsService.paramsOf(AnalyticsEvents.BOOKMARK_TOGGLED),
+        )
+    }
+
+    @Test
+    fun openingAHeadlineLogsHeadlineOpenedWithItsDetails() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        buildViewModel(headline = buildHeadline(), analyticsService = analyticsService)
+
+        assertEquals(listOf(expectedHeadlineParams), analyticsService.paramsOf(AnalyticsEvents.HEADLINE_OPENED))
+    }
+
+    @Test
+    fun loadedEncouragementLogsEncouragementLoadedWithHeadlineDetails() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        buildViewModel(headline = buildHeadline(), analyticsService = analyticsService)
+
+        assertEquals(listOf(expectedHeadlineParams), analyticsService.paramsOf(AnalyticsEvents.ENCOURAGEMENT_LOADED))
+        assertEquals(emptyList(), analyticsService.paramsOf(AnalyticsEvents.ENCOURAGEMENT_FAILED))
+    }
+
+    @Test
+    fun failedEncouragementLogsEncouragementFailedWithHeadlineDetails() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        buildViewModel(headline = buildHeadline(), encouragement = null, analyticsService = analyticsService)
+
+        assertEquals(listOf(expectedHeadlineParams), analyticsService.paramsOf(AnalyticsEvents.ENCOURAGEMENT_FAILED))
+        assertEquals(emptyList(), analyticsService.paramsOf(AnalyticsEvents.ENCOURAGEMENT_LOADED))
+    }
+
+    @Test
+    fun headlineEventsCarryNoTitleUrlOrArticleText() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForHeadlineDetailScreen()
+        val headline = buildHeadline()
+        val vm = buildViewModel(headline = headline, analyticsService = analyticsService)
+        vm.onIntent(HeadlineDetailContract.Intent.ToggleBookmark)
+
+        val loggedValues = analyticsService.loggedEvents.flatMap { (_, params) -> params.values }
+        listOf(headline.title, headline.url, headline.snippet).forEach { forbidden ->
+            assertEquals(false, forbidden in loggedValues, "logged $forbidden")
+        }
     }
 
     private fun buildViewModel(
@@ -229,10 +289,11 @@ class HeadlineDetailViewModelTest {
         quoteRepository: QuoteRepository = FakeQuoteRepository(),
         articleUrl: String = "https://example.com/article",
         analyticsService: AnalyticsService = FakeAnalyticsServiceForHeadlineDetailScreen(),
+        isBookmarked: Boolean = false,
     ) = HeadlineDetailViewModel(
         articleUrl = articleUrl,
         headlineRepository = FakeHeadlineRepository(headline),
-        encouragementRepository = FakeEncouragementRepository(encouragement),
+        encouragementRepository = FakeEncouragementRepository(encouragement, isBookmarked),
         figureRepository = FakeFigureRepository(figure),
         quoteRepository = quoteRepository,
         analyticsService = analyticsService,
@@ -245,6 +306,8 @@ private class FakeAnalyticsServiceForHeadlineDetailScreen : AnalyticsService {
         loggedEvents.add(name to params)
     }
     override fun logScreenView(screenName: String) = Unit
+
+    fun paramsOf(name: String): List<Map<String, String>> = loggedEvents.filter { it.first == name }.map { it.second }
 }
 
 private fun buildHeadline(url: String = "https://example.com/article") = Headline(
@@ -255,6 +318,15 @@ private fun buildHeadline(url: String = "https://example.com/article") = Headlin
     imageUrl = null,
     publishedAt = 0L,
     fetchedAt = 0L,
+    snippet = "The opening paragraph of the article.",
+    category = "world",
+    uuid = "3f2c1a",
+)
+
+private val expectedHeadlineParams = mapOf(
+    AnalyticsEvents.Params.HEADLINE_ID to "3f2c1a",
+    AnalyticsEvents.Params.HEADLINE_SOURCE to "Reuters",
+    AnalyticsEvents.Params.HEADLINE_TAB to "world",
 )
 
 private fun buildFigure(id: Long = 1L, name: String = "Augustine", bio: String = "") = Figure(
@@ -324,7 +396,10 @@ private class FakeHeadlineRepository(private val headline: Headline?) : Headline
     }
 }
 
-private class FakeEncouragementRepository(private val encouragement: Encouragement?) : EncouragementRepository {
+private class FakeEncouragementRepository(
+    private val encouragement: Encouragement?,
+    private val isBookmarked: Boolean = false,
+) : EncouragementRepository {
     override suspend fun getEncouragement(
         headlineTitle: String,
         headlineSource: String,
@@ -339,7 +414,7 @@ private class FakeEncouragementRepository(private val encouragement: Encourageme
     override fun observeBookmarked(): Flow<List<Encouragement>> = MutableStateFlow(emptyList())
     override fun observeCountByFigureName(): Flow<Map<String, Int>> = MutableStateFlow(emptyMap())
     override fun observeByFigureId(figureId: Long): Flow<List<Encouragement>> = MutableStateFlow(emptyList())
-    override fun observeIsBookmarked(articleUrl: String): Flow<Boolean> = MutableStateFlow(false)
+    override fun observeIsBookmarked(articleUrl: String): Flow<Boolean> = MutableStateFlow(isBookmarked)
     override fun observeByEpochDay(epochDay: Long): Flow<List<Encouragement>> = MutableStateFlow(emptyList())
     override fun observeActiveEpochDays(): Flow<Set<Long>> = MutableStateFlow(emptySet())
     override suspend fun toggleBookmark(articleUrl: String) = Unit

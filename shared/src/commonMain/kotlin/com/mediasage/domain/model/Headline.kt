@@ -10,5 +10,6 @@ data class Headline(
     val fetchedAt: Long,
     val snippet: String? = null,
     val category: String = "",
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+    val uuid: String = ""
 )

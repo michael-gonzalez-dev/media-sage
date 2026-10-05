@@ -90,7 +90,8 @@ fun NewsArticleDto.toEntity(fetchedAt: Long = 0L) = HeadlineEntity(
     publishedAt = runCatching { Instant.parse(publishedAt).toEpochMilliseconds() }.getOrDefault(fetchedAt),
     fetchedAt = fetchedAt,
     snippet = snippet.ifBlank { null },
-    category = categories.firstOrNull().orEmpty()
+    category = categories.firstOrNull().orEmpty(),
+    uuid = uuid
 )
 
 // Headline — isRead lives in a separate per-user read_headlines table (MS-734), not on the
@@ -105,7 +106,8 @@ fun HeadlineEntity.toDomain(isRead: Boolean = false) = Headline(
     fetchedAt = fetchedAt,
     snippet = snippet,
     category = category,
-    isRead = isRead
+    isRead = isRead,
+    uuid = uuid
 )
 
 fun Headline.toEntity() = HeadlineEntity(
@@ -117,7 +119,8 @@ fun Headline.toEntity() = HeadlineEntity(
     publishedAt = publishedAt,
     fetchedAt = fetchedAt,
     snippet = snippet,
-    category = category
+    category = category,
+    uuid = uuid
 )
 
 // Encourage DTO → Domain

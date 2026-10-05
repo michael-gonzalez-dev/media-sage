@@ -15,6 +15,9 @@ object AnalyticsEvents {
     const val CONTENT_RETRY = "content_retry"
     const val APPEARANCE_CHANGED = "appearance_changed"
     const val SIGN_OUT = "sign_out"
+    const val HEADLINE_OPENED = "headline_opened"
+    const val ENCOURAGEMENT_LOADED = "encouragement_loaded"
+    const val ENCOURAGEMENT_FAILED = "encouragement_failed"
 
     object Params {
         const val FIGURE_ID = "figure_id"
@@ -23,6 +26,9 @@ object AnalyticsEvents {
         const val SCREEN = "screen"
         const val SURFACE = "surface"
         const val SETTING = "setting"
+        const val HEADLINE_ID = "headline_id"
+        const val HEADLINE_SOURCE = "headline_source"
+        const val HEADLINE_TAB = "headline_tab"
     }
 
     object Values {
