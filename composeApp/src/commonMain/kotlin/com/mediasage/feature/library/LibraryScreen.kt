@@ -33,10 +33,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import com.mediasage.theme.AppTheme
 import com.mediasage.theme.MediaSageTheme
 import com.mediasage.ui.EraChipRow
 import com.mediasage.ui.FigureAvatar
@@ -58,8 +60,9 @@ import mediasage.composeapp.generated.resources.title_library
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
-private val ShelfBookWidth = 104.dp
-private val SectionAvatarSize = 36.dp
+private val ShelfBookWidth = 112.dp
+private val SectionAvatarSize = 28.dp
+private val ListThumbnailWidth = 22.dp
 
 @Composable
 fun LibraryScreen(
@@ -174,8 +177,9 @@ private fun LibraryShelves(sections: List<LibrarySectionItem>, listState: LazyLi
             Column {
                 SectionHeader(section, Modifier.padding(horizontal = 16.dp))
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    // Room above and below so the covers' shadows aren't clipped by the row.
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     items(section.works, key = { it.id }) { work -> ShelfBook(work, onClick = { onWorkClick(work) }) }
                 }
@@ -184,18 +188,12 @@ private fun LibraryShelves(sections: List<LibrarySectionItem>, listState: LazyLi
     }
 }
 
+/** The cover carries the title, so beneath it only the year and who recorded the words. */
 @Composable
 private fun ShelfBook(work: LibraryWorkItem, onClick: () -> Unit) {
     Column(modifier = Modifier.width(ShelfBookWidth).clickable(onClick = onClick)) {
         BookCover(work)
-        Text(
-            text = work.title,
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 6.dp),
-        )
-        WorkDetails(work)
+        WorkDetails(work, Modifier.padding(top = 8.dp))
     }
 }
 
@@ -215,17 +213,23 @@ private fun LibraryList(sections: List<LibrarySectionItem>, listState: LazyListS
 
 @Composable
 private fun ListBook(work: LibraryWorkItem, onClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp)) {
-        Text(text = work.title, style = MaterialTheme.typography.bodyLarge)
-        WorkDetails(work)
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BookThumbnail(work, Modifier.width(ListThumbnailWidth))
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(text = work.title, style = MaterialTheme.typography.bodyLarge)
+            WorkDetails(work)
+        }
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
-/** The reporter's portrait, name, and how many works their shelf holds, over a rule. */
+/** The reporter's portrait, bold name, and how many works their shelf holds in italic, over an accent hairline. */
 @Composable
 private fun SectionHeader(section: LibrarySectionItem, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(top = 20.dp, bottom = 6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FigureAvatar(
                 name = section.reporterName,
@@ -237,31 +241,45 @@ private fun SectionHeader(section: LibrarySectionItem, modifier: Modifier = Modi
             Row(modifier = Modifier.weight(1f)) {
                 Text(
                     text = section.reporterName,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = MaterialTheme.typography.titleLarge.fontFamily,
+                        fontWeight = FontWeight.Bold,
+                    ),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false).alignByBaseline(),
                 )
                 Text(
-                    text = " · " + pluralStringResource(Res.plurals.library_work_count, section.works.size, section.works.size),
+                    text = "  " + pluralStringResource(Res.plurals.library_work_count, section.works.size, section.works.size),
                     style = MaterialTheme.typography.bodySmall,
+                    fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.alignByBaseline(),
                 )
             }
         }
-        HorizontalDivider(modifier = Modifier.padding(top = 4.dp), color = MaterialTheme.colorScheme.primary)
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 8.dp),
+            thickness = 0.75.dp,
+            color = MediaSageTheme.colors.accent.copy(alpha = 0.7f),
+        )
     }
 }
 
 /** "1869 · Words recorded by Sarah Bradford", or whichever half is known; nothing when neither is. */
 @Composable
-internal fun WorkDetails(work: LibraryWorkItem) {
+internal fun WorkDetails(work: LibraryWorkItem, modifier: Modifier = Modifier) {
     val recorded = work.recordedBy?.let { stringResource(Res.string.library_recorded_by, it) }
     val details = listOfNotNull(work.year?.toString(), recorded).joinToString(" · ")
     if (details.isNotEmpty()) {
-        Text(text = details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = details,
+            style = MaterialTheme.typography.bodySmall,
+            fontStyle = FontStyle.Italic,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier,
+        )
     }
 }
 
@@ -273,6 +291,24 @@ private fun LibraryScreenPreview(
     @PreviewParameter(LibraryStateProvider::class) state: LibraryContract.UiState
 ) {
     MediaSageTheme { LibraryScreen(state = state, onIntent = {}) }
+}
+
+@Preview(name = "Shelf — Classic light")
+@Composable
+private fun LibraryShelfClassicLightPreview() {
+    MediaSageTheme(theme = AppTheme.CLASSIC, darkTheme = false) { LibraryScreen(state = LibraryShelfState, onIntent = {}) }
+}
+
+@Preview(name = "Shelf — Warm dark")
+@Composable
+private fun LibraryShelfWarmDarkPreview() {
+    MediaSageTheme(theme = AppTheme.WARM, darkTheme = true) { LibraryScreen(state = LibraryShelfState, onIntent = {}) }
+}
+
+@Preview(name = "Shelf — Modern dark")
+@Composable
+private fun LibraryShelfModernDarkPreview() {
+    MediaSageTheme(theme = AppTheme.MODERN, darkTheme = true) { LibraryScreen(state = LibraryShelfState, onIntent = {}) }
 }
 
 // endregion
