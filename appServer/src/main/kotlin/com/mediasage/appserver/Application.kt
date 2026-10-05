@@ -15,6 +15,9 @@ import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
 
 private const val DEFAULT_DAILY_CLAUDE_CALL_LIMIT = 300
+private const val DEFAULT_DAILY_REFLECTION_LIMIT = 2000
+private const val DEFAULT_ENCOURAGE_PER_CALLER_PER_HOUR = 60
+private const val DEFAULT_REFLECTION_PER_CALLER_PER_HOUR = 20
 
 fun main(args: Array<String>) {
     EngineMain.main(args)
@@ -24,24 +27,32 @@ fun main(args: Array<String>) {
 fun Application.module() {
     val claudeApiKey = environment.config.propertyOrNull("app.claude.apiKey")?.getString() ?: ""
     val newsApiKey = environment.config.propertyOrNull("app.news.apiKey")?.getString() ?: ""
-    val scriptureApiKey = environment.config.propertyOrNull("app.scripture.apiKey")?.getString() ?: ""
     val baseUrl = environment.config.propertyOrNull("app.baseUrl")?.getString() ?: "http://localhost:8080"
-    val dailyClaudeCallLimit = environment.config.propertyOrNull("app.claude.dailyCallLimit")
-        ?.getString()?.toIntOrNull() ?: DEFAULT_DAILY_CLAUDE_CALL_LIMIT
+    val dailyClaudeCallLimit = intConfig("app.claude.dailyCallLimit", DEFAULT_DAILY_CLAUDE_CALL_LIMIT)
+    val dailyReflectionLimit = intConfig("app.claude.dailyReflectionLimit", DEFAULT_DAILY_REFLECTION_LIMIT)
 
     install(Koin) {
-        modules(serverModule(claudeApiKey, newsApiKey, scriptureApiKey, baseUrl, dailyClaudeCallLimit))
+        modules(serverModule(claudeApiKey, newsApiKey, baseUrl, dailyClaudeCallLimit, dailyReflectionLimit))
     }
 
     configureContentNegotiation()
     configureCORS()
     configureCallLogging()
     configureStatusPages()
+    configureRateLimiting(
+        CallerRateLimits(
+            encouragePerHour = intConfig("app.claude.encouragePerCallerPerHour", DEFAULT_ENCOURAGE_PER_CALLER_PER_HOUR),
+            dailyReflectionPerHour = intConfig("app.claude.reflectionPerCallerPerHour", DEFAULT_REFLECTION_PER_CALLER_PER_HOUR)
+        )
+    )
     configureRouting()
 
     initDatabase()
     startHeadlineFetchScheduler()
 }
+
+private fun Application.intConfig(path: String, default: Int): Int =
+    environment.config.propertyOrNull(path)?.getString()?.toIntOrNull() ?: default
 
 private fun Application.startHeadlineFetchScheduler() {
     val headlineFetchService by inject<HeadlineFetchService>()
@@ -65,7 +76,6 @@ fun Application.configureRouting() {
         newsRoutes()
         analysisRoutes()
         dailyReflectionRoutes()
-        scriptureRoutes()
         figureRoutes()
         workRoutes()
         quoteRoutes()

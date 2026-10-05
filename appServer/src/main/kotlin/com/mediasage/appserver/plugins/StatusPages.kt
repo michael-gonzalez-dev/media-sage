@@ -3,7 +3,6 @@ package com.mediasage.appserver.plugins
 import com.mediasage.appserver.service.ClaudeApiException
 import com.mediasage.appserver.service.DailyLimitExceededException
 import com.mediasage.appserver.service.NewsApiException
-import com.mediasage.appserver.service.ScriptureApiException
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
@@ -16,9 +15,6 @@ fun Application.configureStatusPages() {
             call.respond(HttpStatusCode.fromValue(cause.statusCode), ErrorResponse(cause.statusCode, cause.message))
         }
         exception<NewsApiException> { call, cause ->
-            call.respond(HttpStatusCode.fromValue(cause.statusCode), ErrorResponse(cause.statusCode, cause.message))
-        }
-        exception<ScriptureApiException> { call, cause ->
             call.respond(HttpStatusCode.fromValue(cause.statusCode), ErrorResponse(cause.statusCode, cause.message))
         }
         exception<DailyLimitExceededException> { call, cause ->

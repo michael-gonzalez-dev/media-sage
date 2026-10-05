@@ -46,17 +46,6 @@ class MediaSageApiImpl(
         }.body()
     }
 
-    override suspend fun searchScripture(query: String, limit: Int): List<ScriptureVerseDto> {
-        return httpClient.get("$baseUrl/api/scripture/search") {
-            parameter("query", query)
-            parameter("limit", limit)
-        }.body()
-    }
-
-    override suspend fun getPassage(passageId: String): ScripturePassageDto {
-        return httpClient.get("$baseUrl/api/scripture/passage/$passageId").body()
-    }
-
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto {
         return httpClient.post("$baseUrl/api/analysis/daily-reflection") {
             contentType(ContentType.Application.Json)

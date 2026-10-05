@@ -166,21 +166,3 @@ data class AssignmentDefaultDto(
     val dayOrdinal: Int,
     val figureName: String,
 )
-
-// ---- Scripture endpoint DTOs ----
-
-@Serializable
-data class ScriptureVerseDto(
-    val id: String,
-    val bookId: String = "",
-    val chapterId: String = "",
-    val reference: String = "",
-    val text: String = ""
-)
-
-@Serializable
-data class ScripturePassageDto(
-    val id: String,
-    val reference: String = "",
-    val content: String = ""
-)

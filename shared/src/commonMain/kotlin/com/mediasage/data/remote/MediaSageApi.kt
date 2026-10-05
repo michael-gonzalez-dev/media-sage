@@ -9,8 +9,6 @@ interface MediaSageApi {
     suspend fun encourage(request: EncourageRequestDto): EncourageResultDto
     @Deprecated("Use encourage instead — TODO MS-46")
     suspend fun matchQuote(request: MatchRequestDto): MatchResultDto
-    suspend fun searchScripture(query: String, limit: Int = 10): List<ScriptureVerseDto>
-    suspend fun getPassage(passageId: String): ScripturePassageDto
     suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto
     suspend fun getAssignmentDefaults(): List<AssignmentDefaultDto>
 }

@@ -19,6 +19,7 @@ object ServerDatabase {
                 HeadlineTable,
                 EncouragementCacheTable,
                 ClaudeCallLimitTable,
+                ReflectionCallLimitTable,
                 WorkTable
             )
         }

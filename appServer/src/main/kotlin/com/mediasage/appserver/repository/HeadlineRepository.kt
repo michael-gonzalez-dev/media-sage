@@ -46,6 +46,18 @@ class HeadlineRepository {
             }
         }
 
+    /** The stored headline with this URL, or null if the server's current feed doesn't hold it. */
+    suspend fun findByUrl(url: String): NewsArticle? =
+        withContext(Dispatchers.IO) {
+            transaction {
+                HeadlineTable.selectAll()
+                    .where { HeadlineTable.url eq url }
+                    .limit(1)
+                    .firstOrNull()
+                    ?.toNewsArticle()
+            }
+        }
+
     private fun articlesForCategory(category: String, limit: Int): List<NewsArticle> =
         HeadlineTable.selectAll()
             .where { HeadlineTable.category eq category }

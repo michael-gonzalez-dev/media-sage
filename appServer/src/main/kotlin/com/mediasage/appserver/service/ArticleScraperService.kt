@@ -5,18 +5,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
 import org.jsoup.safety.Safelist
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
 
+/**
+ * Downloads and caches article text for headlines the server fetched from GNews.
+ *
+ * Only [preScrape] ever makes a network request, and it is called only with URLs from the server's own GNews
+ * fetch. [getArticleText] reads the cache and never downloads, so a URL sent by a caller can't make the server
+ * request an arbitrary address.
+ */
 class ArticleScraperService {
 
     companion object {
         private const val TIMEOUT_MS = 15_000
         private const val MAX_TEXT_LENGTH = 5_000
+
+        // Two fetch runs' worth of headlines (7 categories x 25) with headroom; the oldest entries are evicted first.
+        private const val MAX_CACHED_ARTICLES = 500
         private const val USER_AGENT =
             "Mozilla/5.0 (compatible; MediaSageBot/1.0; +https://github.com/michael-gonzalez-dev/media-sage)"
     }
 
-    private val cache = ConcurrentHashMap<String, String>()
+    private val cache: MutableMap<String, String> = Collections.synchronizedMap(
+        object : LinkedHashMap<String, String>(16, 0.75f, false) {
+            override fun removeEldestEntry(eldest: Map.Entry<String, String>) = size > MAX_CACHED_ARTICLES
+        }
+    )
     private val scope = CoroutineScope(Dispatchers.IO)
 
     /**
@@ -31,13 +45,8 @@ class ArticleScraperService {
         }
     }
 
-    /**
-     * Gets cached article text, or scrapes on demand if not cached.
-     * Returns null if scraping fails.
-     */
-    fun getArticleText(url: String): String? {
-        return cache[url] ?: scrape(url)
-    }
+    /** Returns the pre-scraped text for [url], or null if it was never pre-scraped or scraping failed. */
+    fun getArticleText(url: String): String? = cache[url]
 
     private fun scrape(url: String): String? {
         return try {

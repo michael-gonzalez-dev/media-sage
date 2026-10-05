@@ -3,12 +3,20 @@ package com.mediasage.appserver
 import com.mediasage.appserver.db.ClaudeCallLimitTable
 import com.mediasage.appserver.db.EncouragementCacheTable
 import com.mediasage.appserver.db.FigureTable
+import com.mediasage.appserver.db.HeadlineTable
 import com.mediasage.appserver.db.QuoteTable
 import com.mediasage.appserver.db.ServerDatabase
 import com.mediasage.appserver.repository.ClaudeCallLimitRepository
 import com.mediasage.appserver.repository.EncouragementCacheRepository
+import com.mediasage.appserver.plugins.CallerRateLimits
 import com.mediasage.appserver.plugins.ErrorResponse
+import com.mediasage.appserver.plugins.configureRateLimiting
 import com.mediasage.appserver.repository.FigureRepository
+import com.mediasage.appserver.repository.HeadlineRepository
+import com.mediasage.appserver.routes.MAX_ARTICLE_SNIPPET_LENGTH
+import com.mediasage.appserver.routes.MAX_ARTICLE_URL_LENGTH
+import com.mediasage.appserver.routes.MAX_HEADLINE_TITLE_LENGTH
+import com.mediasage.appserver.routes.MAX_LOCALE_LENGTH
 import com.mediasage.appserver.routes.analysisRoutes
 import com.mediasage.appserver.service.ArticleScraperService
 import com.mediasage.appserver.service.ClaudeApiClient
@@ -18,6 +26,7 @@ import com.mediasage.appserver.service.EncourageTone
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.http.content.TextContent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -44,6 +53,11 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicInteger
 
 private fun claudeResponseBody(quoteId: Long) = """
 {
@@ -70,9 +84,10 @@ private fun sampleEncourageResult(figureName: String) = EncourageResult(
     tone = EncourageTone.COMFORT
 )
 
-private fun mockClaudeApiClient(quoteId: Long, onCall: () -> Unit): ClaudeApiClient {
-    val httpClient = HttpClient(MockEngine { _ ->
+private fun mockClaudeApiClient(quoteId: Long, onCall: () -> Unit, onPrompt: (String) -> Unit): ClaudeApiClient {
+    val httpClient = HttpClient(MockEngine { request ->
         onCall()
+        onPrompt((request.body as TextContent).text)
         respond(
             content = claudeResponseBody(quoteId),
             status = HttpStatusCode.OK,
@@ -89,9 +104,12 @@ private fun mockClaudeApiClient(quoteId: Long, onCall: () -> Unit): ClaudeApiCli
 private fun ApplicationTestBuilder.installRoutes(
     quoteId: Long,
     claudeCallCount: () -> Unit,
-    dailyClaudeCallLimit: Int = 300
+    dailyClaudeCallLimit: Int = 300,
+    encouragePerHour: Int = 1_000,
+    onPrompt: (String) -> Unit = {}
 ) {
     install(ContentNegotiation) { json() }
+    application { configureRateLimiting(CallerRateLimits(encouragePerHour = encouragePerHour, dailyReflectionPerHour = 1_000)) }
     install(StatusPages) {
         exception<DailyLimitExceededException> { call, cause ->
             call.respond(HttpStatusCode.TooManyRequests, ErrorResponse(429, cause.message))
@@ -100,7 +118,8 @@ private fun ApplicationTestBuilder.installRoutes(
     install(Koin) {
         modules(
             module {
-                single { mockClaudeApiClient(quoteId, claudeCallCount) }
+                single { mockClaudeApiClient(quoteId, claudeCallCount, onPrompt) }
+                single { HeadlineRepository() }
                 single { ArticleScraperService() }
                 single { FigureRepository("http://localhost:8080") }
                 single { EncouragementCacheRepository() }
@@ -120,8 +139,8 @@ class EncourageRoutesTest {
     fun setup() {
         ServerDatabase.init(":memory:")
         transaction {
-            SchemaUtils.drop(FigureTable, QuoteTable, EncouragementCacheTable, ClaudeCallLimitTable)
-            SchemaUtils.create(FigureTable, QuoteTable, EncouragementCacheTable, ClaudeCallLimitTable)
+            SchemaUtils.drop(FigureTable, QuoteTable, EncouragementCacheTable, ClaudeCallLimitTable, HeadlineTable)
+            SchemaUtils.create(FigureTable, QuoteTable, EncouragementCacheTable, ClaudeCallLimitTable, HeadlineTable)
             val figureId = FigureTable.insert {
                 it[name] = "Test Figure"
                 it[category] = "theologian"
@@ -160,7 +179,7 @@ class EncourageRoutesTest {
     @AfterTest
     fun teardown() {
         transaction {
-            SchemaUtils.drop(FigureTable, QuoteTable, EncouragementCacheTable, ClaudeCallLimitTable)
+            SchemaUtils.drop(FigureTable, QuoteTable, EncouragementCacheTable, ClaudeCallLimitTable, HeadlineTable)
         }
     }
 
@@ -193,8 +212,24 @@ class EncourageRoutesTest {
         assertEquals(1, callCount)
     }
 
+    private fun storeHeadline(url: String, title: String) = transaction {
+        HeadlineTable.insert {
+            it[uuid] = url
+            it[category] = "general"
+            it[HeadlineTable.title] = title
+            it[HeadlineTable.url] = url
+            it[fetchedAt] = 1000L
+        }
+    }
+
+    private suspend fun ApplicationTestBuilder.encourage(body: String) = client.post("/api/analysis/encourage") {
+        contentType(ContentType.Application.Json)
+        setBody(body)
+    }
+
     @Test
     fun repeatedArticleUrlDoesNotTriggerSecondClaudeCall() = testApplication {
+        storeHeadline("https://example.com/b", "Markets rally")
         var callCount = 0
         installRoutes(quoteId, claudeCallCount = { callCount++ })
 
@@ -225,6 +260,85 @@ class EncourageRoutesTest {
             setBody("""{"headlineTitle":"Headline two","articleUrl":"https://example.com/d"}""")
         }
 
+        assertEquals(HttpStatusCode.TooManyRequests, second.status)
+        assertEquals(1, callCount)
+    }
+
+    @Test
+    fun urlNotInTheFeedIsEncouragedButNotCachedForOthers() = testApplication {
+        installRoutes(quoteId, claudeCallCount = {})
+        val url = "https://example.com/rotated-out"
+
+        val response = encourage("""{"headlineTitle":"Markets rally","articleUrl":"$url"}""")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(null, EncouragementCacheRepository().getByArticleUrlAndLocale(url, "en"))
+    }
+
+    // A caller sending a real feed URL with a made-up title must not decide what that article's
+    // shared, cached encouragement says: Claude gets the server's own copy of the headline.
+    @Test
+    fun feedHeadlineIsEncouragedFromTheServersOwnTitleNotTheCallers() = testApplication {
+        storeHeadline("https://example.com/real", "Rescuers reach flood victims")
+        val prompts = mutableListOf<String>()
+        installRoutes(quoteId, claudeCallCount = {}, onPrompt = { prompts += it })
+
+        encourage("""{"headlineTitle":"Made-up title","articleUrl":"https://example.com/real"}""")
+
+        assertTrue(prompts.single().contains("Rescuers reach flood victims"))
+        assertFalse(prompts.single().contains("Made-up title"))
+    }
+
+    @Test
+    fun callerSuppliedUrlIsNeverFetched() = testApplication {
+        val hits = AtomicInteger()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+            createContext("/") { exchange ->
+                hits.incrementAndGet()
+                exchange.sendResponseHeaders(200, -1)
+                exchange.close()
+            }
+            start()
+        }
+        try {
+            installRoutes(quoteId, claudeCallCount = {})
+
+            val url = "http://127.0.0.1:${server.address.port}/internal"
+            val response = encourage("""{"headlineTitle":"Markets rally","articleUrl":"$url"}""")
+
+            assertEquals(HttpStatusCode.OK, response.status)
+            assertEquals(0, hits.get())
+        } finally {
+            server.stop(0)
+        }
+    }
+
+    @Test
+    fun oversizedFieldsAreRejectedBeforeAnyClaudeCall() = testApplication {
+        var callCount = 0
+        installRoutes(quoteId, claudeCallCount = { callCount++ })
+        val tooLong = "x".repeat(MAX_ARTICLE_SNIPPET_LENGTH + 1)
+
+        listOf(
+            """{"headlineTitle":"${"x".repeat(MAX_HEADLINE_TITLE_LENGTH + 1)}"}""",
+            """{"headlineTitle":"Markets rally","articleSnippet":"$tooLong"}""",
+            """{"headlineTitle":"Markets rally","articleUrl":"https://example.com/${"x".repeat(MAX_ARTICLE_URL_LENGTH)}"}""",
+            """{"headlineTitle":"Markets rally","locale":"${"x".repeat(MAX_LOCALE_LENGTH + 1)}"}"""
+        ).forEach { body ->
+            assertEquals(HttpStatusCode.BadRequest, encourage(body).status)
+        }
+        assertEquals(0, callCount)
+    }
+
+    @Test
+    fun oneCallerIsRateLimitedBeforeTheDailyBudgetRunsOut() = testApplication {
+        var callCount = 0
+        installRoutes(quoteId, claudeCallCount = { callCount++ }, encouragePerHour = 1)
+
+        val first = encourage("""{"headlineTitle":"Headline one","articleUrl":"https://example.com/e"}""")
+        val second = encourage("""{"headlineTitle":"Headline two","articleUrl":"https://example.com/f"}""")
+
+        assertEquals(HttpStatusCode.OK, first.status)
         assertEquals(HttpStatusCode.TooManyRequests, second.status)
         assertEquals(1, callCount)
     }

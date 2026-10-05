@@ -5,19 +5,27 @@
 ```
 appServer/src/main/kotlin/com/mediasage/appserver/
 ├── Application.kt       — Entry point, Koin setup
-├── plugins/             — ContentNegotiation, CORS, CallLogging, StatusPages
-├── routes/              — Health, News, Encourage, Scripture, Figures, Works, Quotes, DailyReflection
-├── service/             — ClaudeApiClient, NewsApiClient, ScriptureApiClient
+├── plugins/             — ContentNegotiation, CORS, CallLogging, StatusPages, RateLimiting
+├── routes/              — Health, News, Encourage, Figures, Works, Quotes, DailyReflection
+├── service/             — ClaudeApiClient, NewsApiClient, ArticleScraperService
 └── di/                  — ServerModule
 ```
 
 ## Conventions
 
 - JVM-only Ktor server (Netty, port 8080). Never import Ktor client here — that lives in `:shared`.
-- `serverModule(claudeApiKey, newsApiKey, scriptureApiKey, baseUrl, dailyClaudeCallLimit)` wires HttpClient and all API services via Koin.
+- `serverModule(claudeApiKey, newsApiKey, baseUrl, dailyClaudeCallLimit, dailyReflectionCallLimit)` wires HttpClient and all API services via Koin.
 - API keys read from `application.conf` via environment variables — never hardcoded.
 - Routes are thin: parse the request, call a service, return the response. No business logic in route handlers.
 - StatusPages plugin handles all error mapping — do not catch and re-throw in routes.
+- **Every route is public and unauthenticated — treat every caller as untrusted, not as the app.**
+  - No endpoint makes a paid third-party call (Claude, GNews, …) or fetches a URL from caller input unless it is
+    bounded: a per-caller rate limit (`plugins/RateLimiting.kt`) plus an app-wide daily budget (`ClaudeCallLimitRepository`).
+  - Never download a URL a caller sends. The server only fetches URLs it got from its own GNews fetch
+    (`ArticleScraperService.preScrape`); look caller URLs up in the stored feed instead.
+  - Every caller-supplied field (strings, lists, numbers such as `limit`) has a maximum, checked before any paid call.
+    Set it well above what the app sends, so the real app is never rejected.
+  - Never write caller-supplied text into a cache shared by all users; cache what was built from the server's own data.
 - Deployed to Railway (port 8080). Requires manual restart — no hot-reload. Verify the server is running before debugging route behavior.
 
 ## Briefing eval (`src/eval/`)

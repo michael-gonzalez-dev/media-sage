@@ -20,8 +20,6 @@ import com.mediasage.data.remote.MatchResultDto
 import com.mediasage.data.remote.MediaSageApi
 import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.data.remote.QuotesResponse
-import com.mediasage.data.remote.ScripturePassageDto
-import com.mediasage.data.remote.ScriptureVerseDto
 import com.mediasage.data.remote.WorksResponse
 import com.mediasage.domain.model.UserSession
 import com.mediasage.domain.repository.AuthRepository
@@ -744,9 +742,6 @@ private class FakeMediaSageApi(private val result: EncourageResultDto) : MediaSa
     override suspend fun matchQuote(request: MatchRequestDto): MatchResultDto =
         MatchResultDto(selectedQuoteId = 0, confidence = 0f, explanation = "", connectionThemes = emptyList())
 
-    override suspend fun searchScripture(query: String, limit: Int): List<ScriptureVerseDto> = emptyList()
-    override suspend fun getPassage(passageId: String): ScripturePassageDto =
-        ScripturePassageDto(id = "", reference = "", content = "")
     override suspend fun getDailyReflection(request: DailyReflectionRequestDto): DailyReflectionResponseDto =
         DailyReflectionResponseDto(scriptureReference = "", scriptureText = "", insight = "", implication = "", inspiration = "", sources = emptyList(), tone = "morning")
 
