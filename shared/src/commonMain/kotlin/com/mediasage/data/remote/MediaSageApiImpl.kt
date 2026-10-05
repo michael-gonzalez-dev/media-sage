@@ -31,13 +31,6 @@ class MediaSageApiImpl(
         }.body()
     }
 
-    override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> {
-        return httpClient.get("$baseUrl/api/news/search") {
-            parameter("query", query)
-            parameter("limit", limit)
-        }.body()
-    }
-
     override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto {
         return httpClient.post("$baseUrl/api/analysis/encourage") {
             contentType(ContentType.Application.Json)

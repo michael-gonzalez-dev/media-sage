@@ -3,18 +3,17 @@ package com.mediasage.appserver
 import com.mediasage.appserver.db.HeadlineTable
 import com.mediasage.appserver.db.ServerDatabase
 import com.mediasage.appserver.repository.HeadlineRepository
+import com.mediasage.appserver.routes.DEFAULT_HEADLINES_LIMIT
+import com.mediasage.appserver.routes.MAX_HEADLINES_LIMIT
 import com.mediasage.appserver.routes.newsRoutes
-import com.mediasage.appserver.service.ArticleScraperService
-import com.mediasage.appserver.service.NewsApiClient
 import com.mediasage.appserver.service.NewsArticle
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.routing.routing
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.insert
@@ -56,17 +55,17 @@ class NewsRoutesTest {
         transaction { SchemaUtils.drop(HeadlineTable) }
     }
 
-    // The /headlines endpoint must not call the live provider at all, so injecting a client that
-    // errors on any request doubles as proof reads are served purely from the cache.
-    private fun unreachableNewsApiClient() = NewsApiClient(
-        HttpClient(MockEngine { error("live provider should not be called by /headlines") }),
-        "unused-key"
-    )
-
+    // Only the stored-headline repository is provided: the news routes have no way to reach the live provider,
+    // so no request to them can spend GNews quota.
     private fun testKoinModule() = module {
         single { HeadlineRepository() }
-        single { unreachableNewsApiClient() }
-        single { ArticleScraperService() }
+    }
+
+    private fun ApplicationTestBuilder.newsClient() = run {
+        install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) { json() }
+        install(Koin) { modules(testKoinModule()) }
+        routing { newsRoutes() }
+        createClient { install(ContentNegotiation) { json() } }
     }
 
     @Test
@@ -131,5 +130,47 @@ class NewsRoutesTest {
         val articles = response.body<List<NewsArticle>>()
         assertEquals(4, articles.size)
         assertEquals(4, articles.map { it.categories.single() }.toSet().size)
+    }
+
+    @Test
+    fun headlinesEndpoint_capsLimitAboveMaximum() = testApplication {
+        seedTiedCategory("nation", count = MAX_HEADLINES_LIMIT + 20)
+        val client = newsClient()
+
+        val articles = client.get("/api/news/headlines?category=nation&limit=10000").body<List<NewsArticle>>()
+
+        assertEquals(MAX_HEADLINES_LIMIT, articles.size)
+    }
+
+    @Test
+    fun headlinesEndpoint_servesTheAppsFullRequestUncut() = testApplication {
+        seedTiedCategory("nation", count = MAX_HEADLINES_LIMIT)
+        val client = newsClient()
+
+        val articles = client.get("/api/news/headlines?category=nation&limit=$MAX_HEADLINES_LIMIT").body<List<NewsArticle>>()
+
+        assertEquals(MAX_HEADLINES_LIMIT, articles.size)
+    }
+
+    @Test
+    fun headlinesEndpoint_invalidLimitFallsBackToDefault() = testApplication {
+        seedTiedCategory("nation", count = DEFAULT_HEADLINES_LIMIT + 20)
+        val client = newsClient()
+
+        listOf("0", "-1", "abc").forEach { limit ->
+            val response = client.get("/api/news/headlines?category=nation&limit=$limit")
+
+            assertEquals(HttpStatusCode.OK, response.status, "limit=$limit")
+            assertEquals(DEFAULT_HEADLINES_LIMIT, response.body<List<NewsArticle>>().size, "limit=$limit")
+        }
+    }
+
+    @Test
+    fun searchEndpoint_isGone() = testApplication {
+        val client = newsClient()
+
+        val response = client.get("/api/news/search?query=earthquake")
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
     }
 }

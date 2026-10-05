@@ -25,9 +25,6 @@ class MockMediaSageApi : MediaSageApi {
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> =
         MockData.headlines
 
-    override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> =
-        MockData.headlines.filter { it.title.contains(query, ignoreCase = true) }
-
     override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto {
         val headline = MockData.headlines.find { it.title == request.headlineTitle }
         return MockData.encourageResultForHeadline(headline?.uuid ?: "1")

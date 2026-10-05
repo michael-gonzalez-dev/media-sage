@@ -70,15 +70,6 @@ class NewsApiClientTest {
     }
 
     @Test
-    fun searchNewsReturnsArticles() = runTest {
-        val client = NewsApiClient(createMockClient(sampleResponse), "test-api-key")
-
-        val articles = client.searchNews("earthquake")
-
-        assertEquals(2, articles.size)
-    }
-
-    @Test
     fun getTopHeadlinesThrowsOnApiError() = runTest {
         val httpClient = createMockClient("""{"message":"Invalid API token"}""", HttpStatusCode.Unauthorized)
         val client = NewsApiClient(httpClient, "bad-key")
@@ -136,42 +127,6 @@ class NewsApiClientTest {
         assertEquals("https://example.com/earthquake", articles[1].url)
     }
 
-    private val duplicateSearchResponse = """
-    {
-        "totalArticles": 2,
-        "articles": [
-            {
-                "title": "Climate summit reaches agreement",
-                "description": "",
-                "content": "",
-                "url": "https://example.com/climate",
-                "image": null,
-                "publishedAt": "2026-04-19T08:00:00Z",
-                "source": { "name": "BBC", "url": "https://bbc.com" }
-            },
-            {
-                "title": "Climate summit reaches agreement",
-                "description": "",
-                "content": "",
-                "url": "https://example.com/climate",
-                "image": null,
-                "publishedAt": "2026-04-19T08:00:00Z",
-                "source": { "name": "BBC", "url": "https://bbc.com" }
-            }
-        ]
-    }
-    """.trimIndent()
-
-    @Test
-    fun searchNewsDeduplicatesByUrl() = runTest {
-        val client = NewsApiClient(createMockClient(duplicateSearchResponse), "test-api-key")
-
-        val articles = client.searchNews("climate")
-
-        assertEquals(1, articles.size)
-        assertEquals("https://example.com/climate", articles[0].url)
-    }
-
     @Test
     fun articleFieldsMappedCorrectly() = runTest {
         val client = NewsApiClient(createMockClient(sampleResponse), "test-api-key")
@@ -216,14 +171,5 @@ class NewsApiClientTest {
         val articles = client.getTopHeadlines(category = "business")
 
         assertEquals(listOf("business"), articles[0].categories)
-    }
-
-    @Test
-    fun searchNewsLeavesCategoriesEmpty() = runTest {
-        val client = NewsApiClient(createMockClient(sampleResponse), "test-api-key")
-
-        val articles = client.searchNews("earthquake")
-
-        assertEquals(emptyList(), articles[0].categories)
     }
 }

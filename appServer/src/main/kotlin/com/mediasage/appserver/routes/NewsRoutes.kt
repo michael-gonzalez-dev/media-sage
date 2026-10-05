@@ -1,21 +1,23 @@
 package com.mediasage.appserver.routes
 
 import com.mediasage.appserver.repository.HeadlineRepository
-import com.mediasage.appserver.service.ArticleScraperService
-import com.mediasage.appserver.service.NewsApiClient
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 
+internal const val DEFAULT_HEADLINES_LIMIT = 10
+
+// The app syncs up to 100 headlines per request (FETCH_LIMIT in the shared HeadlineRepositoryImpl), so the cap
+// matches it: the app's feed is never cut short, but no single request can ask for more.
+internal const val MAX_HEADLINES_LIMIT = 100
+
 fun Route.newsRoutes() {
-    val newsClient by inject<NewsApiClient>()
-    val scraperService by inject<ArticleScraperService>()
     val headlineRepository by inject<HeadlineRepository>()
 
     route("/api/news") {
         get("/headlines") {
             val category = call.parameters["category"]
-            val limit = call.parameters["limit"]?.toIntOrNull() ?: 10
+            val limit = headlinesLimit(call.parameters["limit"])
 
             // Served from the twice-daily cache populated by HeadlineFetchService — no live
             // provider call here, so read volume never increases the number of GNews requests.
@@ -23,21 +25,10 @@ fun Route.newsRoutes() {
 
             call.respond(articles)
         }
-
-        get("/search") {
-            val query = call.parameters["query"]
-                ?: return@get call.respond(
-                    io.ktor.http.HttpStatusCode.BadRequest,
-                    mapOf("error" to "query parameter is required")
-                )
-            val language = call.parameters["language"] ?: "en"
-            val limit = call.parameters["limit"]?.toIntOrNull() ?: 10
-
-            val articles = newsClient.searchNews(query = query, language = language, limit = limit)
-
-            scraperService.preScrape(articles.map { it.url })
-
-            call.respond(articles)
-        }
     }
 }
+
+// A missing, non-numeric, zero or negative limit falls back to the default. A negative LIMIT must never reach the
+// query: SQLite reads it as "no limit" (every stored headline) and Postgres rejects it with an error.
+internal fun headlinesLimit(raw: String?): Int =
+    raw?.toIntOrNull()?.takeIf { it > 0 }?.coerceAtMost(MAX_HEADLINES_LIMIT) ?: DEFAULT_HEADLINES_LIMIT

@@ -610,8 +610,6 @@ private class FakeAssignmentApi(
 
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = emptyList()
 
-    override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> = emptyList()
-
     override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto =
         EncourageResultDto(
             quoteText = "", figureName = "", figureRole = "", scriptureReference = "",

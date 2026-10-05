@@ -739,7 +739,6 @@ private class FakeMediaSageApi(private val result: EncourageResultDto) : MediaSa
     override suspend fun getFigures(since: Long?): FiguresResponse = FiguresResponse(syncedAt = 0L, figures = emptyList())
     override suspend fun getQuotes(): QuotesResponse = QuotesResponse(quotes = emptyList())
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = emptyList()
-    override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> = emptyList()
 
     @Suppress("DEPRECATION")
     override suspend fun matchQuote(request: MatchRequestDto): MatchResultDto =
