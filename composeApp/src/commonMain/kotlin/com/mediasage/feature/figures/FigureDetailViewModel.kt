@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
 import com.mediasage.data.analytics.figureScheduleParams
+import com.mediasage.data.analytics.quoteMemorizedParams
 import com.mediasage.data.repository.epochMillis
 import com.mediasage.domain.model.LensFilter
 import com.mediasage.domain.repository.DailyReflectionRepository
@@ -56,7 +57,9 @@ class FigureDetailViewModel(
     private fun handlePinQuote(quoteText: String) {
         viewModelScope.launch {
             quoteRepository.memorizeQuote(figureId, quoteText)
-            analyticsService.logEvent(AnalyticsEvents.QUOTE_MEMORIZED, mapOf(AnalyticsEvents.Params.FIGURE_ID to figureId.toString()))
+            val figureName = figureRepository.getFigureById(figureId)?.name
+            val source = quoteRepository.observeQuotesByFigure(figureId).first().firstOrNull { it.text == quoteText }?.source
+            analyticsService.logEvent(AnalyticsEvents.QUOTE_MEMORIZED, quoteMemorizedParams(figureId, figureName, quoteText, source))
         }
     }
 

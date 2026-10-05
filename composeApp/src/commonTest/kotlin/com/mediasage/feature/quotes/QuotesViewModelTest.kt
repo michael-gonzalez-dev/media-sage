@@ -94,7 +94,13 @@ class QuotesViewModelTest {
 
     @Test
     fun quoteSelectedMemorizesTheQuoteForItsFigure() = runTest(testDispatcher) {
-        val quote = Quote(id = 1L, figureId = 1L, text = "You are never too old to set another goal.", source = "", themes = emptyList())
+        val quote = Quote(
+            id = 1L,
+            figureId = 1L,
+            text = "You are never too old to set another goal.",
+            source = "Letters (1955)",
+            themes = emptyList(),
+        )
         val quoteRepo = FakeQuoteRepositoryForQuotesScreen(quotes = listOf(quote))
         val analyticsService = FakeAnalyticsServiceForQuotesScreen()
         val viewModel = quotesViewModel(quoteRepository = quoteRepo, figures = listOf(lewis), analyticsService = analyticsService)
@@ -103,9 +109,33 @@ class QuotesViewModelTest {
 
         assertEquals(listOf(1L to quote.text), quoteRepo.memorizeCalls)
         assertEquals(
-            listOf(AnalyticsEvents.QUOTE_MEMORIZED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "1")),
+            listOf(
+                AnalyticsEvents.QUOTE_MEMORIZED to mapOf(
+                    AnalyticsEvents.Params.FIGURE_ID to "1",
+                    AnalyticsEvents.Params.FIGURE_NAME to "C.S. Lewis",
+                    AnalyticsEvents.Params.QUOTE_TEXT to "You are never too old to set another goal.",
+                    AnalyticsEvents.Params.QUOTE_SOURCE to "Letters (1955)",
+                ),
+            ),
             analyticsService.loggedEvents,
         )
+    }
+
+    @Test
+    fun quoteSelectedLogsALongQuoteCutToItsFirstHundredCharacters() = runTest(testDispatcher) {
+        val longText = "Love, and do what you will. ".repeat(6).trim()
+        val quote = Quote(id = 1L, figureId = 2L, text = longText, source = "Homilies on 1 John", themes = emptyList())
+        val analyticsService = FakeAnalyticsServiceForQuotesScreen()
+        val viewModel = quotesViewModel(
+            quoteRepository = FakeQuoteRepositoryForQuotesScreen(quotes = listOf(quote)),
+            figures = listOf(julian),
+            analyticsService = analyticsService,
+        )
+
+        viewModel.onIntent(QuotesContract.Intent.QuoteSelected(figureId = 2L, quoteText = longText))
+
+        val logged = analyticsService.loggedEvents.single().second[AnalyticsEvents.Params.QUOTE_TEXT]
+        assertEquals(longText.substring(0, 100), logged)
     }
 
     private fun TestScope.quotesViewModel(

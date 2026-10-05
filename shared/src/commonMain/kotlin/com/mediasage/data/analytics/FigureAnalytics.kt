@@ -14,10 +14,15 @@ fun figureScheduleParams(
     dayOfWeekOrdinal: Int,
     lens: LensFilter?,
 ): Map<String, String> = buildMap {
-    put(AnalyticsEvents.Params.FIGURE_ID, figureId.toString())
-    figureName?.let { put(AnalyticsEvents.Params.FIGURE_NAME, it) }
+    putAll(figureParams(figureId, figureName))
     putAll(dayOfWeekParams(dayOfWeekOrdinal))
     put(AnalyticsEvents.Params.LENS, (lens ?: LensFilter.NEWS).name.lowercase())
+}
+
+/** Just the reporter: their stable id, and their name when the reporter is on the device. */
+fun figureParams(figureId: Long, figureName: String?): Map<String, String> = buildMap {
+    put(AnalyticsEvents.Params.FIGURE_ID, figureId.toString())
+    figureName?.let { put(AnalyticsEvents.Params.FIGURE_NAME, it) }
 }
 
 /** Just the weekday slot, as a lowercase day name (`monday`), for a schedule event with no reporter to name. */
