@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.analytics.quoteMemorizedParams
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.Quote
 import com.mediasage.domain.repository.FigureRepository
@@ -11,6 +12,7 @@ import com.mediasage.domain.repository.QuoteRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -40,12 +42,15 @@ class QuotesViewModel(
         when (intent) {
             is QuotesContract.Intent.QuoteSelected -> viewModelScope.launch {
                 quoteRepository.memorizeQuote(intent.figureId, intent.quoteText)
-                analyticsService.logEvent(
-                    AnalyticsEvents.QUOTE_MEMORIZED,
-                    mapOf(AnalyticsEvents.Params.FIGURE_ID to intent.figureId.toString()),
-                )
+                logQuoteMemorized(intent.figureId, intent.quoteText)
             }
         }
+    }
+
+    private suspend fun logQuoteMemorized(figureId: Long, quoteText: String) {
+        val figureName = figureRepository.getFigureById(figureId)?.name
+        val source = quoteRepository.observeQuotesByFigure(figureId).first().firstOrNull { it.text == quoteText }?.source
+        analyticsService.logEvent(AnalyticsEvents.QUOTE_MEMORIZED, quoteMemorizedParams(figureId, figureName, quoteText, source))
     }
 
     private fun buildSuccess(quotes: List<Quote>, figures: List<Figure>): QuotesContract.UiState.Success {

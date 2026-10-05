@@ -24,6 +24,8 @@ object AnalyticsEvents {
         const val FIGURE_NAME = "figure_name"
         const val DAY_OF_WEEK = "day_of_week"
         const val LENS = "lens"
+        const val QUOTE_TEXT = "quote_text"
+        const val QUOTE_SOURCE = "quote_source"
         const val METHOD = "method"
         const val ACTION = "action"
         const val SCREEN = "screen"

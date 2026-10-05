@@ -274,7 +274,11 @@ class FigureDetailViewModelTest {
 
     @Test
     fun pinQuote_memorizesTheQuoteForThisFigure() = runTest(testDispatcher) {
-        val quoteRepo = DetailFakeQuoteRepository()
+        val quoteRepo = DetailFakeQuoteRepository(
+            library = listOf(
+                Quote(id = 1L, figureId = 2L, text = "You are never too old to dream.", source = "Letters (1955)", themes = emptyList()),
+            ),
+        )
         val (viewModel, _, analyticsService) = figureDetailViewModel(
             figureId = 2L,
             figures = listOf(augustine, lewis),
@@ -285,7 +289,14 @@ class FigureDetailViewModelTest {
 
         assertEquals(listOf(2L to "You are never too old to dream."), quoteRepo.memorizeCalls)
         assertEquals(
-            listOf(AnalyticsEvents.QUOTE_MEMORIZED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
+            listOf(
+                AnalyticsEvents.QUOTE_MEMORIZED to mapOf(
+                    AnalyticsEvents.Params.FIGURE_ID to "2",
+                    AnalyticsEvents.Params.FIGURE_NAME to "C.S. Lewis",
+                    AnalyticsEvents.Params.QUOTE_TEXT to "You are never too old to dream.",
+                    AnalyticsEvents.Params.QUOTE_SOURCE to "Letters (1955)",
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
