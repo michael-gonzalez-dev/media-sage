@@ -85,7 +85,14 @@ class FigureDetailViewModelTest {
         assertFalse(state.isLensPickerOpen)
         assertNull(state.pendingReassignment)
         assertEquals(
-            listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
+            listOf(
+                AnalyticsEvents.FIGURE_PINNED to mapOf(
+                    AnalyticsEvents.Params.FIGURE_ID to "2",
+                    AnalyticsEvents.Params.FIGURE_NAME to "C.S. Lewis",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "hope",
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -141,7 +148,14 @@ class FigureDetailViewModelTest {
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertNull(state.pendingReassignment)
         assertEquals(
-            listOf(AnalyticsEvents.FIGURE_PINNED to mapOf(AnalyticsEvents.Params.FIGURE_ID to "2")),
+            listOf(
+                AnalyticsEvents.FIGURE_PINNED to mapOf(
+                    AnalyticsEvents.Params.FIGURE_ID to "2",
+                    AnalyticsEvents.Params.FIGURE_NAME to "C.S. Lewis",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "hope",
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -178,7 +192,18 @@ class FigureDetailViewModelTest {
         val state = viewModel.state.value as FigureDetailContract.UiState.Success
         assertFalse(state.isLensPickerOpen)
         assertNull(state.pendingReassignment)
-        assertTrue(analyticsService.loggedEvents.isEmpty())
+        assertEquals(
+            listOf(
+                AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR,
+                    AnalyticsEvents.Params.FIGURE_ID to "1",
+                    AnalyticsEvents.Params.FIGURE_NAME to "Augustine of Hippo",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "news",
+                ),
+            ),
+            analyticsService.loggedEvents,
+        )
     }
 
     @Test
@@ -329,6 +354,7 @@ class FigureDetailViewModelTest {
         val today = Instant.fromEpochMilliseconds(epochMillis()).toLocalDateTime(TimeZone.currentSystemDefault()).date
         val todayOrdinal = today.dayOfWeek.ordinal
         val todayEpochDay = today.toEpochDays().toLong()
+        val todayWeekday = today.dayOfWeek.name.lowercase()
     }
 }
 

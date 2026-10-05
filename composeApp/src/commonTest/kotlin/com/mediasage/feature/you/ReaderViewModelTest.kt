@@ -172,7 +172,15 @@ class ReaderViewModelTest {
         viewModel.onIntent(ReaderContract.Intent.FigureAssigned(dayOfWeek = todayOrdinal, figureId = 2L, lens = null))
 
         assertEquals(
-            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ASSIGN)),
+            listOf(
+                AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_ASSIGN,
+                    AnalyticsEvents.Params.FIGURE_ID to "2",
+                    AnalyticsEvents.Params.FIGURE_NAME to "C.S. Lewis",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "news",
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -193,20 +201,58 @@ class ReaderViewModelTest {
         viewModel.onIntent(ReaderContract.Intent.ConfirmReassignment)
 
         assertEquals(
-            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REASSIGN)),
+            listOf(
+                AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_REASSIGN,
+                    AnalyticsEvents.Params.FIGURE_ID to "2",
+                    AnalyticsEvents.Params.FIGURE_NAME to "C.S. Lewis",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "news",
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
 
     @Test
-    fun assignmentCleared_logsFigureDayAssignmentEventWithClearAction() = runTest(testDispatcher) {
+    fun assignmentCleared_logsTheClearedWeekdayAndTheReporterRemovedFromIt() = runTest(testDispatcher) {
+        val analyticsService = FakeAnalyticsServiceForReaderScreen()
+        val (viewModel, _) = readerViewModelWithRepo(
+            figure = testFigure,
+            assignments = mapOf(todayOrdinal to DayAssignment(figureId = 1L, lens = LensFilter.GRACE)),
+            analyticsService = analyticsService,
+        )
+
+        viewModel.onIntent(ReaderContract.Intent.AssignmentCleared(dayOfWeek = todayOrdinal))
+
+        assertEquals(
+            listOf(
+                AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR,
+                    AnalyticsEvents.Params.FIGURE_ID to "1",
+                    AnalyticsEvents.Params.FIGURE_NAME to "Augustine of Hippo",
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                    AnalyticsEvents.Params.LENS to "grace",
+                ),
+            ),
+            analyticsService.loggedEvents,
+        )
+    }
+
+    @Test
+    fun assignmentCleared_onAnEmptyDayLogsOnlyTheWeekday() = runTest(testDispatcher) {
         val analyticsService = FakeAnalyticsServiceForReaderScreen()
         val (viewModel, _) = readerViewModelWithRepo(figure = testFigure, analyticsService = analyticsService)
 
         viewModel.onIntent(ReaderContract.Intent.AssignmentCleared(dayOfWeek = todayOrdinal))
 
         assertEquals(
-            listOf(AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR)),
+            listOf(
+                AnalyticsEvents.FIGURE_DAY_ASSIGNMENT to mapOf(
+                    AnalyticsEvents.Params.ACTION to AnalyticsEvents.Values.ACTION_CLEAR,
+                    AnalyticsEvents.Params.DAY_OF_WEEK to todayWeekday,
+                ),
+            ),
             analyticsService.loggedEvents,
         )
     }
@@ -476,6 +522,7 @@ class ReaderViewModelTest {
         val today = Instant.fromEpochMilliseconds(epochMillis()).toLocalDateTime(TimeZone.currentSystemDefault()).date
         val todayOrdinal = today.dayOfWeek.ordinal
         val todayEpochDay = today.toEpochDays().toLong()
+        val todayWeekday = today.dayOfWeek.name.lowercase()
     }
 }
 
