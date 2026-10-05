@@ -17,6 +17,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.filter
@@ -34,7 +35,8 @@ fun ReporterScheduleSection(
     val todayIndex = remember(weekSlots) { weekSlots.indexOfFirst { it.isToday } }
     val rowState = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, todayIndex))
     val density = LocalDensity.current
-    CenterTodayEffect(rowState, todayIndex, density)
+    val slotWidth = daySlotWidth()
+    CenterTodayEffect(rowState, todayIndex, slotWidth, density)
 
     Column(modifier = modifier) {
         Text(
@@ -52,6 +54,7 @@ fun ReporterScheduleSection(
                 val slot = weekSlots[index]
                 DaySlotItem(
                     slot = slot,
+                    width = slotWidth,
                     onClick = { onIntent(ReaderContract.Intent.DaySlotTapped(index)) },
                 )
             }
@@ -60,16 +63,32 @@ fun ReporterScheduleSection(
 }
 
 @Composable
-private fun CenterTodayEffect(rowState: LazyListState, todayIndex: Int, density: Density) {
-    LaunchedEffect(todayIndex) {
+private fun CenterTodayEffect(rowState: LazyListState, todayIndex: Int, slotWidth: Dp, density: Density) {
+    LaunchedEffect(todayIndex, slotWidth) {
         if (todayIndex < 0) return@LaunchedEffect
         snapshotFlow { rowState.layoutInfo.viewportSize.width }
             .filter { it > 0 }
             .first()
             .let { viewportWidth ->
-                val itemWidthPx = with(density) { 72.dp.roundToPx() }
+                val itemWidthPx = with(density) { slotWidth.roundToPx() }
                 val offset = -(viewportWidth / 2 - itemWidthPx / 2)
                 rowState.scrollToItem(index = todayIndex, scrollOffset = offset)
             }
     }
 }
+
+/**
+ * A day's slot is 80dp at the default text size and widens in step with the name text, so the longest
+ * single word in a reporter's name ("Melanchthon", about 74dp at the default size) fits on one line
+ * instead of breaking mid-word. The portrait stays 72dp.
+ */
+@Composable
+private fun daySlotWidth(): Dp {
+    val nameSize = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.fontSize.toDp() }
+    return DaySlotBaseWidth * (nameSize / DaySlotBaseNameSize).coerceAtLeast(1f)
+}
+
+private val DaySlotBaseWidth = 80.dp
+
+// labelSmall's unscaled size in Type.kt.
+private val DaySlotBaseNameSize = 11.dp
