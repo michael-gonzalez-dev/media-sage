@@ -448,7 +448,6 @@ private class FakeMediaSageApiForQuoteLibrary(private val library: List<QuoteDto
     override suspend fun getQuotes(): QuotesResponse = QuotesResponse(library)
     override suspend fun getFigures(since: Long?): FiguresResponse = error("not used in this test")
     override suspend fun getHeadlines(locale: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
-    override suspend fun searchNews(query: String, limit: Int): List<NewsArticleDto> = error("not used in this test")
     override suspend fun encourage(request: EncourageRequestDto): EncourageResultDto = error("not used in this test")
     override suspend fun matchQuote(request: MatchRequestDto): MatchResultDto = error("not used in this test")
     override suspend fun searchScripture(query: String, limit: Int): List<ScriptureVerseDto> =

@@ -6,7 +6,6 @@ interface MediaSageApi {
     suspend fun getQuotes(): QuotesResponse
     suspend fun getWorks(): WorksResponse
     suspend fun getHeadlines(locale: String = "us", limit: Int = 10): List<NewsArticleDto>
-    suspend fun searchNews(query: String, limit: Int = 10): List<NewsArticleDto>
     suspend fun encourage(request: EncourageRequestDto): EncourageResultDto
     @Deprecated("Use encourage instead — TODO MS-46")
     suspend fun matchQuote(request: MatchRequestDto): MatchResultDto

@@ -41,33 +41,7 @@ open class NewsApiClient(
             .map { it.toNewsArticle(category = category) }
     }
 
-    suspend fun searchNews(
-        query: String,
-        language: String = "en",
-        country: String = "us",
-        limit: Int = 10
-    ): List<NewsArticle> {
-        val response = httpClient.get("$BASE_URL/search") {
-            parameter("token", apiKey)
-            parameter("q", query)
-            parameter("lang", language)
-            parameter("country", country)
-            parameter("max", limit)
-        }
-
-        if (!response.status.isSuccess()) {
-            throw NewsApiException(
-                statusCode = response.status.value,
-                message = "News API error (${response.status}): ${response.bodyAsText()}"
-            )
-        }
-
-        return response.body<GNewsResponse>().articles
-            .distinctBy { it.url }
-            .map { it.toNewsArticle() }
-    }
-
-    private fun GNewsArticle.toNewsArticle(category: String = "") = NewsArticle(
+    private fun GNewsArticle.toNewsArticle(category: String) = NewsArticle(
         uuid = UUID.nameUUIDFromBytes(url.toByteArray()).toString(),
         title = title,
         description = description,
@@ -76,7 +50,7 @@ open class NewsApiClient(
         imageUrl = image.orEmpty(),
         publishedAt = publishedAt,
         source = source.name,
-        categories = if (category.isBlank()) emptyList() else listOf(category)
+        categories = listOf(category)
     )
 }
 
