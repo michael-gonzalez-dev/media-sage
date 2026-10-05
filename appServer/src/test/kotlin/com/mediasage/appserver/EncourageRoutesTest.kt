@@ -9,8 +9,8 @@ import com.mediasage.appserver.db.ServerDatabase
 import com.mediasage.appserver.repository.ClaudeCallLimitRepository
 import com.mediasage.appserver.repository.EncouragementCacheRepository
 import com.mediasage.appserver.plugins.CallerRateLimits
-import com.mediasage.appserver.plugins.ErrorResponse
 import com.mediasage.appserver.plugins.configureRateLimiting
+import com.mediasage.appserver.plugins.configureStatusPages
 import com.mediasage.appserver.repository.FigureRepository
 import com.mediasage.appserver.repository.HeadlineRepository
 import com.mediasage.appserver.routes.MAX_ARTICLE_SNIPPET_LENGTH
@@ -20,7 +20,6 @@ import com.mediasage.appserver.routes.MAX_LOCALE_LENGTH
 import com.mediasage.appserver.routes.analysisRoutes
 import com.mediasage.appserver.service.ArticleScraperService
 import com.mediasage.appserver.service.ClaudeApiClient
-import com.mediasage.appserver.service.DailyLimitExceededException
 import com.mediasage.appserver.service.EncourageResult
 import com.mediasage.appserver.service.EncourageTone
 import io.ktor.client.HttpClient
@@ -37,8 +36,6 @@ import io.ktor.http.contentType
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.statuspages.StatusPages
-import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
@@ -111,11 +108,7 @@ private fun ApplicationTestBuilder.installRoutes(
 ) {
     install(ContentNegotiation) { json() }
     application { configureRateLimiting(CallerRateLimits(encouragePerHour = encouragePerHour, dailyReflectionPerHour = 1_000)) }
-    install(StatusPages) {
-        exception<DailyLimitExceededException> { call, cause ->
-            call.respond(HttpStatusCode.TooManyRequests, ErrorResponse(429, cause.message))
-        }
-    }
+    application { configureStatusPages() }
     install(Koin) {
         modules(
             module {
