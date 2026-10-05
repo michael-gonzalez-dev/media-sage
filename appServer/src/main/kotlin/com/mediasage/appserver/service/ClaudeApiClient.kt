@@ -28,6 +28,7 @@ open class ClaudeApiClient(
         private const val API_VERSION = "2023-06-01"
         private const val MODEL = "claude-sonnet-4-6"
         private const val DEFAULT_MAX_TOKENS = 1024
+        private const val CURATION_MAX_TOKENS = 4096
         private const val RECENT_FIGURES_MAX = 10
         private const val CANDIDATE_POOL_SIZE = 20
         private const val MAX_QUOTES_PER_FIGURE = 2
@@ -96,6 +97,12 @@ open class ClaudeApiClient(
             challenge = parsed.challenge,
             tone = tone
         )
+    }
+
+    /** Asks Claude which headlines to show and in which tab. Throws if the call fails or the reply isn't valid JSON. */
+    suspend fun curateHeadlines(systemPrompt: String, userMessage: String): List<HeadlinePick> {
+        val raw = callClaude(systemPrompt, userMessage, maxTokens = CURATION_MAX_TOKENS)
+        return responseJson.decodeFromString<HeadlineCurationResult>(extractJson(raw)).picks
     }
 
     private fun sampleCandidates(
@@ -169,6 +176,12 @@ data class DailyReflectionRaw(
     val sources: List<String>,
     val challenge: String? = null
 )
+
+@Serializable
+data class HeadlineCurationResult(val picks: List<HeadlinePick>)
+
+@Serializable
+data class HeadlinePick(val id: Int, val tab: String)
 
 @Serializable
 data class SelectionResult(
