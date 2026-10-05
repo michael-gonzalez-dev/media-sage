@@ -15,6 +15,10 @@ agentruntime/src/main/kotlin/com/mediasage/agentruntime/
                             SlackApiClient, JobCompletionNotifier
 ```
 
+## Error responses
+
+`plugins/StatusPages.kt` maps every exception to a generic `ErrorResponse`. Error responses never carry exception text, class names, SQL or upstream provider bodies; the detail goes to the server log. Don't respond with `cause.message` or an exception's `toString()` anywhere.
+
 ## Prompts
 
 System prompts must never be hardcoded in Kotlin. Define them in `src/main/resources/prompts/` and load at runtime via classpath. Plain language only — avoid technical AI jargon in file and variable names so anyone maintaining the code can follow them.

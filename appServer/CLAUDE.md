@@ -18,6 +18,10 @@ appServer/src/main/kotlin/com/mediasage/appserver/
 - API keys read from `application.conf` via environment variables — never hardcoded.
 - Routes are thin: parse the request, call a service, return the response. No business logic in route handlers.
 - StatusPages plugin handles all error mapping — do not catch and re-throw in routes.
+- **Error responses never carry exception text.** No `cause.message`, class names, SQL, file paths or upstream provider
+  bodies reach the caller; `StatusPages` returns a fixed message and logs the detail. Upstream API failures are a 502,
+  never the provider's own status. Only messages a route writes for callers on purpose (e.g. "headlineTitle is
+  required") are specific.
 - **Every route is public and unauthenticated — treat every caller as untrusted, not as the app.**
   - No endpoint makes a paid third-party call (Claude, GNews, …) or fetches a URL from caller input unless it is
     bounded: a per-caller rate limit (`plugins/RateLimiting.kt`) plus an app-wide daily budget (`ClaudeCallLimitRepository`).

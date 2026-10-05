@@ -177,4 +177,18 @@ class DailyReflectionRouteTest {
             assertEquals(HttpStatusCode.BadRequest, postReflection("""{"figureId":0,"figureName":"C.S. Lewis"}""").status)
         }
     }
+
+    // The real route, wired as in production: a body that can't be parsed is a 400 with a generic message,
+    // not a 500 that echoes the JSON parser's error.
+    @Test
+    fun malformedBodyIsAGeneric400() = testApplication {
+        startServer()
+
+        val response = postReflection("""{"figureId":"not-a-number","figureName":"C.S. Lewis"}""")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("\"Bad request\""), body)
+        assertFalse(body.contains("not-a-number"), body)
+    }
 }
