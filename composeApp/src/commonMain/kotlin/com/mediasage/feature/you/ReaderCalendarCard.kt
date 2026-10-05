@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -26,8 +26,9 @@ import androidx.compose.ui.unit.sp
 import com.mediasage.theme.BrandAmber
 import kotlinx.datetime.LocalDate
 
-// Fixed height for every day cell (date label + 28.dp portrait + padding) so week rows
-// within a month card measure consistently.
+// Minimum height for every day cell (date label + 28.dp portrait + padding) so week rows
+// within a month card measure consistently. A minimum, not a fixed height: at large text sizes
+// the date label grows and a fixed height would squash the portrait into an oval.
 private val MonthDayCellHeight = 50.dp
 
 @Composable
@@ -105,11 +106,11 @@ private fun MonthDayCell(
     modifier: Modifier = Modifier,
 ) {
     if (day == null) {
-        Box(modifier = modifier.height(MonthDayCellHeight))
+        Box(modifier = modifier.heightIn(min = MonthDayCellHeight))
         return
     }
     Column(
-        modifier = modifier.height(MonthDayCellHeight).clickable(onClick = onClick).padding(vertical = 2.dp),
+        modifier = modifier.heightIn(min = MonthDayCellHeight).clickable(onClick = onClick).padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
     ) {

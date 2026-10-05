@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
@@ -331,6 +332,7 @@ private fun SavedEntryCard(
 @Composable
 internal fun DaySlotItem(
     slot: ReaderContract.DaySlot,
+    width: Dp,
     onClick: () -> Unit,
 ) {
     val primary = MaterialTheme.colorScheme.primary
@@ -340,7 +342,7 @@ internal fun DaySlotItem(
 
     Column(
         modifier = Modifier
-            .width(72.dp)
+            .width(width)
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -380,6 +382,7 @@ internal fun DaySlotItem(
             color = if (slot.assignedFigureName != null) MaterialTheme.colorScheme.onSurface else onSurfaceVariant,
             textAlign = TextAlign.Center,
             maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

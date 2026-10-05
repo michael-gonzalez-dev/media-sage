@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.mediasage.LocalAnalyticsService
 import com.mediasage.theme.MediaSageTheme
+import com.mediasage.theme.mediaSageTypography
 import com.mediasage.feature.briefing.BriefingContract
 import com.mediasage.feature.briefing.BriefingNotificationScheduler
 import com.mediasage.feature.briefing.BriefingScreen
@@ -356,6 +357,7 @@ private fun MediaSageBottomBar(
     currentDestination: Any?,
     onNavigate: (TopLevelDestination) -> Unit
 ) {
+    val labelStyle = mediaSageTypography().labelMedium
     Column {
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
@@ -378,7 +380,8 @@ private fun MediaSageBottomBar(
                         contentDescription = null
                     )
                 },
-                label = { Text(stringResource(destination.labelRes)) },
+                // Fixed size: the in-app text size scales reading content, not navigation controls.
+                label = { Text(stringResource(destination.labelRes), style = labelStyle, maxLines = 1) },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = Color.Transparent,
                     selectedIconColor = MaterialTheme.colorScheme.onSurface,
