@@ -279,6 +279,14 @@ val MIGRATION_40_41 = object : Migration(40, 41) {
     }
 }
 
+// The server's per-article uuid, kept so analytics can name a headline without its title or URL.
+// Existing rows get "" and pick up their uuid on the next headline refresh, which replaces the table.
+val MIGRATION_41_42 = object : Migration(41, 42) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `headlines` ADD COLUMN `uuid` TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 val MIGRATION_12_13 = object : Migration(12, 13) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

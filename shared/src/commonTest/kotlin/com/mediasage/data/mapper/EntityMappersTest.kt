@@ -4,6 +4,7 @@ import com.mediasage.data.local.entity.FigureEntity
 import com.mediasage.data.local.entity.HeadlineEntity
 import com.mediasage.data.local.entity.QuoteEntity
 import com.mediasage.data.remote.FigureDto
+import com.mediasage.data.remote.NewsArticleDto
 import com.mediasage.domain.model.Figure
 import com.mediasage.domain.model.FigureCategory
 import com.mediasage.domain.model.Headline
@@ -126,9 +127,10 @@ class EntityMappersTest {
         val entity = HeadlineEntity(
             id = 1, title = "Test headline", source = "BBC",
             url = "https://example.com", imageUrl = null,
-            publishedAt = 1000L, fetchedAt = 2000L
+            publishedAt = 1000L, fetchedAt = 2000L, uuid = "3f2c1a"
         )
         val domain = entity.toDomain(isRead = true)
+        assertEquals("3f2c1a", domain.uuid)
         assertEquals(true, domain.isRead)
         val backToEntity = domain.toEntity()
         assertEquals(entity, backToEntity)
@@ -142,5 +144,11 @@ class EntityMappersTest {
         assertEquals(FigureCategory.CHURCH_FATHER, FigureCategory.fromString("church_father"))
         assertEquals(FigureCategory.SOCIAL_JUSTICE, FigureCategory.fromString("social_justice"))
         assertEquals(FigureCategory.INTELLECTUAL, FigureCategory.fromString("intellectual"))
+    }
+
+    @Test
+    fun newsArticleDtoKeepsTheServerUuid() {
+        val dto = NewsArticleDto(uuid = "3f2c1a", title = "Test headline", url = "https://example.com", source = "Reuters")
+        assertEquals("3f2c1a", dto.toEntity(fetchedAt = 2000L).uuid)
     }
 }

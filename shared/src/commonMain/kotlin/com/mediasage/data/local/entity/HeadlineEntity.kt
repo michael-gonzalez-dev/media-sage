@@ -13,5 +13,7 @@ data class HeadlineEntity(
     val publishedAt: Long,
     val fetchedAt: Long,
     val snippet: String? = null,
-    val category: String = ""
+    val category: String = "",
+    // The server's stable per-article id, the same for every reader — identifies the headline in analytics.
+    val uuid: String = ""
 )

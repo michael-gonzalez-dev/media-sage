@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mediasage.data.analytics.AnalyticsEvents
 import com.mediasage.data.analytics.AnalyticsService
+import com.mediasage.data.analytics.analyticsParams
+import com.mediasage.domain.model.Encouragement
+import com.mediasage.domain.model.Headline
 import com.mediasage.domain.repository.EncouragementRepository
 import com.mediasage.domain.repository.FigureRepository
 import com.mediasage.domain.repository.HeadlineRepository
@@ -31,8 +34,11 @@ class HeadlineDetailViewModel(
     private val _sideEffects = Channel<HeadlineDetailContract.SideEffect>(Channel.BUFFERED)
     val sideEffects = _sideEffects.receiveAsFlow()
 
+    // The Room row for [articleUrl], read once on open; null when it has aged out of the cache.
+    private var headline: Headline? = null
+
     init {
-        loadMatch()
+        openHeadline()
         observeBookmark()
         markAsRead()
     }
@@ -54,7 +60,7 @@ class HeadlineDetailViewModel(
                     val action = if (wasBookmarked) AnalyticsEvents.Values.ACTION_REMOVE else AnalyticsEvents.Values.ACTION_ADD
                     analyticsService.logEvent(
                         AnalyticsEvents.BOOKMARK_TOGGLED,
-                        mapOf(
+                        headlineParams() + mapOf(
                             AnalyticsEvents.Params.ACTION to action,
                             AnalyticsEvents.Params.SCREEN to AnalyticsEvents.Values.SCREEN_HEADLINE_DETAIL,
                         ),
@@ -105,11 +111,20 @@ class HeadlineDetailViewModel(
         }
     }
 
+    private fun headlineParams(): Map<String, String> = headline?.analyticsParams().orEmpty()
+
+    private fun openHeadline() {
+        viewModelScope.launch {
+            headline = runCatching { headlineRepository.getHeadlineByUrl(articleUrl) }.getOrNull()
+            analyticsService.logEvent(AnalyticsEvents.HEADLINE_OPENED, headlineParams())
+            loadMatch()
+        }
+    }
+
     private fun loadMatch() {
         viewModelScope.launch {
             try {
-                val headline = headlineRepository.getHeadlineByUrl(articleUrl)
-
+                val headline = headline
                 val encouragement = encouragementRepository.getEncouragement(
                     headlineTitle = headline?.title ?: "",
                     headlineSource = headline?.source ?: "",
@@ -119,39 +134,45 @@ class HeadlineDetailViewModel(
                     headlineCategory = headline?.category ?: "",
                     headlinePublishedAt = headline?.publishedAt ?: 0L
                 )
-
-                _state.value = HeadlineDetailContract.UiState.Success(
-                    headlineTitle = headline?.title ?: encouragement.headlineTitle,
-                    headlineSource = headline?.source ?: encouragement.headlineSource,
-                    headlineCategory = headline?.category ?: encouragement.headlineCategory,
-                    headlineImageUrl = headline?.imageUrl ?: encouragement.headlineImageUrl,
-                    encouragement = HeadlineDetailContract.EncouragementState.Loaded(
-                        summary = encouragement.summary,
-                        quoteText = encouragement.quoteText,
-                        figureName = encouragement.figureName,
-                        figureRole = encouragement.figureRole,
-                        figureImageUrl = encouragement.figureImageUrl,
-                        scriptureReference = encouragement.scriptureReference,
-                        scriptureText = encouragement.scriptureText,
-                        matchExplanation = encouragement.explanation,
-                        matchTheme = encouragement.matchTheme,
-                        tone = encouragement.tone,
-                    )
-                )
-
-                runCatching {
-                    val figure = figureRepository.getFigureByName(encouragement.figureName)
-                    if (figure != null) {
-                        quoteRepository.saveQuote(
-                            text = encouragement.quoteText,
-                            source = encouragement.scriptureReference,
-                            themes = encouragement.connectionThemes,
-                            figureId = figure.id,
-                        )
-                    }
-                }
+                _state.value = successState(headline, encouragement)
+                analyticsService.logEvent(AnalyticsEvents.ENCOURAGEMENT_LOADED, headlineParams())
+                saveQuote(encouragement)
             } catch (e: Exception) {
                 _state.value = HeadlineDetailContract.UiState.Error(e.toErrorType())
+                analyticsService.logEvent(AnalyticsEvents.ENCOURAGEMENT_FAILED, headlineParams())
+            }
+        }
+    }
+
+    private fun successState(headline: Headline?, encouragement: Encouragement) = HeadlineDetailContract.UiState.Success(
+        headlineTitle = headline?.title ?: encouragement.headlineTitle,
+        headlineSource = headline?.source ?: encouragement.headlineSource,
+        headlineCategory = headline?.category ?: encouragement.headlineCategory,
+        headlineImageUrl = headline?.imageUrl ?: encouragement.headlineImageUrl,
+        encouragement = HeadlineDetailContract.EncouragementState.Loaded(
+            summary = encouragement.summary,
+            quoteText = encouragement.quoteText,
+            figureName = encouragement.figureName,
+            figureRole = encouragement.figureRole,
+            figureImageUrl = encouragement.figureImageUrl,
+            scriptureReference = encouragement.scriptureReference,
+            scriptureText = encouragement.scriptureText,
+            matchExplanation = encouragement.explanation,
+            matchTheme = encouragement.matchTheme,
+            tone = encouragement.tone,
+        )
+    )
+
+    private suspend fun saveQuote(encouragement: Encouragement) {
+        runCatching {
+            val figure = figureRepository.getFigureByName(encouragement.figureName)
+            if (figure != null) {
+                quoteRepository.saveQuote(
+                    text = encouragement.quoteText,
+                    source = encouragement.scriptureReference,
+                    themes = encouragement.connectionThemes,
+                    figureId = figure.id,
+                )
             }
         }
     }

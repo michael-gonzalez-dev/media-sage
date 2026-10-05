@@ -47,7 +47,7 @@ import com.mediasage.data.local.entity.WorkEntity
         ParkedDailyReflectionEntity::class,
         WorkEntity::class,
     ],
-    version = 41,
+    version = 42,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
