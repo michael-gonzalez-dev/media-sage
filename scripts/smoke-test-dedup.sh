@@ -15,6 +15,7 @@
 #   export SUPABASE_DB_URL="postgresql://postgres.<ref>:<password>@<host>:5432/postgres"
 #   export AGENT_URL="https://<railway-agent-url>"
 #   export JIRA_BOT_ACCOUNT_ID="<bot-account-id>"
+#   export JIRA_WEBHOOK_SECRET="<jira-webhook-secret>"
 #   ./scripts/smoke-test-dedup.sh [--dry-run]
 #
 # --dry-run  Cases 3 and 4 verify PENDING row insertion without triggering a real
@@ -37,9 +38,10 @@ done
 : "${SUPABASE_DB_URL:?Set SUPABASE_DB_URL to the Supabase Postgres connection string}"
 : "${AGENT_URL:?Set AGENT_URL to the agent base URL (no trailing slash)}"
 : "${JIRA_BOT_ACCOUNT_ID:?Set JIRA_BOT_ACCOUNT_ID to the Jira bot account ID}"
+: "${JIRA_WEBHOOK_SECRET:?Set JIRA_WEBHOOK_SECRET to the Jira webhook token}"
 
 TICKET_KEY="MS-SMOKE-DEDUP-$$"  # unique per run to avoid cross-run interference
-WEBHOOK_URL="$AGENT_URL/webhook/jira"
+WEBHOOK_URL="$AGENT_URL/webhook/jira?token=$JIRA_WEBHOOK_SECRET"
 
 pass() { echo "✅  $1"; }
 fail() { echo "❌  $1"; exit 1; }

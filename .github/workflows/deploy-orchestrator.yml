@@ -79,6 +79,7 @@ jobs:
             GITHUB_APP_PRIVATE_KEY_BASE64=github-app-private-key-base64:latest
             JIRA_API_TOKEN=orchestrator-jira-api-token:latest
             JIRA_BOT_API_TOKEN=orchestrator-jira-bot-api-token:latest
+            JIRA_WEBHOOK_SECRET=orchestrator-jira-webhook-secret:latest
             PUBSUB_WEBHOOK_SECRET=orchestrator-pubsub-webhook-secret:latest
             SUPABASE_DB_URL=orchestrator-supabase-db-url:latest
             GOOGLE_CREDENTIALS_BASE64=orchestrator-google-credentials-base64:latest

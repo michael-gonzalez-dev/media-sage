@@ -43,7 +43,7 @@ fun Application.module() {
     configureStatusPages()
     routing {
         get("/health") { call.respond(HttpStatusCode.OK, "OK") }
-        webhookRoutes(config.jiraBotAccountId)
+        webhookRoutes(config.jiraBotAccountId, config.jiraWebhookSecret)
         githubWebhookRoutes(config.githubWebhookSecret, config.githubBotLogin)
         if (config.pubSubWebhookSecret.isNotBlank() && cloudRunJobsClient != null && jobRegistry != null) {
             pubSubWebhookRoutes(
@@ -67,6 +67,7 @@ private fun buildAgentConfig(config: io.ktor.server.config.ApplicationConfig): A
         jiraBotAccountId = config.str("app.jira.botAccountId"),
         jiraBotEmail = config.str("app.jira.botEmail"),
         jiraBotApiToken = config.str("app.jira.botApiToken"),
+        jiraWebhookSecret = config.str("app.jira.webhookSecret"),
         gcpProjectId = config.str("app.cloudRun.projectId"),
         gcpRegion = config.str("app.cloudRun.region", "us-central1"),
         gcpJobName = config.str("app.cloudRun.jobName", "media-sage-agent-worker"),

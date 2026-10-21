@@ -151,6 +151,7 @@ The `:agentruntime` server runs as a GCP Cloud Run Service (`media-sage-orchestr
 | `github-webhook-secret` | `GITHUB_WEBHOOK_SECRET` | Shared secret for GitHub webhook HMAC verification |
 | `jira-api-token` | `JIRA_API_TOKEN` | Atlassian account API token |
 | `jira-bot-api-token` | `JIRA_BOT_API_TOKEN` | Bot Atlassian API token |
+| `jira-webhook-secret` | `JIRA_WEBHOOK_SECRET` | Shared secret for Jira webhook URL auth (`?token=`); blank disables `/webhook/jira` |
 | `supabase-db-url` | `SUPABASE_DB_URL` | Postgres URI with credentials |
 | `pubsub-webhook-secret` | `PUBSUB_WEBHOOK_SECRET` | Shared secret for Pub/Sub push URL auth |
 | `google-credentials-base64` | `GOOGLE_CREDENTIALS_BASE64` | Base64-encoded GCP SA JSON (worker dispatch) |
@@ -173,12 +174,13 @@ The `:agentruntime` server runs as a GCP Cloud Run Service (`media-sage-orchestr
 
 ## Webhook URLs
 
-- Jira: `https://media-sage-orchestrator-924166357877.us-central1.run.app/webhook/jira`
+- Jira: `https://media-sage-orchestrator-924166357877.us-central1.run.app/webhook/jira?token=<JIRA_WEBHOOK_SECRET>`
 - GitHub: `https://media-sage-orchestrator-924166357877.us-central1.run.app/webhook/github`
 
 Register the Jira webhook at **media-sage.atlassian.net → Settings → System → WebHooks**:
 - Events: Issue **created** and **updated**
 - JQL filter: `project = MS` (assignee + status filtering is done in the route, not here)
+- The URL must end in `?token=<secret>` (the value of `orchestrator-jira-webhook-secret`). A missing or wrong token gets 401; with no secret configured the route is not registered and Jira gets 404.
 
 Register the GitHub webhook in repo **Settings → Webhooks**:
 - Content type: `application/json`

@@ -15,6 +15,8 @@ import com.mediasage.pipeline.core.DEFAULT_CLAUDE_MODEL
  *
  * @property githubWebhookSecret Secret used to verify HMAC-SHA256 signatures on incoming GitHub
  *   webhook payloads. Sourced from env var `GITHUB_WEBHOOK_SECRET`.
+ * @property jiraWebhookSecret Shared secret the Jira webhook URL carries as `?token=`. The `/webhook/jira`
+ *   route is only registered when this is non-blank. Sourced from env var `JIRA_WEBHOOK_SECRET`.
  * @property githubBotLogin GitHub login of the bot account (e.g. `media-sage-worker[bot]`). Webhook
  *   events are only acted on when the PR was authored by this identity — prevents the orchestrator
  *   from responding to human-authored PRs. Sourced from env var `GITHUB_BOT_LOGIN`.
@@ -66,6 +68,7 @@ import com.mediasage.pipeline.core.DEFAULT_CLAUDE_MODEL
 data class AgentConfig(
     val githubWebhookSecret: String,
     val githubBotLogin: String = "",
+    val jiraWebhookSecret: String = "",
     val jiraEmail: String,
     val jiraApiToken: String,
     val jiraCloudId: String,

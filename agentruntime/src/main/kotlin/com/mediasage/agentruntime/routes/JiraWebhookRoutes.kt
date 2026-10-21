@@ -9,6 +9,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
+import java.security.MessageDigest
 
 // ---- Jira webhook payload DTOs ----
 
@@ -78,14 +79,28 @@ private val relevantEvents = setOf("jira:issue_created", "jira:issue_updated")
  * An optional `X-Dry-Run: true` request header runs only the dedup check and row
  * insertion without dispatching a Cloud Run Job, useful for smoke-testing the pipeline.
  *
+ * **Authentication:** the webhook URL registered in Jira carries `?token=<secret>`, verified on
+ * every request in constant time. A missing or wrong token gets `401` before the body is read, so
+ * nothing is recorded or dispatched. A blank [webhookSecret] registers no route at all (fail closed).
+ *
  * @param botAccountId Atlassian account ID of the autonomous bot. Only issues assigned
  *   to this account trigger a dispatch.
+ * @param webhookSecret Shared secret the `token` query parameter must match.
  */
-fun Route.webhookRoutes(botAccountId: String) {
+fun Route.webhookRoutes(botAccountId: String, webhookSecret: String) {
     val log = LoggerFactory.getLogger("JiraWebhookRoutes")
+    if (webhookSecret.isBlank()) {
+        log.warn("Jira webhook: JIRA_WEBHOOK_SECRET is blank — /webhook/jira is not registered")
+        return
+    }
     val agentService by inject<AgentLauncher>()
 
     post("/webhook/jira") {
+        if (!tokenMatches(call.request.queryParameters["token"], webhookSecret)) {
+            log.warn("Jira webhook: rejected — invalid or missing token")
+            call.respond(HttpStatusCode.Unauthorized)
+            return@post
+        }
         val payload = call.receive<JiraWebhookPayload>()
         val fields = payload.issue.fields
 
@@ -94,11 +109,7 @@ fun Route.webhookRoutes(botAccountId: String) {
             "status='${fields.status.name}' assignee=${fields.assignee?.accountId}"
         )
 
-        val shouldFire = payload.webhookEvent in relevantEvents &&
-            fields.assignee?.accountId == botAccountId &&
-            fields.status.name == "In Progress"
-
-        if (shouldFire) {
+        if (payload.firesFor(botAccountId)) {
             val dryRun = call.request.headers["X-Dry-Run"]?.lowercase() == "true"
             if (dryRun) log.info("Dry-run mode — dedup check and row insert only, Cloud Run dispatch skipped")
             agentService.launch(payload.issue.key, dryRun)
@@ -107,3 +118,11 @@ fun Route.webhookRoutes(botAccountId: String) {
         call.respond(HttpStatusCode.OK)
     }
 }
+
+private fun JiraWebhookPayload.firesFor(botAccountId: String): Boolean =
+    webhookEvent in relevantEvents &&
+        issue.fields.assignee?.accountId == botAccountId &&
+        issue.fields.status.name == "In Progress"
+
+private fun tokenMatches(provided: String?, expected: String): Boolean =
+    provided != null && MessageDigest.isEqual(provided.toByteArray(Charsets.UTF_8), expected.toByteArray(Charsets.UTF_8))
