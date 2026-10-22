@@ -3,6 +3,8 @@ set -eo pipefail
 
 # shellcheck source=entrypoint-common.sh
 source "$(dirname "$0")/entrypoint-common.sh"
+# shellcheck source=agent-env.sh
+source "$(dirname "$0")/agent-env.sh"
 
 REPO_DIR="/home/agent/${GITHUB_REPO}"
 # GitHub App installation tokens use x-access-token as the username in clone URLs
@@ -24,7 +26,9 @@ python3 -c "import json, os; print(json.dumps({'message': '[worker] job dispatch
 # below are the safety defaults — keep the model in sync with pipelineCore's DEFAULT_CLAUDE_MODEL,
 # and the effort default at "high" (Sonnet's default) so an unset var leaves runs unchanged.
 # Override either per comparison run via `gcloud run jobs update ... --update-env-vars`.
-claude -p "/$JOB_TYPE" \
+# The agent starts in a scrubbed environment (agent-env.sh); the secrets this shell still holds stay here.
+build_agent_env
+env -i "${AGENT_ENV[@]}" claude -p "/$JOB_TYPE" \
   --model "${ANTHROPIC_MODEL:-claude-sonnet-5}" \
   --effort "${WORKER_EFFORT:-high}" \
   --dangerously-skip-permissions \
