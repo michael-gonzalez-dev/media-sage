@@ -41,9 +41,8 @@ for line in open('/tmp/claude-output.jsonl'):
   fi
 
   # Post Jira comment — job owns the comment end-to-end.
-  # Credentials were unset from the exported environment before Claude ran; they are
-  # Bot credentials are exported and available throughout the process.
-  # so Claude's subprocess could never access them.
+  # The bot credentials stay exported for the whole process and the agent receives them too
+  # (it writes to Jira as the bot). See agent-env.sh for exactly what the agent can see.
   local effective_jira_key="${JIRA_TICKET_KEY:-$TICKET_KEY}"
   if [ -f /tmp/jira_comment_posted ]; then
     echo "Jira comment already posted — skipping duplicate"

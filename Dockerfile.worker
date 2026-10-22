@@ -86,6 +86,7 @@ RUN ./gradlew :composeApp:recordRoborazziDebug -Pmediasage.worker=true --no-daem
         build.gradle.kts settings.gradle.kts gradle.properties gradlew gradle
 
 COPY --chown=agent:agent agentruntime/entrypoint-common.sh entrypoint-common.sh
+COPY --chown=agent:agent agentruntime/agent-env.sh agent-env.sh
 COPY --chown=agent:agent agentruntime/worker-entrypoint.sh entrypoint.sh
 COPY --chown=agent:agent agentruntime/get-github-token.py get-github-token.py
 RUN chmod +x entrypoint.sh
