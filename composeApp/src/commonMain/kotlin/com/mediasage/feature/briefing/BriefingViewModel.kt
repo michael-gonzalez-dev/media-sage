@@ -233,7 +233,7 @@ class BriefingViewModel(
         }.onFailure { e ->
             if (e is CancellationException) throw e
             updateCard(BriefingContract.CardState.Hidden)
-            _sideEffects.send(BriefingContract.SideEffect.ShowError(e.message ?: "Failed to load briefing"))
+            _sideEffects.send(BriefingContract.SideEffect.ShowError("Couldn't load today's briefing. Try again later."))
         }
     }
 

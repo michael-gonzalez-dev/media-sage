@@ -3,6 +3,7 @@ package com.mediasage.data.remote
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
@@ -24,6 +25,14 @@ fun createHttpClient(): HttpClient {
             requestTimeoutMillis = 60_000  // Scraping + Claude can take 30-45s
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 60_000
+        }
+
+        // Throw ResponseException for non-2xx responses so callers receive a typed HTTP error
+        // rather than a cryptic JSON deserialization failure from trying to parse an error body.
+        HttpResponseValidator {
+            validateResponse { response ->
+                if (!response.status.isSuccess()) throw ResponseException(response, response.status.description)
+            }
         }
     }
 }
